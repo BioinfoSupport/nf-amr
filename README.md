@@ -33,8 +33,6 @@ docker run --rm nfcore/tools pipelines list
 docker run -it --rm --entrypoint bash nfcore/tools
 nf-core pipelines create
 nf-core pipelines create --name americ -a "J. Prados" --organisation "amr-genomics" --description "anti-microbial resistance infection control pipeline"
-
-
 ```
 
 
