@@ -22,21 +22,3 @@ process ORGANISM_MAP {
 		    """
 }
 
-
-workflow ORGANISM_BEST_HIT {
-	take:
-	  assembly_fna
-	main:
-	fa_ch = Channel.fromPath(params.input)
-			.map({x -> tuple(["id":x.baseName],x)})
-	org_ch = ORGANISM_MAP(fa_ch)
-	
-	org_ch
-		.map({meta,org_map,org_env -> [meta.id,tuple(meta,org_env)]})
-		.view()
-	
-	
-	mlst_ch = fa_ch
-	 //params.organisms[ params.genome ].containsKey("mlst_flags")
-	 
-}

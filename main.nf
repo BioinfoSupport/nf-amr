@@ -14,7 +14,14 @@ workflow {
 			meta.org_name = org_name
 			[meta,assembly_fna]
 		})
-	CGE_MLST(fa_ch)
+	
+	
+	fa_ch.filter({meta,x -> 
+		meta.containsKey("org_name")
+		&& params.organisms.containsKey(meta.org_name) 
+		&& params.organisms[meta.org_name]
+	})
+	| CGE_MLST
 }
 	
 
