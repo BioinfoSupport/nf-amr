@@ -6,7 +6,7 @@ process ORGANISM_MAP {
     input:
         tuple val(meta), path(assembly_fna)
     output:
-        tuple val(meta), path(assembly_fna), path("*.org.map"), path("*.org.env"), env("ORG_NAME")
+        tuple val(meta), env("ORG_NAME"), path("*.org.map"), path("*.org.env")
     script:
 				def args = task.ext.args ?: ''
     		def prefix = task.ext.prefix ?: (meta.id?:assembly_fna.baseName)
