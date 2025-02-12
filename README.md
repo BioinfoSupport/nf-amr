@@ -10,12 +10,22 @@ docker run --rm \
   --platform linux/amd64 \
   --workdir $(pwd) \
   nextflow/nextflow:24.10.4 \
-  nextflow run ./ -resume -output-dir out/
+  nextflow run ./ -resume
 ```
 
 
+# List organism names
 ```bash
+docker run --rm registry.gitlab.unige.ch/amr-genomics/species_profiler:main bash -c "awk 'BEGIN{FS=\"\\t\"}{print \$2}' /app/db/db.tsv"
+```
+
+
+
+
+```bash
+rm -rf results/
 rm -rf .nextflow*
+rm -rf work/
 ```
 
 

@@ -3,9 +3,7 @@
 nextflow.preview.output = true
 
 
-include { AMR_ANNOTATE     } from './subworkflows/local/amr_annotate'
-//include { FATOOLS_ROTATE   } from './modules/local/fatools/rotate'
-//include { FATOOLS_REHEADER } from './modules/local/fatools/reheader'
+include { AMR_ANNOTATE } from './subworkflows/local/amr_annotate'
 
 workflow {
 	main:
@@ -20,9 +18,16 @@ workflow {
 			fa_ch = Channel.fromPath(params.input)
 					.map({x -> tuple(["id":x.baseName],x)})
 			amr_ch = AMR_ANNOTATE(fa_ch)
-			amr_ch.resfinder.view()
+			
+			
+			amr_ch.resfinder
+			
 	publish:
 			amr_ch.resfinder >> 'resfinder'
+			amr_ch.org_map >> 'org_map'
+			amr_ch.org_db >> 'org_db'
+			amr_ch.plasmidfinder >> 'plasmidfinder'
+			amr_ch.mlst >> 'mlst'
 }
 
 output {} // required to publish the output !
