@@ -9,18 +9,13 @@ docker run --rm \
   -v $(pwd):$(pwd) \
   --platform linux/amd64 \
   --workdir $(pwd) \
-  nextflow/nextflow:24.10.1 \
-  nextflow run ./ -resume
+  nextflow/nextflow:24.10.4 \
+  nextflow run ./ -resume -output-dir out/
 ```
 
+
 ```bash
-docker run --rm \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  -v $(pwd):$(pwd) \
-  --platform linux/amd64 \
-  --workdir $(pwd) \
-  nextflow/nextflow:24.10.1 \
-  nextflow run -resume ./ -params-file params.json -profile local
+rm -rf .nextflow*
 ```
 
 

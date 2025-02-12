@@ -4,9 +4,9 @@ process CGE_RESFINDER {
     memory '4 GB'
     cpus 1
     input:
-        tuple val(meta), path(assembly_fna)
+        tuple val(meta), file(assembly_fna)
     output:
-				tuple val(meta), path("*.resfinder.json")
+				tuple val(meta), file("*.resfinder.json")
     script:
 				def args = task.ext.args ?: ''
     		def prefix = task.ext.prefix ?: (meta.id?:assembly_fna.baseName)

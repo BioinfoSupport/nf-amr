@@ -7,10 +7,10 @@ include { CGE_RESFINDER     } from '../../../modules/local/cgetools/resfinder'
 
 workflow AMR_ANNOTATE {
 		take:
-	    	fa_ch    // channel: [ val(meta), path(assembly_fna) ]
+	    	fa_ch    // channel: [ val(meta), file(assembly_fna) ]
 		main:
 				res_ch = CGE_RESFINDER(fa_ch)
-
+/*
 				// Add org_name metadata
 				org_ch = ORGANISM_MAP(fa_ch)
 						.map({meta,org_name,x,y -> [meta,org_name]})
@@ -30,11 +30,12 @@ workflow AMR_ANNOTATE {
 								&& params.organisms[org_name]["plasmidfinder_flags"]
 						})
 						| CGE_PLASMIDFINDER
+*/
 		emit:
-		    org_map       = org_ch    // channel: [ val(meta), val(org_name) ]
-				resfinder     = res_ch    // channel: [ val(meta), path(resfinder_json) ]
-				plasmidfinder = plf_ch    // channel: [ val(meta), path(plasmidfinder_json) ]
-				mlst          = mlst_ch   // channel: [ val(meta), path(mlst_json) ]
+				resfinder     = res_ch    // channel: [ val(meta), file(resfinder_json) ]
+        //org_map       = org_ch    // channel: [ val(meta), val(org_name) ]				
+				//plasmidfinder = plf_ch    // channel: [ val(meta), file(plasmidfinder_json) ]
+				//mlst          = mlst_ch   // channel: [ val(meta), file(mlst_json) ]
 }
 	
 
