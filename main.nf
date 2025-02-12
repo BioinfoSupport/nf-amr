@@ -1,5 +1,8 @@
 #!/usr/bin/env nextflow
 
+nextflow.preview.output = true
+
+
 include { AMR_ANNOTATE     } from './subworkflows/local/amr_annotate'
 //include { FATOOLS_ROTATE   } from './modules/local/fatools/rotate'
 //include { FATOOLS_REHEADER } from './modules/local/fatools/reheader'
@@ -22,7 +25,7 @@ workflow {
 			amr_ch.resfinder >> 'resfinder'
 }
 
-
+output {} // required to publish the output !
 
 
 

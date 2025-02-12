@@ -4,9 +4,9 @@ process CGE_MLST {
     memory '4 GB'
     cpus 1
     input:
-        tuple val(meta), file(assembly_fna), val(org_name)
+        tuple val(meta), path(assembly_fna), val(org_name)
     output:
-    		tuple val(meta), file("*.mlst.json")
+    		tuple val(meta), path("*.mlst.json")
     script:
 				def args = task.ext.args ?: ''
     		def prefix = task.ext.prefix ?: (meta.id?:assembly_fna.baseName)

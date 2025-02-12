@@ -4,9 +4,9 @@ process FATOOLS_REHEADER {
     memory '4 GB'
     cpus 1
     input:
-        tuple val(meta), file(assembly_fna)
+        tuple val(meta), path(assembly_fna)
     output:
-    		tuple val(meta), file("*.hdr.fasta")
+    		tuple val(meta), path("*.hdr.fasta")
     script:
 				def args = task.ext.args ?: ''
     		def prefix = task.ext.prefix ?: (meta.id?:assembly_fna.baseName)
