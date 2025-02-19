@@ -1,10 +1,10 @@
 #!/usr/bin/env nextflow
 
 include { RESFINDER } from '../resfinder'
+include { PLASMIDFINDER } from '../plasmidfinder'
+include { MLST } from '../mlst'
 include { ORGANISM_MAP      } from '../../../modules/local/organism/org_map'
 include { ORGANISM_DB      } from '../../../modules/local/organism/org_db'
-include { CGE_MLST          } from '../../../modules/local/cgetools/mlst'
-include { CGE_PLASMIDFINDER } from '../../../modules/local/cgetools/plasmidfinder'
 include { REPORTING_AMR     } from '../../../modules/local/reporting/amr'
 
 workflow AMR_ANNOTATE {
@@ -25,7 +25,7 @@ workflow AMR_ANNOTATE {
 								&& params.organisms[org_name].containsKey("mlst_flags")
 								&& params.organisms[org_name]["mlst_flags"]
 						})
-						| CGE_MLST
+						| MLST
 
 				// Perform plasmid type
 				plf_ch = fa_ch
@@ -35,7 +35,7 @@ workflow AMR_ANNOTATE {
 								&& params.organisms[org_name].containsKey("plasmidfinder_flags")
 								&& params.organisms[org_name]["plasmidfinder_flags"]
 						})
-						| CGE_PLASMIDFINDER
+						| PLASMIDFINDER
 
 
 				//REPORTING_AMR(aggr_results_ch.collect(flat:false))

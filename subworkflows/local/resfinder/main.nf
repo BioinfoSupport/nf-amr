@@ -1,17 +1,53 @@
 #!/usr/bin/env nextflow
 
-include { CGE_RESFINDER_RUN } from '../../../modules/local/cgetools/resfinder'
-include { CGE_RESFINDER_FORMAT } from '../../../modules/local/cgetools/resfinder'
+process CGE_RESFINDER_RUN {
+	  container "registry.gitlab.unige.ch/amr-genomics/cgetools:main"
+    memory '4 GB'
+    cpus 1
+    input:
+        tuple val(meta), path(assembly_fna)
+    output:
+				tuple val(meta), path("*.resfinder.json")
+    script:
+				def args = task.ext.args ?: ''
+    		def prefix = task.ext.prefix ?: (meta.id?:assembly_fna.baseName)
+		    """
+					python -m resfinder -ifa '${assembly_fna}' -acq -d -o '${prefix}.resfinder/'
+					cp '${prefix}.resfinder/'*.json '${prefix}.resfinder.json'
+		    """    
+}
+
+process CGE_RESFINDER_FORMAT {
+	  label 'Rscript'
+    memory '4 GB'
+    cpus 1
+    input:
+        tuple val(meta), path('resfinder.json')
+    output:
+				path('*.resfinder.rds')
+    script:
+    		def prefix = task.ext.prefix ?: (meta.id?:assembly_fna.baseName)
+		    """
+				#!/usr/bin/env Rscript
+				library(tidyverse)
+				jsonlite::fromJSON("resfinder.json")\$seq_regions |>
+					tibble() |>
+					unnest_wider(1) |>
+					mutate(contig_id = str_replace(query_id," .*","")) |>
+					mutate(assembly_id = "${meta.id}") |>
+					saveRDS(file="${prefix}.resfinder.rds")
+		    """
+}
 
 workflow RESFINDER {
 		take:
 	    	fa_ch    // channel: [ val(meta), path(assembly_fna) ]
 		main:
-				res_ch = fa_ch 
+				rds_ch = fa_ch 
 				  | CGE_RESFINDER_RUN 
 					| CGE_RESFINDER_FORMAT
 		emit:
-				res_ch    // channel: [ val(meta), path(resfinder_json) ]
+				rds_ch    // channel: [ path(rds_file) ]
 }
 
 
