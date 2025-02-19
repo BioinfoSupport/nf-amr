@@ -9,6 +9,7 @@ docker run --rm \
   -v $(pwd):$(pwd) \
   --platform linux/amd64 \
   --workdir $(pwd) \
+  --env NXF_HOME=$(pwd)/.nextflow_home \
   nextflow/nextflow:24.10.4 \
   nextflow run ./ -resume
 ```

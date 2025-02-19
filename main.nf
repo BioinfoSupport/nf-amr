@@ -19,15 +19,13 @@ workflow {
 					.map({x -> tuple(["id":x.baseName],x)})
 			amr_ch = AMR_ANNOTATE(fa_ch)
 			
-			
-			amr_ch.resfinder
-			
 	publish:
 			amr_ch.resfinder >> 'resfinder'
 			amr_ch.org_map >> 'org_map'
 			amr_ch.org_db >> 'org_db'
 			amr_ch.plasmidfinder >> 'plasmidfinder'
 			amr_ch.mlst >> 'mlst'
+			//amr_ch.report >> '.'
 }
 
 output {} // required to publish the output !

@@ -1,5 +1,5 @@
 
-process CGE_RESFINDER {
+process CGE_RESFINDER_RUN {
 	  container "registry.gitlab.unige.ch/amr-genomics/cgetools:main"
     memory '4 GB'
     cpus 1
@@ -16,4 +16,25 @@ process CGE_RESFINDER {
 		    """    
 }
 
+process CGE_RESFINDER_FORMAT {
+	  label 'Rscript'
+    memory '4 GB'
+    cpus 1
+    input:
+        tuple val(meta), path('resfinder.json')
+    output:
+				path('*.resfinder.rds')
+    script:
+    		def prefix = task.ext.prefix ?: (meta.id?:assembly_fna.baseName)
+		    """
+				#!/usr/bin/env Rscript
+				library(tidyverse)
+				jsonlite::fromJSON("resfinder.json")\$seq_regions |>
+					tibble() |>
+					unnest_wider(1) |>
+					mutate(contig_id = str_replace(query_id," .*","")) |>
+					mutate(assembly_id = "${meta.id}") |>
+					saveRDS(file="${prefix}.resfinder.rds")
+		    """
+}
 
