@@ -32,11 +32,16 @@ process CGE_PLASMIDFINDER_FORMAT {
 		    """
 				#!/usr/bin/env Rscript
 				library(tidyverse)
-				jsonlite::fromJSON("plasmidfinder.json")\$plasmidfinder\$results\$Enterobacteriales\$enterobacteriales |>
-		    tibble() |>
-		    unnest_wider(1) |>
+				jsonlite::fromJSON("plasmidfinder.json") |>
+				pluck("plasmidfinder","results") |>
+				enframe("plasmidfinder_Species") |> 
+				unnest_longer(value,indices_to = "plasmidfinder_species") |>
+		    unnest_longer(value) |>
+		    select(!value_id) |>
+		    unnest_wider(value) |>
 		    mutate(contig_id = str_replace(contig_name," .*",""))	|>
 				mutate(assembly_id = "${meta.id}") |>
+				relocate(assembly_id,contig_id) |>
 				saveRDS(file="${prefix}.plasmidfinder.rds")
 		    """
 }
