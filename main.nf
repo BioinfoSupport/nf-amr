@@ -3,7 +3,7 @@
 nextflow.preview.output = true
 
 
-include { AMR_ANNOTATE } from './subworkflows/local/amr_annotate'
+include { AMR_ANNOTATE } from './subworkflows/local/amr'
 
 workflow {
 	main:
@@ -22,7 +22,7 @@ workflow {
 	publish:
 			amr_ch.resfinder >> 'resfinder'
 			amr_ch.org_map >> 'org_map'
-			amr_ch.org_db >> 'org_db'
+			amr_ch.org_db >> '.'
 			amr_ch.plasmidfinder >> 'plasmidfinder'
 			amr_ch.mlst >> 'mlst'
 			//amr_ch.report >> '.'

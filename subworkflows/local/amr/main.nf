@@ -5,7 +5,7 @@ include { PLASMIDFINDER } from '../plasmidfinder'
 include { MLST } from '../mlst'
 include { ORGANISM_MAP      } from '../../../modules/local/organism/org_map'
 include { ORGANISM_DB      } from '../../../modules/local/organism/org_db'
-include { REPORTING_AMR     } from '../../../modules/local/reporting/amr'
+//include { REPORTING_AMR     } from '../../../modules/local/reporting/amr'
 
 workflow AMR_ANNOTATE {
 		take:
@@ -37,15 +37,18 @@ workflow AMR_ANNOTATE {
 						})
 						| PLASMIDFINDER
 
-
+				res_ch.view()
+				mlst_ch.view()
+				plf_ch.view()
+	
 				//REPORTING_AMR(aggr_results_ch.collect(flat:false))
 
 		emit:
-				resfinder     = res_ch    // channel: [ val(meta), path(resfinder_json) ]
+				resfinder     = res_ch    // channel: [ path(resfinder_rds) ]
         org_map       = org_ch    // channel: [ val(meta), val(org_name) ]
         org_db        = ORGANISM_DB.out // channel: path(org_db) ]
-				plasmidfinder = plf_ch    // channel: [ val(meta), path(plasmidfinder_json) ]
-				mlst          = mlst_ch   // channel: [ val(meta), path(mlst_json) ]
+				plasmidfinder = plf_ch    // channel: [ path(plasmidfinder_rds) ]
+				mlst          = mlst_ch   // channel: [ path(mlst_rds) ]
 				//report        = REPORTING_AMR.out.report
 }
 	

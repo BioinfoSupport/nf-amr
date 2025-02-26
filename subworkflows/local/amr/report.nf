@@ -4,7 +4,12 @@ process REPORTING_AMR {
     memory '8 GB'
     cpus 4
     input:
-    		tuple val(meta), path(fasta), path(resfinder), path(org_map), path(org_env), path(mlst), path(plasmidfinder)
+    		path("fasta/*")
+    		path("resfinder/*")
+    		path("org_map/*")
+    		path("org_env/*")
+    		path("mlst/*")
+    		path("plasmidfinder/*")
     output:
         path("*.amr_report.json"), emit: report
     script:

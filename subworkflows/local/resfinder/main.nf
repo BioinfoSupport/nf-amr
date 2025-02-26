@@ -1,6 +1,16 @@
 #!/usr/bin/env nextflow
 
-process CGE_RESFINDER_RUN {
+import groovy.json.JsonSlurper
+import groovy.json.JsonBuilder
+
+def setAssemblyId(json_file,assembly_id) {
+    def slurp = new JsonSlurper().parseText(json_file.text)
+    def builder = new JsonBuilder(slurp)
+		builder.content.assembly_id = assembly_id
+		json_file.text = builder.toPrettyString()
+}
+
+process CGE_RESFINDER {
 	  container "registry.gitlab.unige.ch/amr-genomics/cgetools:main"
     memory '4 GB'
     cpus 1
@@ -17,37 +27,15 @@ process CGE_RESFINDER_RUN {
 		    """    
 }
 
-process CGE_RESFINDER_FORMAT {
-	  label 'Rscript'
-    memory '4 GB'
-    cpus 1
-    input:
-        tuple val(meta), path('resfinder.json')
-    output:
-				path('*.resfinder.rds')
-    script:
-    		def prefix = task.ext.prefix ?: (meta.id?:assembly_fna.baseName)
-		    """
-				#!/usr/bin/env Rscript
-				library(tidyverse)
-				jsonlite::fromJSON("resfinder.json")\$seq_regions |>
-					tibble() |>
-					unnest_wider(1) |>
-					mutate(contig_id = str_replace(query_id," .*","")) |>
-					mutate(assembly_id = "${meta.id}") |>
-					saveRDS(file="${prefix}.resfinder.rds")
-		    """
-}
-
 workflow RESFINDER {
 		take:
 	    	fa_ch    // channel: [ val(meta), path(assembly_fna) ]
 		main:
-				rds_ch = fa_ch 
-				  | CGE_RESFINDER_RUN 
-					| CGE_RESFINDER_FORMAT
+				out_ch = fa_ch 
+				  | CGE_RESFINDER
+				  | map({meta,json -> setAssemblyId(json,meta.id);[meta,json]})
 		emit:
-				rds_ch    // channel: [ path(rds_file) ]
+				out_ch    // channel: [ val(meta), path(json_file) ]
 }
 
 

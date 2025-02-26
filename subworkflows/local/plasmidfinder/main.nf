@@ -1,6 +1,16 @@
 #!/usr/bin/env nextflow
 
-process CGE_PLASMIDFINDER_RUN {
+import groovy.json.JsonSlurper
+import groovy.json.JsonBuilder
+
+def setAssemblyId(json_file,assembly_id) {
+    def slurp = new JsonSlurper().parseText(json_file.text)
+    def builder = new JsonBuilder(slurp)
+		builder.content.assembly_id = assembly_id
+		json_file.text = builder.toPrettyString()
+}
+
+process CGE_PLASMIDFINDER {
 	  container "registry.gitlab.unige.ch/amr-genomics/cgetools:main"
     memory '4 GB'
     cpus 1
@@ -13,48 +23,21 @@ process CGE_PLASMIDFINDER_RUN {
     		def prefix = task.ext.prefix ?: (meta.id?:assembly_fna.baseName)
     		def plf_flags = params.organisms[org_name]["plasmidfinder_flags"]
 		    """
-	  		mkdir -p '${prefix}.plasmidfinder'
-		  	plasmidfinder.py -q -x -p /db/plasmidfinder_db ${plf_flags} ${args} -i '${assembly_fna}' -o '${prefix}.plasmidfinder/'
-			  cp '${prefix}.plasmidfinder/data.json' '${prefix}.plasmidfinder.json'
+		  		mkdir -p '${prefix}.plasmidfinder'
+			  	plasmidfinder.py -q -x -p /db/plasmidfinder_db ${plf_flags} ${args} -i '${assembly_fna}' -o '${prefix}.plasmidfinder/'
+				  cp '${prefix}.plasmidfinder/data.json' '${prefix}.plasmidfinder.json'
 		    """    
-}
-
-process CGE_PLASMIDFINDER_FORMAT {
-	  label 'Rscript'
-    memory '4 GB'
-    cpus 1
-    input:
-        tuple val(meta), path('plasmidfinder.json')
-    output:
-				path('*.plasmidfinder.rds')
-    script:
-    		def prefix = task.ext.prefix ?: (meta.id?:assembly_fna.baseName)
-		    """
-				#!/usr/bin/env Rscript
-				library(tidyverse)
-				jsonlite::fromJSON("plasmidfinder.json") |>
-				pluck("plasmidfinder","results") |>
-				enframe("plasmidfinder_Species") |> 
-				unnest_longer(value,indices_to = "plasmidfinder_species") |>
-		    unnest_longer(value) |>
-		    select(!value_id) |>
-		    unnest_wider(value) |>
-		    mutate(contig_id = str_replace(contig_name," .*",""))	|>
-				mutate(assembly_id = "${meta.id}") |>
-				relocate(assembly_id,contig_id) |>
-				saveRDS(file="${prefix}.plasmidfinder.rds")
-		    """
 }
 
 workflow PLASMIDFINDER {
 		take:
 	    	fa_ch    // channel: [ val(meta), path(assembly_fna) ]
 		main:
-				rds_ch = fa_ch 
-				  | CGE_PLASMIDFINDER_RUN 
-					| CGE_PLASMIDFINDER_FORMAT
+				out_ch = fa_ch 
+				  | CGE_PLASMIDFINDER 
+				  | map({meta,json -> setAssemblyId(json,meta.id);[meta,json]})
 		emit:
-				rds_ch    // channel: [ path(rds_file) ]
+				out_ch    // channel: [ val(meta), path(json_file) ]
 }
 
 
