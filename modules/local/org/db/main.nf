@@ -1,5 +1,5 @@
 
-process ORGANISM_DB {
+process ORG_DB {
 		container 'registry.gitlab.unige.ch/amr-genomics/species_profiler:main'
 		memory '2 GB'
 		cpus 1

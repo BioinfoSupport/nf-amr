@@ -14,11 +14,18 @@ docker run --rm \
   nextflow run ./ -resume
 ```
 
-
-# List organism names
 ```bash
-docker run --rm registry.gitlab.unige.ch/amr-genomics/species_profiler:main bash -c "awk 'BEGIN{FS=\"\\t\"}{print \$2}' /app/db/db.tsv"
+docker run --rm \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v $(pwd):$(pwd) \
+  --platform linux/amd64 \
+  --workdir $(pwd) \
+  --env NXF_HOME=$(pwd)/.nextflow_home \
+  nfcore/tools \
+  pipelines schema build
 ```
+
+
 
 
 

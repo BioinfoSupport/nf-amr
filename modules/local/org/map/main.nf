@@ -1,5 +1,5 @@
 
-process ORGANISM_MAP {
+process ORG_MAP {
     container 'registry.gitlab.unige.ch/amr-genomics/species_profiler:main'
     memory '20 GB'
     cpus 4
