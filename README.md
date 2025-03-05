@@ -6,11 +6,22 @@ Nextflow pipeline for AMR detection
 
 ## Usage
 
+To run the pipeline on your local machine with docker installed:
+
 ```bash
 nextflow run -r main BioinfoSupport/nf-amr -resume
 ```
 
 By default the pipeline process all FASTA files in subfolder `data` (`data/*.fasta`).
+
+
+To run the pipeline on a HPC cluster with slurm and singularity use `hpc` profile:
+```bash
+ml Java/17.0.2
+curl -s https://get.nextflow.io | bash
+./nextflow run -r main BioinfoSupport/nf-amr -profile hpc -resume
+```
+
 
 
 
