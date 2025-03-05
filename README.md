@@ -7,7 +7,7 @@ Nextflow pipeline for AMR detection
 ## Usage
 
 ```bash
-nextflow run https://github.com/BioinfoSupport/nf-amr -resume
+nextflow run -r main BioinfoSupport/nf-amr -resume
 ```
 
 By default the pipeline process all FASTA files in subfolder `data` (`data/*.fasta`).
