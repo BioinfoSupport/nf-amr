@@ -1,8 +1,8 @@
 #!/usr/bin/env nextflow
 
-include { RESFINDER     } from '../resfinder'
-include { PLASMIDFINDER } from '../plasmidfinder'
-include { MLST          } from '../mlst'
+include { RESFINDER     } from '../../../modules/local/resfinder'
+include { PLASMIDFINDER } from '../../../modules/local/plasmidfinder'
+include { MLST          } from '../../../modules/local/mlst'
 include { ORG_MAP       } from '../../../modules/local/org/map'
 include { ORG_DB        } from '../../../modules/local/org/db'
 
@@ -14,7 +14,6 @@ process AMR_REPORT {
     input:
     		val(meta)
     		path(fastas)
-    		val(org_names)
     		path(org_maps)
     		path(org_envs)
     		path(resfinders)
@@ -25,8 +24,14 @@ process AMR_REPORT {
         path("amr_report.html"), emit: html
     script:
 		    def args = task.ext.args ?: ''
-		    
-		    //meta.collect({x -> x.id}).collectFile(name:'meta.txt',newLine:true)
+		    builder = new groovy.json.JsonBuilder(["version":"v2"])
+		    builder.content.meta = meta.collect({x->x.id})
+		    builder.content.fasta = fastas.collect({it.toString()})
+		    builder.content.org_maps = org_maps.collect({it.toString()})
+				builder.content.resfinders = resfinders.collect({it.toString()})
+		    builder.content.mlsts = mlsts.collect({it.toString()})
+		    builder.content.plasmidfinders = plasmidfinders.collect({it.toString()})
+		    println(builder.toPrettyString())
 		    
 		    """
 			    cat <<EOF > amr_report.html
@@ -69,26 +74,26 @@ workflow AMR_ANNOTATE {
 						})
 						| PLASMIDFINDER
 	
-
+				// Aggregate results joining on assembly id
 				aggr_ch = fa_ch
-				.join(org_ch.map({meta,org_name,map,env -> [meta,[org_name,map,env]]}),remainder:true)
+				.join(org_ch.map({meta,org_name,map,env -> [meta,["name": org_name,"map": map,"env": env]]}),remainder:true)
 				.join(res_ch,remainder:true)
 				.join(mlst_ch,remainder:true)
 				.join(plf_ch,remainder:true)
 				.multiMap({meta,fa,org,res,mlst,plf -> 
 					meta: meta
 					fasta: fa
-					org_name: org[0]
-					org_map: org[1]
-					org_env: org[2]
+					org_map: org.map
+					org_env: org.env
 					resfinder: res
 					mlst: mlst
 					plasmidfinder: plf
 				})
+				
+				// Collect all results and call reporting
 				AMR_REPORT(
 					aggr_ch.meta.collect(flat:false),
 					aggr_ch.fasta.collect(flat:false),
-					aggr_ch.org_name.collect(flat:false),
 					aggr_ch.org_map.collect(flat:false),
 					aggr_ch.org_env.collect(flat:false),
 					aggr_ch.resfinder.collect(flat:false),

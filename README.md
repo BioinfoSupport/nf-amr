@@ -1,18 +1,35 @@
 
 # nf
 
-Nextflow for AMR detection
+Nextflow pipeline for AMR detection
+
+
+## Usage
 
 ```bash
-docker run --rm \
+nextflow run https://github.com/BioinfoSupport/nf-amr -resume
+```
+
+By default the pipeline process all FASTA files in subfolder `data` (`data/*.fasta`).
+
+
+
+### Docker
+
+If `nextflow``` is not installed on your system, you can run a docker environement
+running it:
+
+```bash
+docker run --rm -it \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v $(pwd):$(pwd) \
   --platform linux/amd64 \
   --workdir $(pwd) \
   --env NXF_HOME=$(pwd)/.nextflow_home \
-  nextflow/nextflow:24.10.4 \
-  nextflow run ./ -resume
+  nextflow/nextflow:24.10.4 bash
 ```
+
+If in addition you need `nf-core` toolbox:
 
 ```bash
 docker run --rm \
@@ -26,17 +43,15 @@ docker run --rm \
 ```
 
 
+# Parking 
 
-
-
+### Cleaning
 
 ```bash
 rm -rf results/
 rm -rf .nextflow*
 rm -rf work/
 ```
-
-
 
 ```bash
 docker run --rm nfcore/tools --help
