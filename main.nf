@@ -25,7 +25,7 @@ workflow {
 			amr_ch.org_db >> '.'
 			amr_ch.plasmidfinder >> 'plasmidfinder'
 			amr_ch.mlst >> 'mlst'
-			amr_ch.report >> '.'
+			//amr_ch.report >> '.'
 }
 
 output {} // required to publish the output !

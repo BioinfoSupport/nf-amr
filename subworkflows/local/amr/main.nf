@@ -91,6 +91,7 @@ workflow AMR_ANNOTATE {
 				})
 				
 				// Collect all results and call reporting
+				/*
 				AMR_REPORT(
 					aggr_ch.meta.collect(flat:false),
 					aggr_ch.fasta.collect(flat:false),
@@ -100,6 +101,7 @@ workflow AMR_ANNOTATE {
 					aggr_ch.mlst.collect(flat:false),
 					aggr_ch.plasmidfinder.collect(flat:false)
 				)
+				*/
 
 		emit:
 				resfinder     = res_ch     // channel: [ path(resfinder_rds) ]
@@ -107,7 +109,7 @@ workflow AMR_ANNOTATE {
         org_db        = ORG_DB.out // channel: path(org_db) ]
 				plasmidfinder = plf_ch     // channel: [ path(plasmidfinder_rds) ]
 				mlst          = mlst_ch    // channel: [ path(mlst_rds) ]
-				report        = AMR_REPORT.out.html
+				//report        = AMR_REPORT.out.html
 }
 	
 
