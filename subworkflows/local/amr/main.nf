@@ -71,10 +71,13 @@ workflow AMR_ANNOTATE {
 					.join(mlst_ch,remainder:true)
 					.join(plf_ch,remainder:true)
 					.join(org_ch,remainder:true)
-/*					
 					.map({meta,fa,res,mlst,plf,meta_org,ani -> 
+							[meta:meta, meta_org:meta_org, fasta:fa, resfinder:res, plasmidfinder:plf, mlst:mlst, ani:ani]
 					})
-*/
+					.collect()
+					
+					.view()
+/*
 					.multiMap({meta,fa,res,mlst,plf,meta_org,ani -> 
 						meta: meta
 						meta_org: meta_org
@@ -84,7 +87,7 @@ workflow AMR_ANNOTATE {
 						mlst: mlst
 						plasmidfinder: plf
 					})
-
+*/
 				// Collect all results and call reporting
 				/*
 				AMR_REPORT(

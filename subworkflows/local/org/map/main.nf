@@ -37,12 +37,12 @@ workflow ORG_MAP {
 					.join(org_ch,remainder:true)
 					.map({meta,fa,meta_org,ani -> 
 							if (meta.org_name!=null) {
-								[meta,['org_name':meta.org_name],ani]
+								[meta,['org_name':meta.org_name],null]
 							} else {
-								[meta, meta_org, fa]
+								[meta, meta_org, ani]
 							}
 					})
 		emit:
-				out_ch // [meta, meta_org, fa]
+				out_ch // [meta, meta_org, ani]
 }
 
