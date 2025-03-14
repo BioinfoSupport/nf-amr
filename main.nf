@@ -21,14 +21,32 @@ workflow {
 			
 	publish:
 			amr_ch.resfinder >> 'resfinder'
-			amr_ch.org_map >> 'org_map'
+			amr_ch.org_ani >> 'org_ani'
 			amr_ch.org_db >> '.'
 			amr_ch.plasmidfinder >> 'plasmidfinder'
 			amr_ch.mlst >> 'mlst'
 			//amr_ch.report >> '.'
 }
 
-output {} // required to publish the output !
+
+output {
+	resfinder {
+		path({x -> "results/${x[0].id}/"})
+		mode 'copy'
+	}
+	plasmidfinder {
+		path({x -> "results/${x[0].id}/"})
+		mode 'copy'
+	}
+	mlst {
+		path({x -> "results/${x[0].id}/"})
+		mode 'copy'
+	}
+	org_ani {
+		path({x -> "results/${x[0].id}/"})
+		mode 'copy'
+	}
+} // required to publish the output !
 
 
 

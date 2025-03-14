@@ -65,6 +65,11 @@ rm -rf work/
 ```
 
 ```bash
+nextflow run . -resume
+```
+
+
+```bash
 docker run --rm nfcore/tools --help
 docker run --rm nfcore/tools modules list remote
 docker run --rm nfcore/tools pipelines list
@@ -75,5 +80,17 @@ nf-core pipelines create --name americ -a "J. Prados" --organisation "amr-genomi
 ```
 
 
+
+
+
+# TODO:
+ - add text results of CGE tools
+ - allow missing file in the report
+ - run plasmidfinder in all cases with default gram+ parameters
+ - add sample sheet where we can force org_name
+ - add multi-reporting (which include independant report)
+ 
+ 
+ 
 
 

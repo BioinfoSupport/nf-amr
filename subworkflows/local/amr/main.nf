@@ -1,10 +1,10 @@
 #!/usr/bin/env nextflow
 
-include { RESFINDER     } from '../../../modules/local/resfinder'
-include { PLASMIDFINDER } from '../../../modules/local/plasmidfinder'
-include { MLST          } from '../../../modules/local/mlst'
-include { ORG_MAP       } from '../../../modules/local/org/map'
-include { ORG_DB        } from '../../../modules/local/org/db'
+include { RESFINDER     } from '../resfinder'
+include { PLASMIDFINDER } from '../plasmidfinder'
+include { MLST          } from '../mlst'
+include { ORG_MAP       } from '../org/map'
+include { ORG_DB        } from '../org/db'
 
 
 process AMR_REPORT {
@@ -48,48 +48,43 @@ workflow AMR_ANNOTATE {
 		take:
 	    	fa_ch    // channel: [ val(meta), path(assembly_fna) ]
 		main:
-				res_ch = RESFINDER(fa_ch)
-				
 				// Determine organism by mapping the assembly on organism database
 				ORG_DB()
 				org_ch = ORG_MAP(fa_ch)
+				res_ch = RESFINDER(fa_ch)
 				
-				// Determine MLST
-				mlst_ch = fa_ch
-						.join(org_ch.map({meta,org_name,map,env -> [meta,org_name]}))
-						.filter({meta,fasta,org_name -> 
-								params.organisms.containsKey(org_name) 
-								&& params.organisms[org_name].containsKey("mlst_flags")
-								&& params.organisms[org_name]["mlst_flags"]
-						})
-						| MLST
-
-				// Perform plasmid type
+				// Plasmid typing
 				plf_ch = fa_ch
-				    .join(org_ch.map({meta,org_name,map,env -> [meta,org_name]}))
-						.filter({meta,fasta,org_name -> 
-								params.organisms.containsKey(org_name) 
-								&& params.organisms[org_name].containsKey("plasmidfinder_flags")
-								&& params.organisms[org_name]["plasmidfinder_flags"]
-						})
-						| PLASMIDFINDER
-	
+					.join(org_ch,remainder:true)
+					.map({meta,fa,meta_org,ani -> [meta, meta_org, fa]})
+					| PLASMIDFINDER
+					
+				// MLST typing
+				mlst_ch = fa_ch
+					.join(org_ch,remainder:true)
+					.map({meta,fa,meta_org,ani -> [meta, meta_org, fa]})
+					| MLST
+
 				// Aggregate results joining on assembly id
 				aggr_ch = fa_ch
-				.join(org_ch.map({meta,org_name,map,env -> [meta,["name": org_name,"map": map,"env": env]]}),remainder:true)
-				.join(res_ch,remainder:true)
-				.join(mlst_ch,remainder:true)
-				.join(plf_ch,remainder:true)
-				.multiMap({meta,fa,org,res,mlst,plf -> 
-					meta: meta
-					fasta: fa
-					org_map: org.map
-					org_env: org.env
-					resfinder: res
-					mlst: mlst
-					plasmidfinder: plf
-				})
-				
+					.join(res_ch,remainder:true)
+					.join(mlst_ch,remainder:true)
+					.join(plf_ch,remainder:true)
+					.join(org_ch,remainder:true)
+/*					
+					.map({meta,fa,res,mlst,plf,meta_org,ani -> 
+					})
+*/
+					.multiMap({meta,fa,res,mlst,plf,meta_org,ani -> 
+						meta: meta
+						meta_org: meta_org
+						fasta: fa
+						ani: ani
+						resfinder: res
+						mlst: mlst
+						plasmidfinder: plf
+					})
+
 				// Collect all results and call reporting
 				/*
 				AMR_REPORT(
@@ -104,11 +99,11 @@ workflow AMR_ANNOTATE {
 				*/
 
 		emit:
-				resfinder     = res_ch     // channel: [ path(resfinder_rds) ]
-        org_map       = org_ch     // channel: [ val(meta), val(org_name) ]
+				resfinder     = res_ch     // channel: [ val(meta), path(resfinder) ]
+        org_ani       = org_ch     // channel: [ val(meta), val(org_name) ]
         org_db        = ORG_DB.out // channel: path(org_db) ]
-				plasmidfinder = plf_ch     // channel: [ path(plasmidfinder_rds) ]
-				mlst          = mlst_ch    // channel: [ path(mlst_rds) ]
+				plasmidfinder = plf_ch     // channel: [ val(meta), path(plasmidfinder) ]
+				mlst          = mlst_ch    // channel: [ val(meta), path(mlst) ]
 				//report        = AMR_REPORT.out.html
 }
 	
