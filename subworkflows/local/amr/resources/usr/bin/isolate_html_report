@@ -1,0 +1,27 @@
+#!/usr/bin/env Rscript
+
+#-#-#-#-#-#-#-#-#-#-#-#-#
+# Argument parsing
+#-#-#-#-#-#-#-#-#-#-#-#-#
+library(optparse)
+option_list <- list(
+	make_option("--rds",help="Path to RDS file with aggregated data",default = 'isolate_data.rds'),
+	make_option("--out", help="Path to output text file",default="isolate_report.html")
+)
+opt <- parse_args(OptionParser(option_list=option_list))
+
+
+#-#-#-#-#-#-#-#-#-#-#-#-#
+# Script
+#-#-#-#-#-#-#-#-#-#-#-#-#
+
+suppressPackageStartupMessages({
+	library(tidyverse)
+})
+
+x <- readRDS(opt$rds)
+con <- file(opt$out,open="wt")
+on.exit(close(con))
+writeLines("REPORT",con=con)
+
+

@@ -21,7 +21,7 @@ __EOF_META_JSON__
 """
 }
 
-process AGGREGATE_ISOLATE_DATA {
+process ISOLATE_AGGREGATE_DATA {
 	  container "registry.gitlab.unige.ch/amr-genomics/fatools:main"
     memory '8 GB'
     cpus 4
@@ -31,7 +31,35 @@ process AGGREGATE_ISOLATE_DATA {
         tuple(val(meta),path("isolate_data.rds"))
     script:
 				"""
-				aggregate_isolate_data
+				isolate_aggregate_data
+				"""
+}
+
+process ISOLATE_TEXT_REPORT {
+	  container "registry.gitlab.unige.ch/amr-genomics/fatools:main"
+    memory '8 GB'
+    cpus 4
+    input:
+    		tuple(val(meta),path(rds_data))
+    output:
+        tuple(val(meta),path("isolate_report.txt"))
+    script:
+				"""
+				isolate_text_report
+				"""
+}
+
+process ISOLATE_HTML_REPORT {
+	  container "registry.gitlab.unige.ch/amr-genomics/fatools:main"
+    memory '8 GB'
+    cpus 4
+    input:
+    		tuple(val(meta),path(rds_data))
+    output:
+        tuple(val(meta),path("isolate_report.html"))
+    script:
+				"""
+				isolate_html_report
 				"""
 }
 
@@ -71,8 +99,10 @@ workflow AMR_REPORT {
 					.map({meta,fa,res,mlst,plf,meta_org,ani,meta_json -> 
 							[meta,meta_json,fa,ani,res,mlst,plf]
 					})
-					| AGGREGATE_ISOLATE_DATA
+					| ISOLATE_AGGREGATE_DATA
 
+				ISOLATE_TEXT_REPORT(isolate_ch)
+				ISOLATE_HTML_REPORT(isolate_ch)
 
 		emit:
 				resfinder     = res_ch     // channel: [ val(meta), path(resfinder) ]
@@ -80,7 +110,9 @@ workflow AMR_REPORT {
         org_db        = ORG_DB.out // channel: path(org_db) ]
 				plasmidfinder = plf_ch     // channel: [ val(meta), path(plasmidfinder) ]
 				mlst          = mlst_ch    // channel: [ val(meta), path(mlst) ]
-				report        = AGGREGATE_ISOLATE_DATA.out // channel: [val(meta), path(json), path(html)]
+				report_rds    = ISOLATE_AGGREGATE_DATA.out // channel: [val(meta), path(rds)]
+				report_txt    = ISOLATE_TEXT_REPORT.out    // channel: [val(meta), path(json)]
+				report_html   = ISOLATE_HTML_REPORT.out    // channel: [val(meta), path(html)]
 }
 	
 
