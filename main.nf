@@ -3,7 +3,7 @@
 nextflow.preview.output = true
 
 
-include { AMR_ANNOTATE } from './subworkflows/local/amr'
+include { AMR_REPORT } from './subworkflows/local/amr'
 
 workflow {
 	main:
@@ -17,7 +17,7 @@ workflow {
 			
 			fa_ch = Channel.fromPath(params.input)
 					.map({x -> tuple(["id":x.baseName],x)})
-			amr_ch = AMR_ANNOTATE(fa_ch)
+			amr_ch = AMR_REPORT(fa_ch)
 			
 	publish:
 			amr_ch.resfinder >> 'resfinder'
@@ -25,7 +25,7 @@ workflow {
 			amr_ch.org_db >> '.'
 			amr_ch.plasmidfinder >> 'plasmidfinder'
 			amr_ch.mlst >> 'mlst'
-			//amr_ch.report >> '.'
+			amr_ch.report >> 'amr'
 }
 
 
@@ -46,6 +46,10 @@ output {
 		path({x -> "results/${x[0].id}/"})
 		mode 'copy'
 	}
+	amr {
+		path({x -> "results/${x[0].id}/"})
+		mode 'copy'
+	}	
 } // required to publish the output !
 
 

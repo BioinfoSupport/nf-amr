@@ -3,6 +3,8 @@
 
 Nextflow pipeline for AMR detection
 
+# TODO
+- Use the out-dir in the 
 
 ## Usage
 
