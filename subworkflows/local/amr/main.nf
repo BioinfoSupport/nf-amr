@@ -47,9 +47,11 @@ process ISOLATE_HTML_REPORT {
 				"""
 				#!/usr/bin/env Rscript
 				rmarkdown::render(
+				  knit_root_dir = getwd(),
 					'${moduleDir}/resources/isolate_report.Rmd',
 					params = list(rds = '${rds_data}'),
-					output_file = "./isolate_report.html"
+					output_dir = getwd(),
+					output_file = "isolate_report.html"
 				)
 				"""
 }
