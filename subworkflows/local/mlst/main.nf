@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 
 params.skip_mlst = false
-params.mlst_default_args = ''
+params.mlst_default_args = null // do not run by default
 
 process RUN_MLST {
 	  container "registry.gitlab.unige.ch/amr-genomics/cgetools:main"

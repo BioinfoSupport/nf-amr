@@ -27,8 +27,8 @@ read_meta_json <- function(meta_json) {
 		unnest_wider(c(assembly,org),names_sep = "_")
 }
 
-
 read_mlst_json <- function(mlst_json) {
+	if (!file.exists(mlst_json)) return(NULL)
 	json <- jsonlite::fromJSON(mlst_json)
 	json <- modify_in(json,c("mlst","user_input"),as_tibble)
 	json <- modify_in(json,c("mlst","run_info"),as_tibble)
@@ -42,8 +42,10 @@ read_mlst_json <- function(mlst_json) {
 	json$mlst
 }
 
-
 read_resfinder_json <- function(res_json) {
+	if (!file.exists(res_json)) return(list(
+		seq_regions = tibble(contig_id=character(),name=character(),identity=numeric(),coverage=numeric())
+	))
 	json <- jsonlite::fromJSON(res_json)
 	json$phenotypes <- json$phenotypes |> enframe() |> unnest_wider(value)
 	json$seq_regions <- json$seq_regions |>
@@ -55,6 +57,9 @@ read_resfinder_json <- function(res_json) {
 }
 
 read_plasmidfinder_json <- function(plf_json) {
+	if (!file.exists(plf_json)) return(list(
+		results = tibble(contig_id=character(),feature_plasmid=character(),feature_identity=numeric(),feature_coverage=numeric())
+	))
 	json <- jsonlite::fromJSON(plf_json,simplifyVector=FALSE)
 	json <- modify_in(json,c("plasmidfinder","user_input"),as_tibble)
 	json <- modify_in(json,c("plasmidfinder","run_info"),as_tibble)	
@@ -75,6 +80,10 @@ contigs <- function(fa) {
 		mutate(contig_id = str_replace(contig_name," .*",""))
 }
 
+read_txt <- function(f) {
+	if (!file.exists(f)) return("")
+	readLines(f) |> str_c(collapse="\n")
+}
 
 read_isolate <- function(isolate_dir) {
 	fa <- Biostrings::readDNAStringSet(fs::path(isolate_dir,"assembly.fasta"))
@@ -86,9 +95,9 @@ read_isolate <- function(isolate_dir) {
 		plasmidfinder = read_plasmidfinder_json(fs::path(isolate_dir,"plasmidfinder/data.json")),
 		contigs = contigs(fa),
 		raw = list(
-			resfinder = readLines(fs::path(isolate_dir,"resfinder/ResFinder_results.txt")) |> str_c(collapse="\n"),
-			mlst = readLines(fs::path(isolate_dir,"mlst/results.txt")) |> str_c(collapse="\n"),
-			plasmidfinder = readLines(fs::path(isolate_dir,"plasmidfinder/results.txt")) |> str_c(collapse="\n")
+			resfinder = read_txt(fs::path(isolate_dir,"resfinder/ResFinder_results.txt")),
+			mlst = read_txt(fs::path(isolate_dir,"mlst/results.txt")),
+			plasmidfinder = read_txt(fs::path(isolate_dir,"plasmidfinder/results.txt"))
 		)
 	)
 }

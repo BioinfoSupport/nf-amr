@@ -3,6 +3,7 @@
 include { RESFINDER     } from '../resfinder'
 include { PLASMIDFINDER } from '../plasmidfinder'
 include { MLST          } from '../mlst'
+include { PROKKA        } from '../prokka'
 include { ORG_MAP       } from '../org/map'
 include { ORG_DB        } from '../org/db'
 
@@ -26,12 +27,13 @@ process ISOLATE_REPORT {
     memory '8 GB'
     cpus 1
     input:
-    		tuple(val(meta),path("meta.json"),path("assembly.fasta"),path("ani.tsv"),path("resfinder"),path("mlst"),path("plasmidfinder"))
+    		tuple(val(meta),path('assembly.fasta'),path('meta.json'),path(files))
     output:
         tuple(val(meta),path("isolate_report.html"))
     script:
 				"""
 				#!/usr/bin/env Rscript
+				print(list.files("."))
 				p <- list(isolate_dir = getwd())
 				print(p)
 				rmarkdown::render(
@@ -65,6 +67,12 @@ workflow AMR_REPORT {
 					.map({meta,fa,meta_org,ani -> [meta, meta_org, fa]})
 					| MLST
 
+				// PROKKA annotations
+				prokka_ch = fa_ch
+					.join(org_ch,remainder:true)
+					.map({meta,fa,meta_org,ani -> [meta, meta_org, fa]})
+					| PROKKA
+
 				meta_json_ch = fa_ch
 					.join(org_ch,remainder:true)
 					.map({meta,fa,meta_org,ani -> [meta, [meta:[assembly:meta,org:meta_org]] ]})
@@ -78,12 +86,13 @@ workflow AMR_REPORT {
 					.join(org_ch,remainder:true)
 					.join(meta_json_ch,remainder:true)
 					.map({meta,fa,res,mlst,plf,meta_org,ani,meta_json -> 
-							[meta,meta_json,fa,ani,res,mlst,plf]
+							[meta,fa,meta_json,[ani,res,mlst,plf].findAll({x->x!=null})]
 					})
 					| ISOLATE_REPORT
 
 		emit:
 		    meta_json     = META_TO_JSON.out // channel: [ val(meta), path(resfinder) ]
+		    prokka        = prokka_ch  // channel: [ val(meta), path(prokka) ]
 				resfinder     = res_ch     // channel: [ val(meta), path(resfinder) ]
         org_ani       = org_ch     // channel: [ val(meta), val(org_name) ]
         org_db        = ORG_DB.out // channel: path(org_db) ]
