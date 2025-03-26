@@ -21,35 +21,23 @@ __EOF_META_JSON__
 """
 }
 
-process AGGREGATE_ISOLATE_DATA {
+process ISOLATE_REPORT {
 	  container "registry.gitlab.unige.ch/amr-genomics/rscript:main"
     memory '8 GB'
-    cpus 4
+    cpus 1
     input:
     		tuple(val(meta),path("meta.json"),path("assembly.fasta"),path("ani.tsv"),path("resfinder"),path("mlst"),path("plasmidfinder"))
-    output:
-        tuple(val(meta),path("isolate_data.rds"))
-    script:
-				"""
-				aggregate_isolate_data
-				"""
-}
-
-process ISOLATE_HTML_REPORT {
-	  container "registry.gitlab.unige.ch/amr-genomics/rscript:main"
-    memory '8 GB'
-    cpus 4
-    input:
-    		tuple(val(meta),path(rds_data))
     output:
         tuple(val(meta),path("isolate_report.html"))
     script:
 				"""
 				#!/usr/bin/env Rscript
+				p <- list(isolate_dir = getwd())
+				print(p)
 				rmarkdown::render(
 				  knit_root_dir = getwd(),
-					'${moduleDir}/resources/isolate_report.Rmd',
-					params = list(rds = '${rds_data}'),
+					'${moduleDir}/isolate_report.Rmd',
+					params = p,
 					output_dir = getwd(),
 					output_file = "isolate_report.html"
 				)
@@ -92,18 +80,16 @@ workflow AMR_REPORT {
 					.map({meta,fa,res,mlst,plf,meta_org,ani,meta_json -> 
 							[meta,meta_json,fa,ani,res,mlst,plf]
 					})
-					| AGGREGATE_ISOLATE_DATA
-
-				ISOLATE_HTML_REPORT(isolate_ch)
+					| ISOLATE_REPORT
 
 		emit:
+		    meta_json     = META_TO_JSON.out // channel: [ val(meta), path(resfinder) ]
 				resfinder     = res_ch     // channel: [ val(meta), path(resfinder) ]
         org_ani       = org_ch     // channel: [ val(meta), val(org_name) ]
         org_db        = ORG_DB.out // channel: path(org_db) ]
 				plasmidfinder = plf_ch     // channel: [ val(meta), path(plasmidfinder) ]
 				mlst          = mlst_ch    // channel: [ val(meta), path(mlst) ]
-				report_rds    = AGGREGATE_ISOLATE_DATA.out // channel: [val(meta), path(rds)]
-				report_html   = ISOLATE_HTML_REPORT.out    // channel: [val(meta), path(html)]
+				report_html   = ISOLATE_REPORT.out    // channel: [val(meta), path(html)]
 }
 	
 

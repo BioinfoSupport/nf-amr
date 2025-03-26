@@ -1,36 +1,53 @@
 
-# nf
+# nf-amr
 
-Nextflow pipeline for AMR detection
+`nf-amr` is a nextflow pipeline to annotate FASTA assemblies for Antimicrobial Multi-Resistance.
 
-# TODO
-- Use the out-dir in the 
+The pipeline:
 
+ 1) Detect the species by comparing the assembly to a reference species database.
+ 
+ 2) Run `ResFinder` and `PlasmidFinder`.
+ 
+ 3) Run `MLST` with the schema automatically selected from detected species.
+
+ 4) Generate a HTML report.
+ 
 ## Usage
 
-To run the pipeline on your local machine with docker installed:
+### Local computer
+
+To run the pipeline on your local computer (with `docker`  and `nextflow` already installed):
 
 ```bash
-nextflow run -r main BioinfoSupport/nf-amr -resume
+nextflow run -r main BioinfoSupport/nf-amr -resume --input=data/r62b14.hdr.fasta
 ```
 
-By default the pipeline process all FASTA files in subfolder `data` (`data/*.fasta`).
 
+### HPC
 
-To run the pipeline on a HPC cluster with slurm and singularity use `hpc` profile:
+To run the pipeline on a HPC cluster with `slurm` and `singularity` use `-profile=hpc`:
+
+```bash
+nextflow run -r main BioinfoSupport/nf-amr -profile hpc -resume
+```
+
+If `nextflow` is not installed on your HPC, it can be installed with:
+
 ```bash
 ml Java/17.0.2
 curl -s https://get.nextflow.io | bash
-./nextflow run -r main BioinfoSupport/nf-amr -profile hpc -resume
 ```
 
 
 
 
-### Docker
 
-If `nextflow``` is not installed on your system, you can run a docker environement
-running it:
+If `--input` argument is missing, the pipeline process all FASTA files located 
+in subfolder `data/` (`--input='data/*.fasta'` by default).
+
+If only `docker` is installed on your computer, but not `nextflow`, 
+you can run a docker environment with `nextflow` inside:
 
 ```bash
 docker run --rm -it \
@@ -86,13 +103,10 @@ nf-core pipelines create --name americ -a "J. Prados" --organisation "amr-genomi
 
 
 # TODO:
- - add text results of CGE tools
  - allow missing file in the report
- - run plasmidfinder in all cases with default gram+ parameters
  - add sample sheet where we can force org_name
  - add multi-reporting (which include independant report)
- 
- 
+ - Use the out-dir in the 
  
 
 

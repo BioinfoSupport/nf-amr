@@ -22,39 +22,48 @@ workflow {
 	publish:
 			amr_ch.resfinder >> 'resfinder'
 			amr_ch.org_ani >> 'org_ani'
-			amr_ch.org_db >> '.'
+			amr_ch.org_db >> 'org_db'
 			amr_ch.plasmidfinder >> 'plasmidfinder'
 			amr_ch.mlst >> 'mlst'
-			amr_ch.report_rds >> 'report_rds'
 			amr_ch.report_html >> 'report_html'
+			amr_ch.meta_json >> 'meta_json'
+			fa_ch >> 'assembly_fa'
 }
 
 
 output {
+	org_db {
+		path({x -> {filename -> "${filename}"}})
+		mode 'copy'
+	}
 	resfinder {
-		path({x -> "results/${x[0].id}/"})
+		path({x -> {filename -> "${x[0].id}/${filename}"}})
 		mode 'copy'
 	}
 	plasmidfinder {
-		path({x -> "results/${x[0].id}/"})
+		path({x -> {filename -> "${x[0].id}/${filename}"}})
 		mode 'copy'
 	}
 	mlst {
-		path({x -> "results/${x[0].id}/"})
+		path({x -> {filename -> "${x[0].id}/${filename}"}})
 		mode 'copy'
 	}
 	org_ani {
-		path({x -> "results/${x[0].id}/"})
-		mode 'copy'
-	}
-	report_rds {
-		path({x -> "results/${x[0].id}/"})
+		path({x -> {filename -> "${x[0].id}/${filename}"}})
 		mode 'copy'
 	}
 	report_html {
-		path({x -> "results/${x[0].id}/"})
+		path({x -> {filename -> "${x[0].id}/${filename}"}})
 		mode 'copy'
-	}	
+	}
+	meta_json {
+		path({x -> {filename -> "${x[0].id}/${filename}"}})
+		mode 'copy'
+	}
+	assembly_fa {
+		path({x -> {filename -> "${x[0].id}/assembly.fasta"}})
+		mode 'copy'
+	}		
 } // required to publish the output !
 
 
