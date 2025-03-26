@@ -75,12 +75,12 @@ contigs <- contig_stats(readDNAStringSet(opt$fasta)) |> mutate(assembly_id=meta$
 
 list(
 	meta = meta,
+	mlst = mlst,
 	contigs = contigs,
 	ANI = read_tsv(opt$`ani-tsv`),
 	resfinder = resfinder,
 	plasmidfinder = plasmidfinder
 ) |>
 saveRDS(opt$out)
-
 
 

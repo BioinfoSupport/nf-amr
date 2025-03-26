@@ -21,8 +21,8 @@ __EOF_META_JSON__
 """
 }
 
-process ISOLATE_AGGREGATE_DATA {
-	  container "registry.gitlab.unige.ch/amr-genomics/fatools:main"
+process AGGREGATE_ISOLATE_DATA {
+	  container "registry.gitlab.unige.ch/amr-genomics/rscript:main"
     memory '8 GB'
     cpus 4
     input:
@@ -31,26 +31,12 @@ process ISOLATE_AGGREGATE_DATA {
         tuple(val(meta),path("isolate_data.rds"))
     script:
 				"""
-				isolate_aggregate_data
-				"""
-}
-
-process ISOLATE_TEXT_REPORT {
-	  container "registry.gitlab.unige.ch/amr-genomics/fatools:main"
-    memory '8 GB'
-    cpus 4
-    input:
-    		tuple(val(meta),path(rds_data))
-    output:
-        tuple(val(meta),path("isolate_report.txt"))
-    script:
-				"""
-				isolate_text_report
+				aggregate_isolate_data
 				"""
 }
 
 process ISOLATE_HTML_REPORT {
-	  container "registry.gitlab.unige.ch/amr-genomics/fatools:main"
+	  container "registry.gitlab.unige.ch/amr-genomics/rscript:main"
     memory '8 GB'
     cpus 4
     input:
@@ -59,7 +45,12 @@ process ISOLATE_HTML_REPORT {
         tuple(val(meta),path("isolate_report.html"))
     script:
 				"""
-				isolate_html_report
+				#!/usr/bin/env Rscript
+				rmarkdown::render(
+					'${moduleDir}/resources/isolate_report.Rmd',
+					params = list(rds = '${rds_data}'),
+					output_file = "./isolate_report.html"
+				)
 				"""
 }
 
@@ -99,9 +90,8 @@ workflow AMR_REPORT {
 					.map({meta,fa,res,mlst,plf,meta_org,ani,meta_json -> 
 							[meta,meta_json,fa,ani,res,mlst,plf]
 					})
-					| ISOLATE_AGGREGATE_DATA
+					| AGGREGATE_ISOLATE_DATA
 
-				ISOLATE_TEXT_REPORT(isolate_ch)
 				ISOLATE_HTML_REPORT(isolate_ch)
 
 		emit:
@@ -110,8 +100,7 @@ workflow AMR_REPORT {
         org_db        = ORG_DB.out // channel: path(org_db) ]
 				plasmidfinder = plf_ch     // channel: [ val(meta), path(plasmidfinder) ]
 				mlst          = mlst_ch    // channel: [ val(meta), path(mlst) ]
-				report_rds    = ISOLATE_AGGREGATE_DATA.out // channel: [val(meta), path(rds)]
-				report_txt    = ISOLATE_TEXT_REPORT.out    // channel: [val(meta), path(json)]
+				report_rds    = AGGREGATE_ISOLATE_DATA.out // channel: [val(meta), path(rds)]
 				report_html   = ISOLATE_HTML_REPORT.out    // channel: [val(meta), path(html)]
 }
 	

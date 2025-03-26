@@ -26,8 +26,7 @@ workflow {
 			amr_ch.plasmidfinder >> 'plasmidfinder'
 			amr_ch.mlst >> 'mlst'
 			amr_ch.report_rds >> 'report_rds'
-			amr_ch.report_txt >> 'report_txt'
-			amr_ch.report_html >> 'report_hrml'
+			amr_ch.report_html >> 'report_html'
 }
 
 
@@ -49,10 +48,6 @@ output {
 		mode 'copy'
 	}
 	report_rds {
-		path({x -> "results/${x[0].id}/"})
-		mode 'copy'
-	}
-	report_txt {
 		path({x -> "results/${x[0].id}/"})
 		mode 'copy'
 	}

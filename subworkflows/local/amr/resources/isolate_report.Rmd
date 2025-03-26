@@ -1,0 +1,208 @@
+---
+title: "Isolate Assembly Report"
+author: "`r Sys.getenv('USER')`"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+    flexdashboard::flex_dashboard:
+        orientation: rows
+params:
+  rds: "results/r62b14.hdr/isolate_data.rds"
+---
+
+```{r setup}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)
+library(flexdashboard)
+```
+
+
+```{r}
+x <- readRDS(params$rds)
+```
+
+
+# Sidebar {.sidebar}
+
+### Assembly
+```{r}
+valueBox(x$meta$assembly_id)
+```
+
+### Organism
+```{r}
+valueBox(x$meta$org_org_name,"Organism name")
+```
+
+
+
+# Summary
+
+Row
+-------------------------
+
+### Organism
+```{r}
+valueBox(x$meta$org_org_name,"Organism name",icon = "glyphicon glyphicon-user")
+```
+
+Row
+-------------------------
+
+### Total length
+```{r}
+valueBox(sprintf("%s bp",format(sum(x$contigs$contig_len),big.mark="'")),"Total length",icon='glyphicon glyphicon-resize-horizontal')
+```
+
+### Number of contig
+```{r}
+valueBox(nrow(x$contigs),"Contigs",icon='glyphicon glyphicon-scissors')
+```
+
+### ANI
+```{r}
+gauge(as.numeric(x$meta$org_org_ani), min = 80, max = 100, symbol = '%', gaugeSectors(
+  success = c(95, 100), warning = c(90, 95), danger = c(80, 90)
+))
+```
+
+Row
+-------------------------
+
+### MLST
+```{r}
+valueBox(x$mlst$mlst_type,"MLST",icon = "glyphicon glyphicon-tags")
+```
+
+
+
+
+# Assembly QC
+
+Row
+-------------------------
+### Total length
+```{r}
+valueBox(sprintf("%s bp",format(sum(x$contigs$contig_len),big.mark="'")),"Total length",icon='glyphicon glyphicon-resize-horizontal')
+```
+
+### Number of contig
+```{r}
+valueBox(nrow(x$contigs),"Contigs",icon='glyphicon glyphicon-scissors')
+```
+
+### N50
+```{r}
+valueBox(sprintf("%s bp",format(Biostrings::N50(x$contigs$contig_len),big.mark="'")),"N50",icon='glyphicon glyphicon-equalizer')
+```
+
+
+Row
+-------------------------
+
+### Contig size distribution
+
+```{r}
+x$contigs |>
+	mutate(contig_id = fct_reorder(contig_id,contig_len,mean)) |>
+	ggplot() + 
+		facet_grid(assembly_id~.) +
+		geom_segment(aes(x=0,y=contig_id,xend=contig_len,yend=contig_id)) + 
+		scale_x_continuous(labels = scales::label_number(scale_cut = scales::cut_short_scale())) +
+		xlab("Contig size (bp)") +
+		theme_bw()
+```
+
+### Contig topology
+
+Row
+-------------------------
+
+### Contig coverage
+
+### GC content
+
+
+
+# Resitances
+
+## {.tabset}
+
+### Summary
+
+#### All resistance
+```{r}
+x$resfinder |>
+	left_join(x$contigs,by=c("assembly_id","contig_id")) |>
+	mutate(contig_id = str_glue("{contig_id} - {contig_len}bp")) |>
+	mutate(contig_id = fct_reorder(contig_id,contig_len,mean)) |>
+	arrange(desc(contig_id)) |>
+	select(contig_id,resistance=name,identity,coverage) |>
+	arrange(desc(contig_id)) |>
+	group_by(contig_id) |>
+	gt::gt(row_group_as_column=TRUE,caption = "Detected resistances per contig") |>
+	gt::tab_stubhead("contig - len - topo")  |>
+	gt::tab_style(list(gt::cell_text(weight="bold"),gt::cell_fill()),locations=gt::cells_column_labels()) |>
+	gt::tab_style(list(gt::cell_text(weight="bold"),gt::cell_fill()),locations=gt::cells_stubhead()) |>
+	gt::tab_style(list(gt::cell_fill(color = "green")),locations=gt::cells_body(identity,rows = identity>=100)) |>
+	gt::tab_style(list(gt::cell_fill(color = "green")),locations=gt::cells_body(coverage,rows = coverage>=100)) |>
+	gt::fmt_number(c(identity,coverage),pattern = "{x}%")
+```
+
+
+#### Phenotypes
+```{r fig.height=5, fig.width=5}
+select(x$resfinder,name,phenotypes) |> 
+	unnest_longer(phenotypes) |> 
+	mutate(name = fct_reorder(name,phenotypes,length,.desc = TRUE)) |>
+	mutate(phenotypes = fct_reorder(phenotypes,name,length)) |>
+	ggplot() + 
+	geom_point(aes(x=name,y=phenotypes)) + 
+	scale_x_discrete(position="top") +
+	theme(axis.text.x.top = element_text(angle=30,hjust=0,vjust=0)) + 
+	xlab("")
+```
+
+
+### Resfinder
+
+```{r,results='asis'}
+cat("Hello world")
+```
+
+
+
+# Plasmids 
+
+## {.tabset}
+
+### Summary
+
+```{r}
+x$plasmidfinder |>
+	left_join(x$contigs,by=c("assembly_id","contig_id")) |>
+	mutate(contig_id = str_glue("{contig_id} - {contig_len}bp")) |>
+	mutate(contig_id = fct_reorder(contig_id,contig_len,mean)) |>
+	arrange(desc(contig_id),desc(feature_identity)) |>
+	select(contig_id,plasmid_type=feature_plasmid,identity=feature_identity,coverage=feature_coverage) |>
+	group_by(contig_id) |>
+	gt::gt(row_group_as_column=TRUE,caption = "Detected plasmid feature per contig") |>
+	gt::tab_stubhead("contig - length") |>
+	gt::tab_style(list(gt::cell_text(weight="bold"),gt::cell_fill()),locations=gt::cells_column_labels()) |>
+	gt::tab_style(list(gt::cell_text(weight="bold"),gt::cell_fill()),locations=gt::cells_stubhead()) |>
+	gt::tab_style(list(gt::cell_fill(color = "green")),locations=gt::cells_body(identity,rows = identity>=100)) |>
+	gt::tab_style(list(gt::cell_fill(color = "green")),locations=gt::cells_body(coverage,rows = coverage>=100)) |>
+	gt::fmt_number(c(identity,coverage),pattern = "{x}%")
+```
+
+### Plasmidfinder
+
+```{r,results='asis'}
+cat("Hello world")
+```
+
+
+
+
+
+
+
