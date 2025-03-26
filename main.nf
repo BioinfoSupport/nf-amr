@@ -27,6 +27,7 @@ workflow {
 			amr_ch.mlst >> 'mlst'
 			amr_ch.report_html >> 'report_html'
 			amr_ch.meta_json >> 'meta_json'
+			amr_ch.prokka >> 'prokka'
 			fa_ch >> 'assembly_fa'
 }
 
@@ -40,6 +41,10 @@ output {
 		path({x -> {filename -> "${x[0].id}/${filename}"}})
 		mode 'copy'
 	}
+	prokka {
+		path({x -> {filename -> "${x[0].id}/${filename}"}})
+		mode 'copy'
+	}	
 	plasmidfinder {
 		path({x -> {filename -> "${x[0].id}/${filename}"}})
 		mode 'copy'
