@@ -29,8 +29,12 @@ workflow MLST {
 				out_ch = fa_ch
 					.map({meta,meta_org,fasta -> 
 							args = meta.mlst_args
-							args = args!=null?args:params.organisms[meta_org.org_name].mlst_args
-							args = args!=null?args:params.mlst_default_args
+							if ((args==null) && (meta_org.org_name) && (meta_org.org_name in params.organisms)) {
+								args = params.organisms[meta_org.org_name].mlst_args
+							}
+							if (args==null) {
+								args = params.mlst_default_args
+							}					
 							[meta,fasta,args]
 					})
 					.filter({meta,fasta,args -> args!=null})
