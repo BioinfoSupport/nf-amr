@@ -22,14 +22,15 @@ __EOF_META_JSON__
 """
 }
 
-process ISOLATE_REPORT {
+process BUILD_RMD_REPORT {
 	  container "registry.gitlab.unige.ch/amr-genomics/rscript:main"
     memory '8 GB'
     cpus 1
     input:
     		tuple(val(meta),path('assembly.fasta'),path('meta.json'),path(files))
+    		each path(report_template)
     output:
-        tuple(val(meta),path("isolate_report.html"))
+        tuple(val(meta),path("report.html"))
     script:
 				"""
 				#!/usr/bin/env Rscript
@@ -38,10 +39,10 @@ process ISOLATE_REPORT {
 				print(p)
 				rmarkdown::render(
 				  knit_root_dir = getwd(),
-					'${moduleDir}/isolate_report.Rmd',
+				  '${report_template}',
 					params = p,
 					output_dir = getwd(),
-					output_file = "isolate_report.html"
+					output_file = "report.html"
 				)
 				"""
 }
@@ -88,7 +89,7 @@ workflow AMR_REPORT {
 					.map({meta,fa,res,mlst,plf,meta_org,ani,meta_json -> 
 							[meta,fa,meta_json,[ani,res,mlst,plf].findAll({x->x!=null})]
 					})
-					| ISOLATE_REPORT
+				BUILD_RMD_REPORT(isolate_ch,file('${moduleDir}/isolate_report.Rmd'))
 
 		emit:
 		    meta_json     = META_TO_JSON.out // channel: [ val(meta), path(resfinder) ]
@@ -98,7 +99,7 @@ workflow AMR_REPORT {
         org_db        = ORG_DB.out // channel: path(org_db) ]
 				plasmidfinder = plf_ch     // channel: [ val(meta), path(plasmidfinder) ]
 				mlst          = mlst_ch    // channel: [ val(meta), path(mlst) ]
-				report_html   = ISOLATE_REPORT.out    // channel: [val(meta), path(html)]
+				report_html   = BUILD_RMD_REPORT.out    // channel: [val(meta), path(html)]
 }
 	
 

@@ -87,6 +87,12 @@ rm -rf work/
 nextflow run . -resume
 ```
 
+# Test ANI speed
+```bash
+nextflow run . --input=data/r62b14.hdr.fasta --skip_plasmidfinder --skip_resfinder --skip_mlst --skip_prokka
+```
+
+
 
 ```bash
 docker run --rm nfcore/tools --help
