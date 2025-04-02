@@ -89,7 +89,7 @@ workflow AMR_REPORT {
 					.map({meta,fa,res,mlst,plf,meta_org,ani,meta_json -> 
 							[meta,fa,meta_json,[ani,res,mlst,plf].findAll({x->x!=null})]
 					})
-				BUILD_RMD_REPORT(isolate_ch,file('${moduleDir}/isolate_report.Rmd'))
+				BUILD_RMD_REPORT(isolate_ch,file("${moduleDir}/isolate_report.Rmd"))
 
 		emit:
 		    meta_json     = META_TO_JSON.out // channel: [ val(meta), path(resfinder) ]
