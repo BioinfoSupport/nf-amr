@@ -7,6 +7,7 @@ include { PROKKA        } from '../prokka'
 include { ORG_MAP       } from '../org/map'
 include { ORG_DB        } from '../org/db'
 
+params.skip_amr_report = true // do not run by default as we are still in debugging phase
 
 process META_TO_JSON {
 	input:
@@ -34,9 +35,7 @@ process BUILD_RMD_REPORT {
     script:
 				"""
 				#!/usr/bin/env Rscript
-				print(list.files("."))
 				p <- list(isolate_dir = getwd())
-				print(p)
 				rmarkdown::render(
 				  knit_root_dir = getwd(),
 				  '${report_template}',
@@ -89,7 +88,12 @@ workflow AMR_REPORT {
 					.map({meta,fa,res,mlst,plf,meta_org,ani,meta_json -> 
 							[meta,fa,meta_json,[ani,res,mlst,plf].findAll({x->x!=null})]
 					})
-				BUILD_RMD_REPORT(isolate_ch,file("${moduleDir}/isolate_report.Rmd"))
+
+				if (!params.skip_amr_report) {
+					report_ch = BUILD_RMD_REPORT(isolate_ch,file("${moduleDir}/isolate_report.Rmd"))
+				} else {
+					report_ch = Channel.empty()
+				}
 
 		emit:
 		    meta_json     = META_TO_JSON.out // channel: [ val(meta), path(resfinder) ]
@@ -99,7 +103,7 @@ workflow AMR_REPORT {
         org_db        = ORG_DB.out // channel: path(org_db) ]
 				plasmidfinder = plf_ch     // channel: [ val(meta), path(plasmidfinder) ]
 				mlst          = mlst_ch    // channel: [ val(meta), path(mlst) ]
-				report_html   = BUILD_RMD_REPORT.out    // channel: [val(meta), path(html)]
+				report_html   = report_ch  // channel: [ val(meta), path(html) ]
 }
 	
 
