@@ -21,6 +21,7 @@ workflow {
 			
 	publish:
 			amr_ch.resfinder >> 'resfinder'
+			amr_ch.mobtyper >> 'mobtyper'
 			amr_ch.org_ani >> 'org_ani'
 			amr_ch.org_db >> 'org_db'
 			amr_ch.plasmidfinder >> 'plasmidfinder'
@@ -28,6 +29,7 @@ workflow {
 			amr_ch.report_html >> 'report_html'
 			amr_ch.meta_json >> 'meta_json'
 			amr_ch.prokka >> 'prokka'
+			
 			fa_ch >> 'assembly_fa'
 }
 
@@ -38,6 +40,10 @@ output {
 		mode 'copy'
 	}
 	resfinder {
+		path({x -> {filename -> "${x[0].id}/${filename}"}})
+		mode 'copy'
+	}
+	mobtyper {
 		path({x -> {filename -> "${x[0].id}/${filename}"}})
 		mode 'copy'
 	}
