@@ -6,7 +6,7 @@ output:
     flexdashboard::flex_dashboard:
         orientation: rows
 params:
-  isolate_dir: "results/r62b14.hdr"
+  isolate_dir: "results/RS1357_contig_1"
 ---
 
 ```{r setup}
@@ -57,12 +57,17 @@ read_resfinder_json <- function(res_json) {
 }
 
 read_plasmidfinder_json <- function(plf_json) {
+	#plf_json <- "results/RS1357_contig_1/plasmidfinder/data.json"
+	plf_json <- "results/r62b16.hdr/plasmidfinder/data.json"
+	
 	if (!file.exists(plf_json)) return(list(
 		results = tibble(contig_id=character(),feature_plasmid=character(),feature_identity=numeric(),feature_coverage=numeric())
 	))
 	json <- jsonlite::fromJSON(plf_json,simplifyVector=FALSE)
 	json <- modify_in(json,c("plasmidfinder","user_input"),as_tibble)
 	json <- modify_in(json,c("plasmidfinder","run_info"),as_tibble)	
+	
+	
 	json$plasmidfinder$results <- json |>
 		pluck("plasmidfinder","results") |>
 		modify_tree(leaf = ~ if (.=="No hit found") list() else .) |>

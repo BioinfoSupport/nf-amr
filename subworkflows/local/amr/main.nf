@@ -1,8 +1,9 @@
 #!/usr/bin/env nextflow
 
-include { RESFINDER     } from '../resfinder'
-include { PLASMIDFINDER } from '../plasmidfinder'
-include { MLST          } from '../mlst'
+include { RESFINDER     } from '../cgetools/resfinder'
+include { PLASMIDFINDER } from '../cgetools/plasmidfinder'
+include { MLST          } from '../cgetools/mlst'
+include { MOBTYPER      } from '../mobsuite/mobtyper'
 include { PROKKA        } from '../prokka'
 include { ORG_MAP       } from '../org/map'
 include { ORG_DB        } from '../org/db'
@@ -54,12 +55,14 @@ workflow AMR_REPORT {
 				ORG_DB()
 				org_ch = ORG_MAP(fa_ch)
 				res_ch = RESFINDER(fa_ch)
+				mob_ch = MOBTYPER(fa_ch)
 				
 				// Plasmid typing
 				plf_ch = fa_ch
 					.join(org_ch,remainder:true)
 					.map({meta,fa,meta_org,ani -> [meta, meta_org, fa]})
 					| PLASMIDFINDER
+
 
 				// MLST typing
 				mlst_ch = fa_ch
@@ -89,16 +92,17 @@ workflow AMR_REPORT {
 							[meta,fa,meta_json,[ani,res,mlst,plf].findAll({x->x!=null})]
 					})
 
-				if (!params.skip_amr_report) {
-					report_ch = BUILD_RMD_REPORT(isolate_ch,file("${moduleDir}/isolate_report.Rmd"))
-				} else {
+				if (params.skip_amr_report) {
 					report_ch = Channel.empty()
+				} else {
+					report_ch = BUILD_RMD_REPORT(isolate_ch,file("${moduleDir}/isolate_report.Rmd"))
 				}
 
 		emit:
 		    meta_json     = META_TO_JSON.out // channel: [ val(meta), path(resfinder) ]
 		    prokka        = prokka_ch  // channel: [ val(meta), path(prokka) ]
 				resfinder     = res_ch     // channel: [ val(meta), path(resfinder) ]
+				mobtyper      = mob_ch     // channel: [ val(meta), path(mobtyper) ]
         org_ani       = org_ch     // channel: [ val(meta), val(org_name) ]
         org_db        = ORG_DB.out // channel: path(org_db) ]
 				plasmidfinder = plf_ch     // channel: [ val(meta), path(plasmidfinder) ]
