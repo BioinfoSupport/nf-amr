@@ -1,0 +1,17 @@
+
+process AMRFINDERPLUS_RUN {
+	  container 'quay.io/biocontainers/ncbi-amrfinderplus:4.0.22--hf69ffd2_0'
+    memory '6 GB'
+    cpus 4
+    input:
+		    tuple val(meta), path(fasta), val(args)
+		    path('amrfinder_db')
+    output:
+		    tuple val(meta), path("amrfinderplus", type: 'dir')
+    script:
+		    """
+		    mkdir amrfinderplus
+			  amrfinder -n $fasta $args --mutation_all amrfinderplus/mutations.tsv --database amrfinder_db --threads $task.cpus > amrfinderplus/report.tsv
+		    """
+}
+

@@ -1,6 +1,10 @@
 #!/usr/bin/env nextflow
 
-include { AMRFINDERPLUS } from '../amrfinderplus'
+include { get_tool_args } from '../../../modules/local/functions.nf'
+
+include { AMRFINDERPLUS_UPDATE } from '../../../modules/local/amrfinderplus/update'
+include { AMRFINDERPLUS_RUN } from '../../../modules/local/amrfinderplus/run'
+
 include { RESFINDER     } from '../cgetools/resfinder'
 include { PLASMIDFINDER } from '../cgetools/plasmidfinder'
 include { MLST          } from '../cgetools/mlst'
@@ -8,6 +12,11 @@ include { MOBTYPER      } from '../mobsuite/mobtyper'
 include { PROKKA        } from '../prokka'
 include { ORG_MAP       } from '../org/map'
 include { ORG_DB        } from '../org/db'
+
+
+
+
+
 
 
 
@@ -62,7 +71,12 @@ workflow AMR_REPORT {
 				res_ch = RESFINDER(fa_ch)
 				mob_ch = MOBTYPER(fa_ch)
 				
-				AMRFINDERPLUS(fa_ch)
+				// NCBI AMRfinder+
+				amrfinderplus_db = AMRFINDERPLUS_UPDATE()
+				amrfinderplus_ch = AMRFINDERPLUS_RUN(
+						fa_ch.map({meta,fasta -> [meta,fasta,get_tool_args('amrfinderplus',meta)]}),
+						amrfinderplus_db
+				)
 				
 				// Plasmid typing
 				plf_ch = fa_ch
@@ -107,8 +121,8 @@ workflow AMR_REPORT {
 		emit:
 		    meta_json        = META_TO_JSON.out // channel: [ val(meta), path(resfinder) ]
 		    prokka           = prokka_ch  // channel: [ val(meta), path(prokka) ]
-		    amrfinderplus_db = AMRFINDERPLUS.out.db // channel: path(org_db) ]
-		    amrfinderplus    = AMRFINDERPLUS.out.results // channel: path(org_db) ]
+		    amrfinderplus_db = amrfinderplus_db // channel: path(amrfinderplus_db) ]
+		    amrfinderplus    = amrfinderplus_ch // channel: val(meta), path(amrfinderplus) ]
 				resfinder        = res_ch     // channel: [ val(meta), path(resfinder) ]
 				mobtyper         = mob_ch     // channel: [ val(meta), path(mobtyper) ]
         org_ani          = org_ch     // channel: [ val(meta), val(org_name) ]

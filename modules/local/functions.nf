@@ -1,7 +1,7 @@
 
 
 
-def get_tool_args(tool_name, meta, orgs_args=params.organisms,default_args=params.default_args) {
+def get_tool_args(tool_name, meta, orgs_args=null, default_args=null, unknown_value="") {
 		if (orgs_args==null) orgs_args = [:]
 		if (default_args==null) default_args = [:]
     def tool_key = "${tool_name}_args"
@@ -11,7 +11,7 @@ def get_tool_args(tool_name, meta, orgs_args=params.organisms,default_args=param
     } else if (default_args.containsKey(tool_key)) {
     		return default_args[tool_key]
     } else {
-    		return ""
+    		return unknown_value
     }
 }
 
