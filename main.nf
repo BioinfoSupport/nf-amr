@@ -29,52 +29,62 @@ workflow {
 			amr_ch.report_html >> 'report_html'
 			amr_ch.meta_json >> 'meta_json'
 			amr_ch.prokka >> 'prokka'
-			
+			amr_ch.amrfinderplus_db >> 'amrfinderplus_db'
+			amr_ch.amrfinderplus >> 'amrfinderplus'
 			fa_ch >> 'assembly_fa'
 }
 
 
 output {
 	org_db {
-		path({x -> {filename -> "${filename}"}})
+		path({x -> {filename -> "db/${filename}"}})
 		mode 'copy'
 	}
+	amrfinderplus_db {
+		path({x -> {filename -> "db/${filename}"}})
+		mode 'copy'
+	}
+	
 	resfinder {
-		path({x -> {filename -> "${x[0].id}/${filename}"}})
+		path({x -> {filename -> "samples/${x[0].id}/${filename}"}})
 		mode 'copy'
 	}
 	mobtyper {
-		path({x -> {filename -> "${x[0].id}/${filename}"}})
+		path({x -> {filename -> "samples/${x[0].id}/${filename}"}})
 		mode 'copy'
 	}
 	prokka {
-		path({x -> {filename -> "${x[0].id}/${filename}"}})
+		path({x -> {filename -> "samples/${x[0].id}/${filename}"}})
 		mode 'copy'
 	}	
 	plasmidfinder {
-		path({x -> {filename -> "${x[0].id}/${filename}"}})
+		path({x -> {filename -> "samples/${x[0].id}/${filename}"}})
 		mode 'copy'
 	}
 	mlst {
-		path({x -> {filename -> "${x[0].id}/${filename}"}})
+		path({x -> {filename -> "samples/${x[0].id}/${filename}"}})
 		mode 'copy'
 	}
 	org_ani {
-		path({x -> {filename -> "${x[0].id}/${filename}"}})
+		path({x -> {filename -> "samples/${x[0].id}/${filename}"}})
 		mode 'copy'
 	}
 	report_html {
-		path({x -> {filename -> "${x[0].id}/${filename}"}})
+		path({x -> {filename -> "samples/${x[0].id}/${filename}"}})
 		mode 'copy'
 	}
 	meta_json {
-		path({x -> {filename -> "${x[0].id}/${filename}"}})
+		path({x -> {filename -> "samples/${x[0].id}/${filename}"}})
 		mode 'copy'
 	}
 	assembly_fa {
-		path({x -> {filename -> "${x[0].id}/assembly.fasta"}})
+		path({x -> {filename -> "samples/${x[0].id}/assembly.fasta"}})
 		mode 'copy'
-	}		
+	}
+	amrfinderplus {
+		path({x -> {filename -> "samples/${x[0].id}/${filename}"}})
+		mode 'copy'
+	}
 } // required to publish the output !
 
 
