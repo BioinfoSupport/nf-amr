@@ -4,14 +4,14 @@ process AMRFINDERPLUS_RUN {
     memory '6 GB'
     cpus 4
     input:
-		    tuple val(meta), path(fasta), val(args)
+		    tuple val(meta), path('assembly.fasta'), val(args)
 		    path('amrfinder_db')
     output:
 		    tuple val(meta), path("amrfinderplus", type: 'dir')
     script:
 		    """
 		    mkdir amrfinderplus
-			  amrfinder -n $fasta $args --mutation_all amrfinderplus/mutations.tsv --database amrfinder_db --threads $task.cpus > amrfinderplus/report.tsv
+			  amrfinder ${task.ext.args?:''} -n assembly.fasta ${args} --mutation_all amrfinderplus/mutations.tsv --database amrfinder_db --threads $task.cpus > amrfinderplus/report.tsv
 		    """
 }
 

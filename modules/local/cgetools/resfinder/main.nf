@@ -1,22 +1,21 @@
 #!/usr/bin/env nextflow
 
-params.skip_resfinder = false
 
-process RUN_RESFINDER_FA {
+process RESFINDER_FA_RUN {
 	  container "registry.gitlab.unige.ch/amr-genomics/cgetools:main"
     memory '4 GB'
     cpus 1
     input:
-        tuple val(meta), path(assembly_fna)
+        tuple val(meta), path('assembly.fna')
     output:
 				tuple val(meta), path("resfinder/", type: 'dir')
     script:
 		    """
-				python -m resfinder ${task.ext.args?:''} -ifa '${assembly_fna}' -acq -d -j resfinder/data.json -o 'resfinder/'
+				python -m resfinder ${task.ext.args?:''} -ifa 'assembly.fna' -acq -d -j resfinder/data.json -o 'resfinder/'
 		    """    
 }
 
-process RUN_RESFINDER_FQ {
+process RESFINDER_FQ_RUN {
 	  container "registry.gitlab.unige.ch/amr-genomics/cgetools:main"
     memory '4 GB'
     cpus 1
@@ -29,18 +28,5 @@ process RUN_RESFINDER_FQ {
 		    """
 				python -m resfinder ${task.ext.args?:''} -ifq ${ifq} -acq -d -j resfinder/data.json -o 'resfinder/'
 		    """    
-}
-
-workflow RESFINDER {
-		take:
-	    	fa_ch // [meta,fasta] or [meta,[fq]] or [meta,[fq1,fq2]]
-		main:
-			if (params.skip_resfinder) {
-				out_ch = Channel.empty()
-			} else {
-				out_ch = RUN_RESFINDER_FA(fa_ch)
-			}
-		emit:
-				out_ch
 }
 

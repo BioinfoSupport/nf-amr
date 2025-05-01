@@ -4,9 +4,9 @@ process ORG_DB {
 		memory '2 GB'
 		cpus 1
 		output:
-		    path("org_db.tsv")
+		    path("org_db", type: 'dir')
 		script:
 				"""
-				cp /app/db/db.tsv org_db.tsv
+				cp -r /app/db ./org_db
 				"""
 }
