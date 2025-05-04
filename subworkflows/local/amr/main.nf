@@ -14,8 +14,8 @@ include { PLASMIDFINDER_RUN } from '../../../modules/local/cgetools/plasmidfinde
 include { MLST_RUN          } from '../../../modules/local/cgetools/mlst'
 include { MOBTYPER_RUN      } from '../../../modules/local/mobsuite/mobtyper'
 
-
-
+include { TO_JSON           } from '../../../modules/local/tojson'
+//include { RMD_RENDER        } from '../../../modules/local/rmd/render'
 
 
 params.default_args = [
@@ -23,47 +23,7 @@ params.default_args = [
 	'amrfinderplus_args' : ''
 ]
 
-
-
-
-
-process META_TO_JSON {
-	input:
-		tuple(val(meta),val(json_content))
-	output:
-		tuple(val(meta),path("meta.json"))
-	script:
-		def builder = new groovy.json.JsonBuilder(json_content)
-"""
-cat >> meta.json << __EOF_META_JSON__
-${builder.toPrettyString()}
-__EOF_META_JSON__
-"""
-}
-
-process BUILD_RMD_REPORT {
-	  container "registry.gitlab.unige.ch/amr-genomics/rscript:main"
-    memory '8 GB'
-    cpus 1
-    input:
-    		tuple(val(meta),path('assembly.fasta'),path('meta.json'),path(files))
-    		each path(report_template)
-    output:
-        tuple(val(meta),path("report.html"))
-    script:
-				"""
-				#!/usr/bin/env Rscript
-				p <- list(isolate_dir = getwd())
-				rmarkdown::render(
-				  knit_root_dir = getwd(),
-				  '${report_template}',
-					params = p,
-					output_dir = getwd(),
-					output_file = "report.html"
-				)
-				"""
-}
-
+params.skip_prokka = true
 
 
 
@@ -97,7 +57,6 @@ workflow AMR_REPORT {
 					.map({meta,fasta -> [meta,fasta,get_tool_args('mobtyper',meta)]})
 					.filter({meta,fasta,args -> args!=null})
           | MOBTYPER_RUN
-	
 
 				// MLST typing
 				mlst_ch = fa_ch
@@ -106,20 +65,24 @@ workflow AMR_REPORT {
 					.filter({meta,fasta,args -> args!=null})
 					| MLST_RUN
 					
-
 				// PROKKA annotations
-				prokka_ch = fa_ch
-				  .join(org_ch.org_name,remainder:true)
-				  .map({meta,fa,org_name -> [meta, fa, get_tool_args('prokka',meta,params.organisms,params.default_args,null)]})
-				  .filter({meta,fasta,args -> args!=null})
-					| PROKKA_RUN
+				prokka_ch = Channel.empty()
+				if (!params.skip_prokka) {
+						prokka_ch = fa_ch
+						  .join(org_ch.org_name,remainder:true)
+						  .map({meta,fa,org_name -> [meta, fa, get_tool_args('prokka',meta,params.organisms,params.default_args,null)]})
+						  .filter({meta,fasta,args -> args!=null})
+							| PROKKA_RUN
+				}
+
+				meta_json_ch = fa_ch
+					.join(org_ch.org_name,remainder:true)
+					.join(org_ch.org_ani,remainder:true)
+					.join(org_ch.org_acc,remainder:true)
+					.map({meta,fa,org_name,org_ani,org_acc -> [meta, [meta:[assembly:meta,org:[org_name:org_name,org_ani:org_ani,org_acc:org_acc]]] ]})
+					| TO_JSON
 
 /*
-				meta_json_ch = fa_ch
-					.join(org_ch,remainder:true)
-					.map({meta,fa,meta_org,ani -> [meta, [meta:[assembly:meta,org:meta_org]] ]})
-					| META_TO_JSON
-
 				// Aggregate isolate annotations
 				isolate_ch = fa_ch
 					.join(res_ch,remainder:true)
@@ -130,16 +93,10 @@ workflow AMR_REPORT {
 					.map({meta,fa,res,mlst,plf,meta_org,ani,meta_json -> 
 							[meta,fa,meta_json,[ani,res,mlst,plf].findAll({x->x!=null})]
 					})
+					//report_ch = RMD_RENDER(isolate_ch,file("${moduleDir}/isolate_report.Rmd"))
 */
 				report_ch = Channel.empty()
-				//report_ch = BUILD_RMD_REPORT(isolate_ch,file("${moduleDir}/isolate_report.Rmd"))
-				plf_ch = Channel.empty()
-				mlst_ch = Channel.empty()
-				prokka_ch = Channel.empty()
-				meta_json_ch = Channel.empty()
-				isolate_ch = Channel.empty()
-
-
+				
 		emit:
 		    meta_json        = meta_json_ch     // channel: [ val(meta), path(resfinder) ]
 		    prokka           = prokka_ch        // channel: [ val(meta), path(prokka) ]
