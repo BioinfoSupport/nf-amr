@@ -83,9 +83,11 @@ workflow AMR_REPORT {
 	      // ----------------------------------------------------
 	      // Tools specific to an organism
 	      // ----------------------------------------------------
-				// Run organism detection when organism is unknown
+				// Run organism detection on all assemblies (no matter if it is known or not)
 				ORG_DB()
-				detected_org_ch = ORG_DETECT(fa_ch.filter({meta,fa -> get_org(meta)==null}),ORG_DB.out)
+				//detected_org_ch = ORG_DETECT(fa_ch.filter({meta,fa -> get_org(meta)==null}),ORG_DB.out)
+				detected_org_ch = ORG_DETECT(fa_ch,ORG_DB.out)
+				
 				
 				// Update fa_ch to add detected organism
 				fa_org_ch = fa_ch
@@ -113,15 +115,10 @@ workflow AMR_REPORT {
 							| PROKKA_RUN
 				}
 
-/*
-				meta_json_ch = fa_ch
-					.join(org_ch.org_name,remainder:true)
-					.join(org_ch.org_ani,remainder:true)
-					.join(org_ch.org_acc,remainder:true)
-					.map({meta,fa,org_name,org_ani,org_acc -> [meta, [meta:[assembly:meta,org:[org_name:org_name,org_ani:org_ani,org_acc:org_acc]]] ]})
+
+				runinfo_json_ch = fa_org_ch
+					.map({meta,fa,org_name -> [runinfo: [meta:meta, org_name:org_name]]})
 					| TO_JSON
-*/
-				meta_json_ch = Channel.empty()
 
 /*
 				// Aggregate isolate annotations
@@ -139,7 +136,7 @@ workflow AMR_REPORT {
 				report_ch = Channel.empty()
 				
 		emit:
-		    meta_json        = meta_json_ch     // channel: [ val(meta), path(resfinder) ]
+		    runinfo          = runinfo_json_ch  // channel: [ val(meta), path(resfinder) ]
 		    prokka           = prokka_ch        // channel: [ val(meta), path(prokka) ]
 		    amrfinderplus_db = amrfinderplus_db // channel: path(amrfinderplus_db) ]
 		    amrfinderplus    = amrfinderplus_ch // channel: val(meta), path(amrfinderplus) ]

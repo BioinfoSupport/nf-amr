@@ -27,7 +27,7 @@ workflow {
 			amr_ch.plasmidfinder >> 'plasmidfinder'
 			amr_ch.mlst >> 'mlst'
 			amr_ch.report_html >> 'report_html'
-			amr_ch.meta_json >> 'meta_json'
+			amr_ch.runinfo >> 'runinfo'
 			amr_ch.prokka >> 'prokka'
 			amr_ch.amrfinderplus_db >> 'amrfinderplus_db'
 			amr_ch.amrfinderplus >> 'amrfinderplus'
@@ -73,8 +73,8 @@ output {
 		path({x -> {filename -> "samples/${x[0].id}/${filename}"}})
 		mode 'copy'
 	}
-	meta_json {
-		path({x -> {filename -> "samples/${x[0].id}/${filename}"}})
+	runinfo {
+		path({x -> {filename -> "samples/${x[0].id}/runinfo.json"}})
 		mode 'copy'
 	}
 	assembly_fa {
