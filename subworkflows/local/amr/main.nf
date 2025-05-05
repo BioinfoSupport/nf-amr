@@ -117,7 +117,7 @@ workflow AMR_REPORT {
 
 
 				runinfo_json_ch = fa_org_ch
-					.map({meta,fa,org_name -> [runinfo: [meta:meta, org_name:org_name]]})
+					.map({meta,fa,org_name -> [meta, [runinfo: [meta:meta, org_name:org_name]] ]})
 					| TO_JSON
 
 /*
