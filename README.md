@@ -85,6 +85,7 @@ rm -rf work/
 
 ```bash
 nextflow run . -resume
+nextflow run . -resume --org_name="Citrobacter freundii"
 ```
 
 # Test ANI speed

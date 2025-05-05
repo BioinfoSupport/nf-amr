@@ -6,12 +6,12 @@ process RESFINDER_FA_RUN {
     memory '4 GB'
     cpus 1
     input:
-        tuple val(meta), path('assembly.fna')
+        tuple val(meta), path('assembly.fna'), val(args)
     output:
 				tuple val(meta), path("resfinder/", type: 'dir')
     script:
 		    """
-				python -m resfinder ${task.ext.args?:''} -ifa 'assembly.fna' -acq -d -j resfinder/data.json -o 'resfinder/'
+				python -m resfinder ${task.ext.args?:''} ${args} -ifa 'assembly.fna' -acq -d -j resfinder/data.json -o 'resfinder/'
 		    """    
 }
 
