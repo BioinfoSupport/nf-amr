@@ -21,7 +21,7 @@ params.default_args = [
 	'mobtyper_args' : '',
 	'amrfinderplus_args' : '',
 	'plasmidfinder_args' : '',
-	'mlst_args' : null,
+	'mlst_args' : null, // do not run by default
 	'prokka_args'	: '--kingdom Bacteria'
 ]
 params.skip_prokka = true
@@ -115,9 +115,17 @@ workflow AMR_REPORT {
 							| PROKKA_RUN
 				}
 
-
 				runinfo_json_ch = fa_org_ch
-					.map({meta,fa,org_name -> [meta, [runinfo: [meta:meta, org_name:org_name]] ]})
+					.join(detected_org_ch.org_name,remainder:true)
+					.join(detected_org_ch.org_ani,remainder:true)
+					.join(detected_org_ch.org_acc,remainder:true)
+					.map({meta,fa,org_name,detected_org_name,detected_org_ani,detected_org_acc -> [
+						meta, 
+						[runinfo: [
+							meta: meta, 
+							org_name: org_name,
+							org_detection: [org_name: detected_org_name, org_ani: detected_org_ani, org_acc: detected_org_acc]
+						]]]})
 					| TO_JSON
 
 /*
@@ -141,8 +149,8 @@ workflow AMR_REPORT {
 		    amrfinderplus_db = amrfinderplus_db // channel: path(amrfinderplus_db) ]
 		    amrfinderplus    = amrfinderplus_ch // channel: val(meta), path(amrfinderplus) ]
 				resfinder        = resfinder_ch     // channel: [ val(meta), path(resfinder) ]
-				mobtyper         = mobtyper_ch     // channel: [ val(meta), path(mobtyper) ]
-        org_ani          = detected_org_ch.all_ani     // channel: [ val(meta), val(org_name) ]
+				mobtyper         = mobtyper_ch      // channel: [ val(meta), path(mobtyper) ]
+        org_ani          = detected_org_ch.all_ani // channel: [ val(meta), val(org_name) ]
         org_db           = ORG_DB.out // channel: path(org_db) ]
 				plasmidfinder    = plf_ch     // channel: [ val(meta), path(plasmidfinder) ]
 				mlst             = mlst_ch    // channel: [ val(meta), path(mlst) ]
