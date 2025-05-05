@@ -8,7 +8,6 @@ process SAMTOOLS_FAIDX {
     output:
     		tuple val(meta), path ("*.fasta.fai")
     script:
-    		def args = task.ext.args ?: ''
 		    """
 		    samtools faidx ${task.ext.args?:''} $fasta
 		    """
