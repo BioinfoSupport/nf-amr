@@ -20,6 +20,8 @@ workflow {
 			amr_ch = AMR_REPORT(fa_ch)
 			
 	publish:
+			amr_ch.runinfo >> 'runinfo'
+			amr_ch.faidx >> 'faidx'
 			amr_ch.resfinder >> 'resfinder'
 			amr_ch.mobtyper >> 'mobtyper'
 			amr_ch.org_ani >> 'org_ani'
@@ -27,7 +29,6 @@ workflow {
 			amr_ch.plasmidfinder >> 'plasmidfinder'
 			amr_ch.mlst >> 'mlst'
 			amr_ch.report_html >> 'report_html'
-			amr_ch.runinfo >> 'runinfo'
 			amr_ch.prokka >> 'prokka'
 			amr_ch.amrfinderplus_db >> 'amrfinderplus_db'
 			amr_ch.amrfinderplus >> 'amrfinderplus'
@@ -81,6 +82,11 @@ output {
 		path({x -> {filename -> "samples/${x[0].id}/assembly.fasta"}})
 		mode 'copy'
 	}
+	faidx {
+		path({x -> {filename -> "samples/${x[0].id}/assembly.fasta.fai"}})
+		mode 'copy'
+	}
+	
 	amrfinderplus {
 		path({x -> {filename -> "samples/${x[0].id}/${filename}"}})
 		mode 'copy'

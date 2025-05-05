@@ -110,10 +110,18 @@ nf-core pipelines create --name americ -a "J. Prados" --organisation "amr-genomi
 
 
 # TODO:
- - allow missing file in the report
- - add sample sheet where we can force org_name
+ - add sample sheet from CSV file (with id, org_name)
+ - custom ord_db is not functional yet because it uses absolute path
  - add multi-reporting (which include independant report)
- - Use the out-dir in the 
+
+ - add ISfinder annotations (mobile elements)
+ - add generation of CGView file
+ - add hybracter assembly ?
+ - add cgMLST
+ - add plasmid cgMLST
+ 
+ 
+ 
  
 
 

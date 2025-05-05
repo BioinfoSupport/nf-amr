@@ -13,6 +13,7 @@ include { MLST_RUN          } from '../../../modules/local/cgetools/mlst'
 include { MOBTYPER_RUN      } from '../../../modules/local/mobsuite/mobtyper'
 
 include { TO_JSON           } from '../../../modules/local/tojson'
+include { SAMTOOLS_FAIDX    } from '../../../modules/local/samtools/faidx'
 //include { RMD_RENDER        } from '../../../modules/local/rmd/render'
 
 
@@ -57,6 +58,8 @@ workflow AMR_REPORT {
 	      // ---------------------------------------------------------------------
 	      // Tools that can run directly on a FASTA witout specifying an organism
 	      // ---------------------------------------------------------------------
+				SAMTOOLS_FAIDX(fa_ch)
+	      
 				// CGE - RESFINDER
 				resfinder_ch = fa_ch
 					.map({meta,fasta -> [meta,fasta,get_tool_args('resfinder',meta)]})
@@ -145,6 +148,7 @@ workflow AMR_REPORT {
 				
 		emit:
 		    runinfo          = runinfo_json_ch  // channel: [ val(meta), path(resfinder) ]
+		    faidx            = SAMTOOLS_FAIDX.out
 		    prokka           = prokka_ch        // channel: [ val(meta), path(prokka) ]
 		    amrfinderplus_db = amrfinderplus_db // channel: path(amrfinderplus_db) ]
 		    amrfinderplus    = amrfinderplus_ch // channel: val(meta), path(amrfinderplus) ]
