@@ -1,0 +1,98 @@
+#!/usr/bin/env Rscript
+
+#-#-#-#-#-#-#-#-#-#-#-#-#
+# Argument parsing
+#-#-#-#-#-#-#-#-#-#-#-#-#
+library(optparse)
+option_list <- list( 
+    make_option("--fasta",help="Path to the input FASTA file to rotate [required]"),
+    make_option("--dict",help="Comma separated list of DNA sequences to search [required]"),
+    make_option("--no-topology", help="",action = "store_true",default = FALSE),
+    make_option("--max-mismatch", help="Maximum number of allowed mismatches",default = 0L),
+    make_option("--out", help="Name of the output FASTA file [required]")
+)
+opt <- parse_args(OptionParser(option_list=option_list))
+if (is.null(opt$fasta)) stop("missing --fasta argument")
+if (is.null(opt$out)) stop("missing --out argument")
+if (is.null(opt$dict)) stop("missing --dict argument")
+
+
+
+#-#-#-#-#-#-#-#-#-#-#-#-#
+# Script
+#-#-#-#-#-#-#-#-#-#-#-#-#
+
+suppressPackageStartupMessages({
+  library(IRanges)
+  library(GenomicRanges)
+  library(Biostrings)
+	library(tidyverse)
+})
+
+#opt <- list(fasta = "./data/fastq/P43-H.r11bc13.20p.flye.fasta",`no-topology`=FALSE,dict="TCGACCTGTCTTGC,ATTGTCTTGGGTTGC","max-mismatch"=2)
+
+# Read FASTA
+dict <- str_split(opt$dict,",")[[1]] |>
+	DNAStringSet()
+fa <- readDNAStringSet(opt$fasta)
+
+
+# Find hits of a set of patterns (dict) in a set of sequences (fa)
+findHits <- function(fa,dict,max.mismatch=0L,fixed=TRUE) {
+	map(dict,~{
+		i_fwd <- vmatchPattern(.x,fa,max.mismatch = max.mismatch,fixed = fixed)
+		i_rev <- vmatchPattern(reverseComplement(.x),fa,max.mismatch = max.mismatch,fixed = fixed)
+		i_fwd <- GRanges(i_fwd);strand(i_fwd) <- "+";i_fwd$seq <- fa[i_fwd];
+		i_rev <- GRanges(i_rev);strand(i_rev) <- "-";i_rev$seq <- reverseComplement(fa[i_rev]);
+		i_fwd$nedit <- as.vector(neditStartingAt(.x,i_fwd$seq))
+		i_rev$nedit <- as.vector(neditStartingAt(.x,i_rev$seq))
+		c(i_fwd,i_rev)
+	}) |>
+		GRangesList() |>
+		stack()
+}
+
+# Find all hits
+h <- findHits(fa,dict,max.mismatch = opt$"max-mismatch")
+
+# Keep best hit for each sequence
+h$score <- lengths(h$seq) - h$nedit
+h <- h[order(h$score,decreasing = TRUE)]
+h <- h[!duplicated(as.factor(seqnames(h)))]
+
+# parse header line
+if (!opt$"no-topology") {
+	h <- keepSeqlevels(h,str_subset(seqlevels(h),"\\[ *topology *= *circular *\\]"),pruning.mode = "coarse")
+}
+
+h <- resize(h,0)
+
+local({
+	i <- match(names(fa),seqnames(h))
+	data.frame(
+		seq_id=names(fa),
+		pattern=as.vector(h$name)[i],
+		strand=as.vector(strand(h))[i],
+		pos=start(h)[i],
+		nedit=h$nedit[i]
+	) |>
+		print()
+})
+
+# Rotate the sequences, and change strand
+i <- match(names(fa),seqnames(h),nomatch = 0)
+fa[i!=0] <- xscat(
+	subseq(fa[i!=0],start=start(h)[i]),
+	subseq(fa[i!=0],end=end(h)[i])
+)
+fa[i!=0][strand(h)[i]=="-"] <- reverseComplement(fa[i!=0][strand(h)[i]=="-"])
+
+# Update header line
+names(fa)[i!=0] <- str_glue("{names(fa)[i!=0]} [rotation={strand(h)[i]}{start(h)[i]}]")
+
+# Write output
+writeXStringSet(fa,opt$out)
+
+
+
+

@@ -6,7 +6,7 @@ output:
     flexdashboard::flex_dashboard:
         orientation: rows
 params:
-  isolate_dir: "results/RS1357_contig_1"
+  isolate_dir: "results/samples/RS1357_contig_1"
 ---
 
 ```{r setup}
