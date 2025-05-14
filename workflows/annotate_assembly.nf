@@ -1,32 +1,37 @@
 #!/usr/bin/env nextflow
 
-include { ORG_DB        } from '../../../modules/local/org/db'
-include { ORG_DETECT       } from '../../../modules/local/org/detect'
+include { ORG_DB        } from '../modules/local/org/db'
+include { ORG_DETECT       } from '../modules/local/org/detect'
 
-include { AMRFINDERPLUS_UPDATE } from '../../../modules/local/amrfinderplus/update'
-include { AMRFINDERPLUS_RUN } from '../../../modules/local/amrfinderplus/run'
-include { PROKKA_RUN        } from '../../../modules/local/prokka'
+include { AMRFINDERPLUS_UPDATE } from '../modules/local/amrfinderplus/update'
+include { AMRFINDERPLUS_RUN } from '../modules/local/amrfinderplus/run'
+include { PROKKA_RUN        } from '../modules/local/prokka'
 
-include { RESFINDER_FA_RUN  } from '../../../modules/local/cgetools/resfinder'
-include { PLASMIDFINDER_RUN } from '../../../modules/local/cgetools/plasmidfinder'
-include { MLST_RUN          } from '../../../modules/local/cgetools/mlst'
-include { MOBTYPER_RUN      } from '../../../modules/local/mobsuite/mobtyper'
+include { RESFINDER_FA_RUN  } from '../modules/local/cgetools/resfinder'
+include { PLASMIDFINDER_RUN } from '../modules/local/cgetools/plasmidfinder'
+include { MLST_RUN          } from '../modules/local/cgetools/mlst'
+include { MOBTYPER_RUN      } from '../modules/local/mobsuite/mobtyper'
 
-include { TO_JSON           } from '../../../modules/local/tojson'
-include { SAMTOOLS_FAIDX    } from '../../../modules/local/samtools/faidx'
-//include { RMD_RENDER        } from '../../../modules/local/rmd/render'
+include { TO_JSON           } from '../modules/local/tojson'
+include { SAMTOOLS_FAIDX    } from '../modules/local/samtools/faidx'
+//include { RMD_RENDER        } from '../modules/local/rmd/render'
 
-
-params.default_args = [
-	'resfinder_args'	: '',
-	'mobtyper_args' : '',
-	'amrfinderplus_args' : '',
-	'plasmidfinder_args' : '',
-	'mlst_args' : null, // do not run by default
-	'prokka_args'	: '--kingdom Bacteria'
-]
 params.skip_prokka = true
 
+params.tools_default_args = [
+	'resfinder'	    : '',
+	'mobtyper'      : '',
+	'amrfinderplus' : '',
+	'plasmidfinder' : '',
+	'mlst'          : null, // do not run by default
+	'prokka'	      : '--kingdom Bacteria'
+]
+
+def tool_skip(tool_name) {
+	def key = 'skip_' + tool_name
+	if (params.containsKey(key)) return params[key]
+	return false
+}
 
 def get_org(meta) {
 		def org_key = 'org_name'
@@ -35,22 +40,22 @@ def get_org(meta) {
 		return null
 }
 
-def get_key(meta,key,org_name=null) {
+def get_key(meta,tool_name,org_name=null) {
+		def key = tool_name + "_args"
 		if (params.containsKey(key)) return params[key]
     if (meta.containsKey(key)) return meta[key]
-    if (org_name==null) return params.default_args[key]
+    if (org_name==null) return params.tools_default_args[tool_name]
     def org_args = params.organisms.containsKey(org_name)?params.organisms[org_name] : [:]
     if (org_args.containsKey(key)) return org_args[key]
-    return params.default_args[key]
+    return params.tools_default_args[tool_name]
 }
 
 def get_tool_args(tool_name, meta, org_name=null) {
-		return get_key(meta,tool_name + "_args", org_name)
+		return get_key(meta,tool_name, org_name)
 }
 
 
-
-workflow AMR_REPORT {
+workflow ANNOTATE_ASSEMBLY {
 		take:
 	    	fa_ch    // channel: [ val(meta), path(assembly_fna) ]
 		main:
@@ -61,26 +66,37 @@ workflow AMR_REPORT {
 				SAMTOOLS_FAIDX(fa_ch)
 	      
 				// CGE - RESFINDER
-				resfinder_ch = fa_ch
-					.map({meta,fasta -> [meta,fasta,get_tool_args('resfinder',meta)]})
-					.filter({meta,fasta,args -> args!=null})
-	        | RESFINDER_FA_RUN
-	
+				if (tool_skip('resfinder')) {
+						resfinder_ch = Channel.empty()
+				} else {
+						resfinder_ch = fa_ch
+							.map({meta,fasta -> [meta,fasta,get_tool_args('resfinder',meta)]})
+							.filter({meta,fasta,args -> args!=null})
+			        | RESFINDER_FA_RUN
+				}
+				
 				// NCBI AMRfinder+
 				amrfinderplus_db = AMRFINDERPLUS_UPDATE()
-				amrfinderplus_ch = AMRFINDERPLUS_RUN(
-						fa_ch
-						  .map({meta,fasta -> [meta,fasta,get_tool_args('amrfinderplus',meta)]})
-							.filter({meta,fasta,args -> args!=null}),
-						amrfinderplus_db
-				)
-	
+				if (tool_skip('amrfinderplus')) {
+						amrfinderplus_ch = Channel.empty()
+				} else {
+						amrfinderplus_ch = AMRFINDERPLUS_RUN(
+								fa_ch
+								  .map({meta,fasta -> [meta,fasta,get_tool_args('amrfinderplus',meta)]})
+									.filter({meta,fasta,args -> args!=null}),
+								amrfinderplus_db
+						)
+				}
+				
 				// MOBsuite - MOBtyper
-				mobtyper_ch = fa_ch
-					.map({meta,fasta -> [meta,fasta,get_tool_args('mobtyper',meta)]})
-					.filter({meta,fasta,args -> args!=null})
-	        | MOBTYPER_RUN
-
+				if (tool_skip('mobtyper')) {
+						mobtyper_ch = Channel.empty()
+				} else {
+						mobtyper_ch = fa_ch
+							.map({meta,fasta -> [meta,fasta,get_tool_args('mobtyper',meta)]})
+							.filter({meta,fasta,args -> args!=null})
+			        | MOBTYPER_RUN
+				}
 
 		
 	      // ----------------------------------------------------
@@ -98,20 +114,28 @@ workflow AMR_REPORT {
 					.map({meta,fa,detected_org_name -> [meta,fa,get_org(meta)?:detected_org_name]})
 				
 				// Plasmid typing
-				plf_ch = fa_org_ch
-					.map({meta,fa,org_name -> [meta, fa, get_tool_args('plasmidfinder',meta, org_name)]})
-					.filter({meta,fasta,args -> args!=null})
-					| PLASMIDFINDER_RUN
-
+				if (tool_skip('plasmidfinder')) {
+					plf_ch = Channel.empty()
+				} else {
+						plf_ch = fa_org_ch
+							.map({meta,fa,org_name -> [meta, fa, get_tool_args('plasmidfinder',meta, org_name)]})
+							.filter({meta,fasta,args -> args!=null})
+							| PLASMIDFINDER_RUN
+				}
 				// MLST typing
-				mlst_ch = fa_org_ch
-					.map({meta,fa,org_name -> [meta, fa, get_tool_args('mlst',meta,org_name)]})
-					.filter({meta,fasta,args -> args!=null})
-					| MLST_RUN
-					
+				if (tool_skip('mlst')) {
+						mlst_ch = Channel.empty()
+				} else {
+						mlst_ch = fa_org_ch
+							.map({meta,fa,org_name -> [meta, fa, get_tool_args('mlst',meta,org_name)]})
+							.filter({meta,fasta,args -> args!=null})
+							| MLST_RUN
+				}
+				
 				// PROKKA annotations
-				prokka_ch = Channel.empty()
-				if (!params.skip_prokka) {
+				if (tool_skip('prokka')) {
+						prokka_ch = Channel.empty()
+				} else {
 						prokka_ch = fa_org_ch
 						  .map({meta,fa,org_name -> [meta, fa, get_tool_args('prokka',meta,org_name)]})
 						  .filter({meta,fasta,args -> args!=null})

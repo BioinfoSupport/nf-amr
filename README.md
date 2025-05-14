@@ -78,9 +78,7 @@ docker run --rm \
 ### Cleaning
 
 ```bash
-rm -rf results/
-rm -rf .nextflow*
-rm -rf work/
+rm -rf results/ .nextflow* work/
 ```
 
 ```bash

@@ -3,7 +3,7 @@
 nextflow.preview.output = true
 
 
-include { AMR_REPORT } from './subworkflows/local/amr'
+include { ANNOTATE_ASSEMBLY } from './workflows/annotate_assembly'
 include { validateParameters; paramsSummaryLog; samplesheetToList } from 'plugin/nf-schema'
 
 workflow {
@@ -23,7 +23,7 @@ workflow {
 			//ch_input = Channel.fromList(samplesheetToList(params.samplesheet, "assets/schema_input.json"))
 			fa_ch = Channel.fromPath(params.input)
 					.map({x -> tuple(["id":x.baseName],x)})
-			amr_ch = AMR_REPORT(fa_ch)
+			amr_ch = ANNOTATE_ASSEMBLY(fa_ch)
 			
 	publish:
 			amr_ch.runinfo >> 'runinfo'
