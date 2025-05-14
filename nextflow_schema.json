@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+	"$defs": { 
+	    "assembly_params": { 
+	      "title": "Assembly parameters",
+	      "type": "object",
+	      "required": ["input"], 
+	      "properties": { 
+	        "input": { 
+	          "type": "string"
+	        },
+	        "org_name": {
+	          "type": "string"
+	        }
+	      }
+	    }
+	  },
+  "allOf": [
+    { "$ref": "#/$defs/assembly_params" } 
+  ]
+}
+

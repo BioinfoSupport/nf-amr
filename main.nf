@@ -4,6 +4,7 @@ nextflow.preview.output = true
 
 
 include { AMR_REPORT } from './subworkflows/local/amr'
+include { validateParameters; paramsSummaryLog; samplesheetToList } from 'plugin/nf-schema'
 
 workflow {
 	main:
@@ -15,6 +16,11 @@ workflow {
 			"Y888888 888  888  888 888     
 			""")
 			
+			// Validate parameters and print summary of supplied ones
+			validateParameters()
+			log.info(paramsSummaryLog(workflow))
+			
+			//ch_input = Channel.fromList(samplesheetToList(params.samplesheet, "assets/schema_input.json"))
 			fa_ch = Channel.fromPath(params.input)
 					.map({x -> tuple(["id":x.baseName],x)})
 			amr_ch = AMR_REPORT(fa_ch)
