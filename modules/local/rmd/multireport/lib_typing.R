@@ -46,32 +46,33 @@ read_plasmidfinder_json <- function(json_file) {
 
 
 
-################### END OF FILE ##########################
-
-
-read_mlst_jsons <- function(json_files) {
-	x <- enframe(json_files,value = "json_filename",name = "assembly_id") |>
-		mutate(json_content = map(json_filename,~if (file.exists(.)) jsonlite::fromJSON(.) else NULL)) |>
-		mutate(mlst_type=map(json_content,~.$mlst$results$sequence_type)) |> 
-		select(assembly_id,mlst_type) |>
-		unnest(mlst_type)
-	x
+read_mlst_json <- function(json_file) {
+	#json_file <- "results/samples/r62b17.hdr/mlst/data.json"
+	json <- jsonlite::fromJSON(json_file,simplifyVector=FALSE)
+	json$mlst$results$sequence_type |>
+		enframe(value = "mlst_type",name = NULL)
 }
+#fs::dir_ls("results/samples/",glob = "*/mlst",recurse = 1,type = "dir") |> fs::path("data.json") |> tail(1) |> read_mlst_json()
 
-read_mobtyper <- function(tsv_files) {
-	enframe(tsv_files,value = "tsv_filename",name = "assembly_id") |>
-		mutate(content = map(tsv_files,~read_tsv(.,show_col_types = FALSE))) |>
-		unnest(content) |>
-		mutate(contig_id=str_replace(sample_id," .*",""))
+
+read_mobtyper <- function(tsv_file) {
+		#tsv_file <- "results/samples/r62b17.hdr/mobtyper.tsv"
+		read_tsv(tsv_file,show_col_types = FALSE) |>
+			mutate(contig_id=str_replace(sample_id," .*","")) |>
+			dplyr::rename(contig_name=sample_id) |>
+			relocate(contig_id)
 }
 
 read_species_tsv <- function(tsv_file) {
+	#tsv_file <- "results/samples/r62b17.hdr/org.ani"
 	readr::read_tsv(tsv_file,col_types = cols(ANI = "n",bi_frag="i",query_frag="i",.default = "c"))
 }
 
-contig_meta <- function(f) {
-	f <- as.character(f)
-	fa <- Biostrings::readDNAStringSet(f)
+
+
+contig_meta <- function(fasta_filename) {
+	f <- as.character(fasta_filename)
+	fa <- Biostrings::readDNAStringSet(fasta_filename)
 	meta <- tibble(
 		contig_id = str_replace(names(fa)," .*",""),
 		contig_length = lengths(fa),
@@ -111,6 +112,7 @@ contig_meta <- function(f) {
 
 
 
+################### END OF FILE ##########################
 
 db_load <- function(ss,dir) {
 	message("Load contigs metadata (name, length, %GC, tags)")
