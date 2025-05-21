@@ -3,6 +3,12 @@ library(tidyverse)
 library(GenomicRanges)
 library(Biostrings)
 
+read_runinfo_json <- function(json_file) {
+	#json_file <- "results/samples/r62b17.hdr/runinfo.json"
+	json <- jsonlite::fromJSON(json_file,simplifyVector=FALSE)
+	tibble(json) |> unnest_wider(1) |> unnest_wider(c(meta,org_detection),names_sep=".")
+}
+
 
 read_resfinder_json <- function(json_file) {
 	json <- jsonlite::fromJSON(json_file,simplifyVector=FALSE)
@@ -19,9 +25,20 @@ read_resfinder_json <- function(json_file) {
 		unnest_wider(1) |>
 		mutate(contig_id = str_replace(query_id," .*","")) |>
 		bind_rows(expected_structure) |>
-		relocate(contig_id,resistance_name=name,query_start_pos,query_end_pos,coverage,identity)
+		mutate(position=str_glue("{query_start_pos}-{query_end_pos}")) |>
+		relocate(contig_id,resistance_name=name,query_start_pos,query_end_pos,coverage,identity,position)
 }
 #fs::dir_ls("results/samples/",glob = "*/resfinder",recurse = 1,type = "dir") |> fs::path("data.json") |> head(1) |> read_resfinder_json()
+
+
+read_amrfinderplus_tsv <- function(tsv_file) {
+	#tsv_file <- "results/samples/r62b17.hdr/amrfinderplus/report.tsv"
+	read_tsv(tsv_file,show_col_types = FALSE) |>
+		dplyr::rename(contig_id=`Contig id`,resistance_name=`Element symbol`,coverage=`% Coverage of reference`,identity=`% Identity to reference`) |>
+		mutate(position=str_glue("{Start}-{Stop}:{Strand}")) |>
+		relocate(contig_id,coverage,identity,resistance_name,position)
+}
+
 
 read_plasmidfinder_json <- function(json_file) {
 	#json_file <- "results/samples/r62b17.hdr/plasmidfinder/data.json"
@@ -55,23 +72,22 @@ read_mlst_json <- function(json_file) {
 #fs::dir_ls("results/samples/",glob = "*/mlst",recurse = 1,type = "dir") |> fs::path("data.json") |> tail(1) |> read_mlst_json()
 
 
-read_mobtyper <- function(tsv_file) {
+read_mobtyper_tsv <- function(tsv_file) {
 		#tsv_file <- "results/samples/r62b17.hdr/mobtyper.tsv"
 		read_tsv(tsv_file,show_col_types = FALSE) |>
 			mutate(contig_id=str_replace(sample_id," .*","")) |>
-			dplyr::rename(contig_name=sample_id) |>
+			dplyr::rename(contig_name=sample_id,relaxase_types=`relaxase_type(s)`,rep_types=`rep_type(s)`) |>
 			relocate(contig_id)
 }
 
 read_species_tsv <- function(tsv_file) {
 	#tsv_file <- "results/samples/r62b17.hdr/org.ani"
-	readr::read_tsv(tsv_file,col_types = cols(ANI = "n",bi_frag="i",query_frag="i",.default = "c"))
+	read_tsv(tsv_file,show_col_types = FALSE,col_types = cols(ANI = "n",bi_frag="i",query_frag="i",.default = "c"))
 }
 
 
-
 contig_meta <- function(fasta_filename) {
-	f <- as.character(fasta_filename)
+	fasta_filename <- as.character(fasta_filename)
 	fa <- Biostrings::readDNAStringSet(fasta_filename)
 	meta <- tibble(
 		contig_id = str_replace(names(fa)," .*",""),
@@ -112,47 +128,72 @@ contig_meta <- function(fasta_filename) {
 
 
 
-################### END OF FILE ##########################
-
-db_load <- function(ss,dir) {
+db_load <- function(amr_dir) {
 	message("Load contigs metadata (name, length, %GC, tags)")
-	contigs <- ss |>
-		mutate(assembly_name = file.path(dir,str_glue("{assembly_id}.hdr/assembly.fasta"))) |>
-		pull("assembly_name",name = "assembly_id") |>
-		BiocParallel::bplapply(\(f) if (file.exists(f)) contig_meta(f) else NULL) |>
-		bind_rows(.id = "assembly_id")
-	
-	message("Load species informations")
-	species <- ss |>
-		mutate(species_tsv = file.path(dir,str_glue("{assembly_id}.hdr/org.ani"))) |>
-		pull("species_tsv",name = "assembly_id") |>
-		BiocParallel::bplapply(\(f) if (file.exists(f)) read_species_tsv(f) else NULL) |>
-		bind_rows(.id = "assembly_id")
-	
-	message("Load resfinder results")
-	resfinder <- ss |>
-		mutate(species_tsv = file.path(dir,str_glue("{assembly_id}.hdr/resfinder/data.json"))) |>
-		pull("species_tsv",name = "assembly_id") |>
-		read_resfinder_jsons()
-	
-	message("Load plasmidfinder results")
-	plasmidfinder <- ss |>
-		mutate(plasmidfinder_json = file.path(dir,str_glue("{assembly_id}.hdr/plasmidfinder/data.json"))) |>
-		pull("plasmidfinder_json",name = "assembly_id") |>
-		read_plasmidfinder_jsons()
-
-	message("Load MLST results")
-	mlst <- ss |>
-		mutate(mlst_json = file.path(dir,str_glue("{assembly_id}.hdr/mlst/data.json"))) |>
-		pull("mlst_json",name = "assembly_id") |>
-		read_mlst_jsons()
-	
-	message("Load Mobtyper results")
-	mobtyper <- ss |>
-		mutate(mobtyper_tsv = file.path(dir,str_glue("{assembly_id}.hdr/mobtyper.tsv"))) |>
-		pull("mobtyper_tsv",name = "assembly_id") |>
-		read_mobtyper()
-	
-	list(contigs=contigs,species=species,resfinder=resfinder,plasmidfinder=plasmidfinder,mlst=mlst,mobtyper=mobtyper)
+	fs::dir_ls(fs::path(amr_dir,"samples"),recurse = 1,glob = "*/assembly.fasta") |>
+		fs::path_dir() |>
+		enframe(name=NULL,value = "basepath") |>
+		mutate(assembly_id=basename(basepath)) |>
+		mutate(runinfo = map(fs::path(basepath,"runinfo.json"),read_runinfo_json)) |>
+		mutate(contigs = map(fs::path(basepath,"assembly.fasta"),contig_meta)) |>
+		mutate(mlst = map(fs::path(basepath,"mlst","data.json"),read_mlst_json)) |>
+		mutate(plasmidfinder = map(fs::path(basepath,"plasmidfinder","data.json"),read_plasmidfinder_json)) |>
+		mutate(resfinder = map(fs::path(basepath,"resfinder","data.json"),read_resfinder_json)) |>
+		mutate(amrfinderplus = map(fs::path(basepath,"amrfinderplus","report.tsv"),read_amrfinderplus_tsv)) |>		
+		mutate(mobtyper = map(fs::path(basepath,"mobtyper.tsv"),read_mobtyper_tsv))
 }
+
+
+summarise_assembly <- function(db) {
+	#db <- db_load("results") 
+	assemlbies <- select(db,assembly_id,contigs) |> unnest(contigs) |> group_by(assembly_id) |> summarise(num_contig=n(),assembly_length=sum(contig_length)) 
+	mlst <- select(db,assembly_id,mlst) |> unnest(mlst) 
+	runinfo <- select(db,assembly_id,runinfo) |> unnest(runinfo) 
+	assemlbies |>
+		left_join(runinfo,by="assembly_id",relationship = "one-to-one")	|>
+		left_join(mlst,by="assembly_id",relationship = "one-to-one")
+}
+
+summarise_resistances <- function(db) {
+	#db <- db_load("results")
+	bind_rows(
+		resfinder = select(db,assembly_id,resfinder) |> 
+			unnest(resfinder) |>
+			select(assembly_id,contig_id,resistance_name,coverage,identity,position),
+		amrfinderplus = select(db,assembly_id,amrfinderplus) |> 
+			unnest(amrfinderplus) |>
+			select(assembly_id,contig_id,resistance_name,coverage,identity,position),
+		.id = "source"
+	) |>
+		arrange(assembly_id,contig_id,resistance_name,desc(coverage),desc(identity)) |>
+		group_by(assembly_id,contig_id,resistance_name) |>
+		slice_head(n = 1)
+}
+
+summarise_contigs <- function(db) {
+	#db <- db_load("results") 
+	contigs <- select(db,assembly_id,contigs) |> 
+		unnest(contigs)
+	res <- summarise_resistances(db) |>
+		group_by(assembly_id,contig_id) |>
+		summarise(resistance_names = list(resistance_name))
+	plf <- select(db,assembly_id,plasmidfinder) |> 
+		unnest(plasmidfinder) |>
+		group_by(assembly_id,contig_id) |>
+		summarise(plasmid_types=list(plasmid_type))
+	mob <- select(db,assembly_id,mobtyper) |> 
+		unnest(mobtyper) |>
+		mutate(relaxase_types=str_split(relaxase_types,",")) |>
+		select(assembly_id,contig_id,relaxase_types)
+	contigs |>
+		select(assembly_id,contig_id,contig_length,GC,topology=tag_topology) |>
+		left_join(res,by=c("assembly_id","contig_id"),relationship = "one-to-one") |>
+		left_join(plf,by=c("assembly_id","contig_id"),relationship = "one-to-one") |>
+		left_join(mob,by=c("assembly_id","contig_id"),relationship = "one-to-one")
+}
+
+
+
+
+
 
