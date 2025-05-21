@@ -20,11 +20,8 @@ library(Biostrings)
 ```{r}
 read_meta_json <- function(meta_json) {
 	if (!file.exists(meta_json)) rlang::abort(str_glue("Cannot find {meta_json}"))
-	json <- jsonlite::fromJSON(meta_json)
-	json |> 
-		enframe(name = NULL) |> 
-		unnest_wider(value) |> 
-		unnest_wider(c(assembly,org),names_sep = "_")
+	json <- jsonlite::fromJSON(meta_json,simplifyVector=FALSE)
+	tibble(json) |> unnest_wider(1) |> unnest_wider(c(meta,org_detection),names_sep=".")
 }
 
 read_mlst_json <- function(mlst_json) {
@@ -94,7 +91,7 @@ read_isolate <- function(isolate_dir) {
 	fa <- Biostrings::readDNAStringSet(fs::path(isolate_dir,"assembly.fasta"))
 	list(
 		fa = fa,
-		meta = read_meta_json(fs::path(isolate_dir,"meta.json")),
+		meta = read_meta_json(fs::path(isolate_dir,"runinfo.json")),
 		mlst = read_mlst_json(fs::path(isolate_dir,"mlst/data.json")),
 		resfinder = read_resfinder_json(fs::path(isolate_dir,"resfinder/data.json")),
 		plasmidfinder = read_plasmidfinder_json(fs::path(isolate_dir,"plasmidfinder/data.json")),
@@ -119,7 +116,7 @@ x <- read_isolate(params$isolate_dir)
 
 ### Assembly
 ```{r}
-valueBox(caption = "Assembly:",value=x$meta$assembly_id)
+valueBox(caption = "Assembly:",value=x$meta$meta.id)
 ```
 
 
@@ -132,7 +129,7 @@ Row
 
 ### Organism
 ```{r}
-valueBox(x$meta$org_org_name,"Organism name",icon = "glyphicon glyphicon-user")
+valueBox(x$meta$org_name,"Organism name",icon = "glyphicon glyphicon-user")
 ```
 
 Row
@@ -150,7 +147,7 @@ valueBox(nrow(x$contigs),"Contigs",icon='glyphicon glyphicon-scissors')
 
 ### ANI
 ```{r}
-gauge(as.numeric(x$meta$org_org_ani), min = 80, max = 100, symbol = '%', gaugeSectors(
+gauge(as.numeric(x$meta$org_detection.org_ani), min = 80, max = 100, symbol = '%', gaugeSectors(
   success = c(95, 100), warning = c(90, 95), danger = c(80, 90)
 ))
 ```
