@@ -2,7 +2,7 @@
 
 nextflow.preview.output = true
 
-
+include { ASSEMBLE_READS } from './workflows/assemble_reads'
 include { ANNOTATE_ASSEMBLY } from './workflows/annotate_assembly'
 include { validateParameters; paramsSummaryLog; samplesheetToList } from 'plugin/nf-schema'
 
@@ -21,10 +21,12 @@ workflow {
 			log.info(paramsSummaryLog(workflow))
 			
 			//ch_input = Channel.fromList(samplesheetToList(params.samplesheet, "assets/schema_input.json"))
+			//ASSEMBLE_READS(Channel.empty())
+			
 			fa_ch = Channel.fromPath(params.input)
 					.map({x -> tuple(["id":x.baseName],x)})
 			amr_ch = ANNOTATE_ASSEMBLY(fa_ch)
-			
+
 	publish:
 			amr_ch.runinfo >> 'runinfo'
 			amr_ch.faidx >> 'faidx'
