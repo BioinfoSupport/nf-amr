@@ -6,16 +6,16 @@ process RMD_RENDER {
     input:
     		tuple(val(meta),path(files))
     		each path("report_template.Rmd")
+    		path(extra)
     output:
         tuple(val(meta),path("report.html"))
     script:
 				"""
 				#!/usr/bin/env Rscript
-				p <- list(isolate_dir = getwd())
 				rmarkdown::render(
 				  knit_root_dir = getwd(),
 				  'report_template.Rmd',
-					params = p,
+					#params = list(),
 					output_dir = getwd(),
 					output_file = "report.html"
 				)

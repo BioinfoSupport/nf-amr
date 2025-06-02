@@ -10,7 +10,7 @@ output:
     toc_float: true
     fig_caption: true
 params:
-    indir: "../../../../results"
+    indir: "results"
     outdir: "out/qc_oxa48_r88"
 ---
 
@@ -25,10 +25,7 @@ knitr::opts_chunk$set(
 
 ```{r include=FALSE}
 library(tidyverse)
-library(BiocParallel)
 library(gt)
-library(patchwork)
-BiocParallel::register(BiocParallel::MulticoreParam(workers=6,progress=TRUE))
 source("lib_typing.R")
 ```
 

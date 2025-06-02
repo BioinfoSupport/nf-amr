@@ -4,6 +4,7 @@ nextflow.preview.output = true
 
 include { ASSEMBLE_READS } from './workflows/assemble_reads'
 include { ANNOTATE_ASSEMBLY } from './workflows/annotate_assembly'
+include { MULTI_REPORT } from './workflows/multi_report'
 include { validateParameters; paramsSummaryLog; samplesheetToList } from 'plugin/nf-schema'
 
 workflow {
@@ -27,6 +28,8 @@ workflow {
 					.map({x -> tuple(["id":x.baseName],x)})
 			amr_ch = ANNOTATE_ASSEMBLY(fa_ch)
 
+			MULTI_REPORT(amr_ch.runinfo)
+			
 	publish:
 			amr_ch.runinfo >> 'runinfo'
 			amr_ch.faidx >> 'faidx'

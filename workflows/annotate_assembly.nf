@@ -176,7 +176,7 @@ workflow ANNOTATE_ASSEMBLY {
 				
 		emit:
 		    runinfo          = runinfo_json_ch  // channel: [ val(meta), path(resfinder) ]
-		    faidx            = SAMTOOLS_FAIDX.out
+		    faidx            = SAMTOOLS_FAIDX.out // channel: [ val(meta), path(fai) ]
 		    prokka           = prokka_ch        // channel: [ val(meta), path(prokka) ]
 		    amrfinderplus_db = amrfinderplus_db // channel: path(amrfinderplus_db) ]
 		    amrfinderplus    = amrfinderplus_ch // channel: val(meta), path(amrfinderplus) ]

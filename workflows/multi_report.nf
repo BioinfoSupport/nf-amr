@@ -1,11 +1,14 @@
 #!/usr/bin/env nextflow
 
-//include { RMD_RENDER        } from '../modules/local/rmd/render'
+include { RMD_RENDER        } from '../modules/local/rmd/render'
+
 
 workflow MULTI_REPORT {
-		take:
+	  take:
+	  	amr_ch
 		main:
-		emit:
+			//RMD_RENDER([["id":"test"],file("assets/rmd")],file("assets/rmd/multireport.Rmd"),[file("assets/rmd/lib_typing.R")])
+			println("DONE")
 }
 	
 
