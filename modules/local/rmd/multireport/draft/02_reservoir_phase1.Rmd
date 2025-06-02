@@ -1,0 +1,574 @@
+---
+title: "QC"
+author: "`r Sys.getenv('USER')`"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  html_document:
+    code_download: true
+    code_folding: hide
+    toc: true
+    toc_float: true
+    fig_caption: true
+params:
+    outdir: "out/reservoir_phase1"
+---
+
+```{r setup}
+knitr::opts_chunk$set(echo = TRUE,message = FALSE,warning = FALSE)
+library(tidyverse)
+library(BiocParallel)
+BiocParallel::register(BiocParallel::MulticoreParam(workers=6,progress=TRUE))
+library(patchwork)
+
+fct_reorder2_hclust <- function(.f, .y, .value,hclust.method="ward.D2") {
+  wide <- tibble(f = .f, y = .y, value = .value) %>%
+    pivot_wider(names_from = f, values_from = value,values_fill = 0) %>%
+    column_to_rownames("y") %>%
+    as.matrix() %>%
+    t()
+  h <- hclust(dist(wide),method=hclust.method)
+  fct_relevel(.f,h$labels[h$order])
+}
+```
+
+```{r}
+source("notebooks/lib_typing.R")
+```
+
+
+
+# Load sample-sheet associated data {.tabset}
+
+- Load samplesheet
+
+```{r include=FALSE}
+# Load the sample sheet
+ss <- openxlsx::read.xlsx("data/sample_sheet_reservoir_phase1_2025-05-21.xlsx","barcodes") |>
+ 	mutate(assembly_id = str_glue("r{run_id}b{bc}"))
+db <- db_load(ss,"out/data_reservoir_phase1")
+res_pheno <- readxl::read_xlsx("data/resfinder_category.xlsx")
+```
+
+
+```{r}
+db$species <- db$species |>
+	left_join(read_tsv("local/species_profiler/notebooks/db_tax.tsv") |> select(assembly_acc,species_name,genus_name),by="assembly_acc") |>
+	mutate(species_name=factor(species_name),genus_name=factor(genus_name))
+db$SPECIES <- db$species |>
+	group_by(assembly_id) |>
+	slice_max(ANI,n=1) |>
+	right_join(select(ss,assembly_id))
+db$contigs <- db$contigs |>
+	left_join(
+		as_tibble(db$plasmidfinder) |> 
+			group_by(contig_id=seqnames) |> 
+			summarize(plasmid_types = list(plasmid_type))
+	) |>
+	left_join(
+		as_tibble(db$resfinder) |> 
+			group_by(contig_id=seqnames) |> 
+			summarize(resistances = list(resistance_name))
+	) |>
+	mutate(is_plasmid = (contig_length<=500000) & lengths(plasmid_types)>0)
+```
+
+
+
+
+## Summary
+```{r,message=TRUE}
+message(str_glue("Number of sample/assembly: {nrow(ss)}"))
+message(str_glue("Number of contig: {nrow(db$contigs)}"))
+```
+
+
+
+
+
+```{r io, echo=FALSE}
+dir.create(fs::path(params$outdir))
+saveRDS(ss,fs::path(params$outdir,"ss.rds"))
+saveRDS(db,fs::path(params$outdir,"db.rds"))
+```
+
+
+# Species
+```{r,fig.height=2.5, fig.width=6}
+db$SPECIES |>
+	left_join(ss,by="assembly_id") |>
+	left_join(db$mlst,by="assembly_id") |>
+	mutate(mlst_type=replace_na(mlst_type,"?") |> fct_recode("?"="Unknown")) |>
+	group_by(source,genus_name,species_name) |>
+	count() |>
+	arrange(species_name) |>
+	rowid_to_column() |>
+	ggplot(aes(y=species_name,x=n)) +
+		facet_grid(genus_name~source,space="free",scales = "free") + 
+		geom_col(color="black",fill="lightblue") +
+		geom_text(aes(label=n),position = position_stack(vjust=0.5),size=3,angle=0) +
+		theme_bw() +
+		theme(legend.position = "none")+
+		theme(
+			panel.spacing = unit(0,"mm"),
+			panel.grid = element_blank(),
+			strip.text.y = element_text(angle = 0),
+			strip.placement = "outside"
+		) + 
+		xlab("Num. sample") + ylab("")
+```
+
+
+# ST
+```{r,fig.height=4, fig.width=8}
+db$SPECIES |>
+	left_join(ss,by="assembly_id") |>
+	left_join(db$mlst,by="assembly_id") |>
+	mutate(mlst_type=replace_na(mlst_type,"?") |> fct_recode("?"="Unknown")) |>
+	group_by(source,genus_name,species_name,mlst_type) |>
+	count() |>
+	arrange(species_name,mlst_type) |>
+	rowid_to_column() |>
+	ggplot(aes(y=species_name,x=n,fill=mlst_type)) +
+		facet_grid(genus_name~source,space="free",scales = "free") + 
+		geom_col(color="black") +
+		geom_text(aes(label=mlst_type),position = position_stack(vjust=0.5),size=3,angle=90) +
+		theme_bw() +
+		theme(legend.position = "none")+
+		theme(
+			panel.spacing = unit(0,"mm"),
+			panel.grid = element_blank(),
+			strip.text.y = element_text(angle = 0),
+			strip.placement = "outside"
+		) + 
+		xlab("Num. sample") + ylab("")
+```
+
+
+
+
+# Resistances
+
+```{r fig.height=10, fig.width=2.7}
+ss |>
+	left_join(db$SPECIES,by="assembly_id") |>		
+	left_join(db$mlst,by="assembly_id") |>
+	left_join(db$contigs,by="assembly_id") |>
+	unnest_longer(resistances,values_to = "resistance_name") |>
+	left_join(res_pheno,by="resistance_name") |>
+	mutate(assembly_id=str_glue("{cmu_id} ({assembly_id})")) |>
+	ungroup() |>
+	distinct(source,assembly_id,resistance_name,res_subgroup) |>
+	mutate(assembly_id = fct_reorder2_hclust(assembly_id,resistance_name,rep_along(assembly_id,1),hclust.method = "complete")) |>
+	filter(!is.na(res_subgroup)) |>
+	ggplot(aes(x=resistance_name,y=assembly_id)) + 
+		facet_grid(.~res_subgroup,space="free",scales="free") +
+		scale_y_discrete(drop=FALSE) +
+		geom_tile(fill="black") + 
+		theme(axis.text.x=element_text(angle=45,hjust=1,vjust=1)) + 
+		ylab("sample") + xlab("")
+```
+
+
+
+```{r fig.height=4, fig.width=4}
+ss |>
+	left_join(db$SPECIES,by="assembly_id") |>		
+	left_join(db$mlst,by="assembly_id") |>
+	left_join(db$contigs,by="assembly_id") |>
+	unnest_longer(resistances,values_to = "resistance_name") |>
+	left_join(res_pheno,by="resistance_name") |>
+	group_by(assembly_id) |>
+	summarize(BetaLactam=any(res_group=="Beta-lactam"),Carba=any(res_subgroup=="Carba"),ESBL=any(res_subgroup=="ESBL")) |>
+	mutate(across(!assembly_id,~replace_na(.,FALSE))) |>
+	column_to_rownames("assembly_id") |>
+	gplots::venn()
+```
+
+
+```{r fig.height=4, fig.width=4}
+ss |>
+	left_join(db$SPECIES,by="assembly_id") |>		
+	left_join(db$mlst,by="assembly_id") |>
+	left_join(db$contigs,by="assembly_id") |>
+	unnest_longer(resistances,values_to = "resistance_name") |>
+	left_join(res_pheno,by="resistance_name") |>
+	group_by(assembly_id) |>
+	select(assembly_id,source,resistance_name,res_subgroup) |>
+	filter(!is.na(res_subgroup)) |>
+	mutate(true=TRUE) |>
+	pivot_wider(id_cols=c(source,assembly_id),names_from = resistance_name,values_from = true,values_fn = any) |>
+	ungroup() |>
+	mutate(across(!c(source,assembly_id),~replace_na(.,FALSE)+0)) |>
+	as.data.frame() |>
+	UpSetR::upset(nsets = 6) 
+```
+
+
+
+
+```{r fig.height=20, fig.width=6}
+res_count <- select(as.data.frame(db$res),contig_id=seqnames,resistance_name) |>
+	inner_join(select(db$contigs,contig_id,assembly_id)) |>
+	left_join(ss,by="assembly_id") |>	
+	group_by(resistance_name,source) |>
+	summarise(n_assembly = n_distinct(assembly_id)) |>
+	ungroup() |>
+	arrange(desc(resistance_name)) |>
+	left_join(res_pheno,by="resistance_name") |>
+	mutate(res_group=replace_na(res_group,"Other") |> fct_relevel("Other",after=+Inf)) |>
+	mutate(res_subgroup=replace_na(res_subgroup,"-") |> fct_relevel("-",after=+Inf)) |>
+	mutate(resistance_name=fct_reorder(resistance_name,n_assembly,sum))
+
+ggplot(res_count,aes(y=resistance_name,x=n_assembly)) +
+	facet_grid(res_group+res_subgroup~source,scales="free_y",space="free_y") +
+	geom_col(fill="lightblue",color="black") +
+	geom_text(aes(label=n_assembly),position = position_stack(vjust=0.5),size=3) +
+	theme_bw() +
+	ggtitle("Resistance Profile")
+```
+
+
+## Detail
+
+```{r fig.height=25, fig.width=20}
+ss |>
+	left_join(db$SPECIES,by="assembly_id") |>		
+	left_join(db$mlst,by="assembly_id") |>
+	left_join(db$contigs,by="assembly_id") |>
+	unnest_longer(resistances,values_to = "resistance_name") |>
+	unnest_longer(plasmid_types,values_to = "plasmid_type",keep_empty = TRUE) |>
+	left_join(res_pheno,by="resistance_name") |>
+	mutate(assembly_id=str_glue("{cmu_id} ({assembly_id})")) |>
+	ungroup() |>
+	distinct(source,assembly_id,contig_id,is_plasmid,resistance_name,res_subgroup) |>
+	mutate(contig_id = fct_reorder2_hclust(contig_id,resistance_name,rep_along(contig_id,1),hclust.method = "complete")) |>
+	ggplot(aes(x=resistance_name,y=contig_id)) + 
+		facet_grid(source+assembly_id~res_subgroup,space="free",scales="free") +
+		#scale_y_discrete(drop=FALSE) +
+		geom_tile(aes(fill=is_plasmid)) + 
+		theme(axis.text.x=element_text(angle=45,hjust=1,vjust=1)) + 
+		theme(strip.text.y = element_text(angle = 0)) +
+		theme(panel.spacing = unit(0,"mm"),panel.border = element_rect(color="black",fill = NA)) +
+		theme(legend.position="top") +
+		ylab("contig") + xlab("")
+```
+
+```{r fig.height=15, fig.width=15}
+select(as.data.frame(db$res),contig_id=seqnames,resistance_name) |>
+	inner_join(select(db$contigs,contig_id,assembly_id)) |>
+	group_by(resistance_name,assembly_id) |>
+	summarize(n=n_distinct(contig_id)) |>
+	left_join(res_pheno,by="resistance_name") |>
+	mutate(res_group=replace_na(res_group,"Other") |> fct_relevel("Other",after=+Inf)) |>
+	mutate(res_subgroup=replace_na(res_subgroup,"-") |> fct_relevel("-",after=+Inf)) |>
+	ungroup() |>
+	left_join(ss,by="assembly_id") |>
+	mutate(assembly_id=fct_reorder2_hclust(assembly_id,resistance_name,n)) |>
+	mutate(resistance_name=fct_reorder2_hclust(resistance_name,assembly_id,n)) |>
+	ggplot(aes(y=resistance_name,x=assembly_id)) +
+		facet_grid(res_group+res_subgroup~source,scales="free",space="free") +
+		geom_tile() + 
+		theme(axis.text.x=element_text(angle=45,hjust=1,vjust=1))
+```
+
+# Resistances & Species
+```{r fig.height=20, fig.width=8}
+res_count <- select(as.data.frame(db$res),contig_id=seqnames,resistance_name) |>
+	inner_join(select(db$contigs,contig_id,assembly_id)) |>
+	left_join(ss,by="assembly_id") |>	
+	left_join(db$mlst,by="assembly_id") |>
+	left_join(db$SPECIES,by="assembly_id") |>
+	mutate(mlst_type=replace_na(mlst_type,"?") |> fct_recode("?"="Unknown")) |>
+	group_by(resistance_name,source,species_name) |>
+	summarise(n_assembly = n_distinct(assembly_id)) |>
+	ungroup() |>
+	arrange(desc(resistance_name)) |>
+	left_join(res_pheno,by="resistance_name") |>
+	mutate(res_group=replace_na(res_group,"Other") |> fct_relevel("Other",after=+Inf)) |>
+	mutate(res_subgroup=replace_na(res_subgroup,"-") |> fct_relevel("-",after=+Inf)) |>
+	mutate(resistance_name=fct_reorder(resistance_name,n_assembly,sum))
+
+ggplot(res_count,aes(y=resistance_name,x=n_assembly,fill=species_name)) +
+	facet_grid(res_group+res_subgroup~source,scales="free_y",space="free_y") +
+	geom_col(color="black") +
+	geom_text(aes(label=n_assembly),position = position_stack(vjust=0.5),size=3) +
+	theme_bw() +
+	ggtitle("Resistance Profile") +
+	theme_bw() +
+	theme(legend.position = "top")+
+	theme(
+		panel.spacing = unit(0,"mm"),
+		panel.grid = element_blank(),
+		strip.text.y = element_text(angle = 0),
+		strip.placement = "outside"
+	)
+	
+```
+
+
+# Resistances & plasmid
+```{r fig.height=15, fig.width=6.5}
+ss |>
+	left_join(db$SPECIES,by="assembly_id") |>		
+	left_join(db$mlst,by="assembly_id") |>
+	left_join(db$contigs,by="assembly_id") |>
+	unnest_longer(resistances,values_to = "resistance_name") |>
+	unnest_longer(plasmid_types,values_to = "plasmid_type",keep_empty = TRUE) |>
+	left_join(res_pheno,by="resistance_name") |>
+	mutate(assembly_id=str_glue("{cmu_id} ({assembly_id})")) |>
+	ungroup() |>
+	filter(!is.na(res_subgroup)) |>
+	distinct(source,assembly_id,contig_id,is_plasmid,resistance_name,res_subgroup) |>
+	mutate(contig_id = fct_reorder2_hclust(contig_id,resistance_name,rep_along(contig_id,1),hclust.method = "complete")) |>
+	ggplot(aes(x=resistance_name,y=contig_id)) + 
+		facet_grid(source+assembly_id~res_subgroup,space="free",scales="free") +
+		#scale_y_discrete(drop=FALSE) +
+		geom_tile(aes(fill=is_plasmid)) + 
+		theme(axis.text.x=element_text(angle=45,hjust=1,vjust=1)) + 
+		theme(strip.text.y = element_text(angle = 0)) +
+		theme(panel.spacing = unit(0,"mm"),panel.border = element_rect(color="black",fill = NA)) +
+		theme(legend.position="top") +
+		ylab("contig") + xlab("")
+```
+
+
+# Assembly statistics 
+
+## Overview
+```{r fig.height=3, fig.width=5}
+db$contigs |>
+	group_by(assembly_id) |>
+	summarize(num_contig = n(),assembly_len=sum(contig_length)) |>
+	left_join(db$SPECIES,by="assembly_id") |>
+	ggplot(aes(x=num_contig,y=assembly_len)) + 
+		geom_point(aes(color=genus_name)) + 
+		ggrepel::geom_text_repel(aes(label=assembly_id),size=2) + 
+	  scale_y_continuous(labels = scales::label_number(scale_cut = scales::cut_short_scale())) +
+		theme_bw() + scale_x_log10()
+```
+
+
+## Detailed {.tabset}
+
+
+### Color by genus
+```{r fig.height=15, fig.width=7}
+db$contigs |>
+	left_join(select(ss,assembly_id,run_id)) |>
+	left_join(db$SPECIES)	|>
+	mutate(assembly_id = fct_reorder(assembly_id,contig_length,sum)) |>
+	mutate(contig_id = fct_reorder(contig_id,contig_length,sum)) |>
+	ggplot() + 
+		facet_grid(run_id~.,space = "free_y",scales="free_y") +
+		geom_col(aes(x=contig_length,y=assembly_id,group=contig_id,fill=genus_name),color="black",position="stack") + 
+		scale_x_continuous(position="top",labels = scales::label_number(scale_cut = scales::cut_short_scale())) +
+		theme_bw() + theme(legend.position="top")
+```
+
+
+### Color by plasmid
+
+ Here is a plasmid is defined as a <=500kb sequence with an Inc detected
+
+```{r fig.height=15, fig.width=7}
+db$contigs |>
+	left_join(select(ss,assembly_id,run_id)) |>
+	mutate(assembly_id = fct_reorder(assembly_id,contig_length,sum)) |>
+	mutate(contig_id = fct_reorder(contig_id,contig_length,sum)) |>
+	ggplot() + 
+		facet_grid(run_id~.,space = "free_y",scales="free_y") +
+		geom_col(aes(x=contig_length,y=assembly_id,group=contig_id,fill=is_plasmid),color="black",position="stack") + 
+		scale_x_continuous(position="top",labels = scales::label_number(scale_cut = scales::cut_short_scale())) +
+		theme_bw() + theme(legend.position="top") + labs(fill="plamid")
+```
+
+
+
+
+
+
+
+
+
+# Plasmidfinder typing results 
+
+
+## Inc types overview
+```{r fig.height=9, fig.width=5}
+select(as.data.frame(db$plasmidfinder),contig_id=seqnames,plasmid_type) |>
+	inner_join(select(db$contigs,contig_id,assembly_id,is_plasmid)) |>
+	right_join(select(ss,assembly_id)) |>
+	filter(is_plasmid) |>
+	group_by(plasmid_type) |>
+	summarise(n_assembly = n_distinct(assembly_id)) |>
+	ungroup() |>
+	mutate(plasmid_type=fct_reorder(plasmid_type,n_assembly,mean)) |>
+	ggplot(aes(y=plasmid_type,x=n_assembly)) +
+		geom_col(fill="lightblue",color="black") +
+		geom_text(aes(label=n_assembly),position = position_stack(vjust=0.5),size=3) +
+		scale_x_continuous(position="top") +
+		theme_bw() +
+		ggtitle("Overall Plasmid Type Profile") + xlab("Number of assembly")
+```
+
+## Plasmid size
+```{r}
+db$contigs |>
+	filter(is_plasmid) |>
+	mutate(has_resistance=lengths(resistances)>0) |>
+	ggplot(aes(x=contig_length,y=GC,shape=tag_topology,size=lengths(plasmid_types),color=has_resistance)) +
+		geom_point() + 
+		scale_x_continuous(limits=c(0,500e3),oob=scales::squish,labels = scales::label_number(scale_cut = scales::cut_short_scale())) + 
+		scale_y_continuous(label=scales::percent) + 
+		ggtitle("Size, GC content and topology of plasmids") + 
+		labs(shape="Topology",color="Carry resistance",size="Num. Inc") +
+		xlab("Contig size") + ylab("GC content")
+```
+
+
+
+
+## Compatibility
+```{r fig.height=7, fig.width=8}
+select(as.data.frame(db$plasmidfinder),contig_id=seqnames,plasmid_type) |>
+	inner_join(select(db$contigs,contig_id,assembly_id)) %>%
+	full_join(.,.,by="assembly_id") |>
+	filter(contig_id.x != contig_id.y) |>
+	group_by(plasmid_type.x,plasmid_type.y) |>
+	summarize(n_assembly=n_distinct(assembly_id)) |>
+	arrange(desc(n_assembly)) |>
+	ungroup() |>
+	mutate(plasmid_type.x=fct_reorder2_hclust(plasmid_type.x,plasmid_type.y,n_assembly)) |>
+	mutate(plasmid_type.y=fct_reorder2_hclust(plasmid_type.y,plasmid_type.x,n_assembly)) |>	
+	ggplot(aes(x=plasmid_type.x,y=plasmid_type.y,fill=n_assembly)) +
+		geom_tile() +
+		theme_bw() + 
+		coord_equal() + theme(axis.text.x=element_text(angle=45,hjust=1,vjust=1))
+```
+
+
+
+
+
+
+
+
+
+
+# Plasmids and Resistance {.tabset}
+
+## Overview
+```{r fig.height=9, fig.width=5}
+db$contigs |>
+	left_join(ss,by="assembly_id") |>
+	filter(is_plasmid) |>
+	select(assembly_id,contig_id,contig_length,GC,plasmid_types,resistances,source) |>
+	unnest_longer(resistances,values_to = "resistance_name") |>
+	group_by(resistance_name,source) |>
+	summarize(n_assembly=n_distinct(assembly_id)) |>
+	ungroup() |>
+	left_join(res_pheno,by="resistance_name") |>
+	mutate(res_group=replace_na(res_group,"Other") |> fct_relevel("Other",after=+Inf)) |>
+	mutate(res_subgroup=replace_na(res_subgroup,"-") |> fct_relevel("-",after=+Inf)) |>
+	mutate(resistance_name=fct_reorder(resistance_name,n_assembly,sum)) |>
+	ggplot(aes(y=resistance_name,x=n_assembly)) + 
+		facet_grid(res_group+res_subgroup~source,scales="free",space="free") +
+		geom_col(fill="lightblue",color="black") +
+		geom_text(aes(label=n_assembly),position = position_stack(vjust=0.5),size=3) + 
+		ggtitle("Plasmid resitances") + xlab("Num. sample with a resistant plasmid")
+```
+
+## Color by species of origin
+```{r fig.height=10, fig.width=7}
+db$contigs |>
+	left_join(ss,by="assembly_id") |>
+	filter(is_plasmid) |>
+	select(assembly_id,contig_id,contig_length,GC,plasmid_types,resistances,source) |>
+	left_join(db$mlst,by="assembly_id") |>
+	left_join(db$SPECIES,by="assembly_id") |>
+	unnest_longer(resistances,values_to = "resistance_name") |>
+	group_by(resistance_name,source,species_name) |>
+	summarize(n_assembly=n_distinct(assembly_id)) |>
+	ungroup() |>
+	left_join(res_pheno,by="resistance_name") |>
+	mutate(res_group=replace_na(res_group,"Other") |> fct_relevel("Other",after=+Inf)) |>
+	mutate(res_subgroup=replace_na(res_subgroup,"-") |> fct_relevel("-",after=+Inf)) |>
+	mutate(resistance_name=fct_reorder(resistance_name,n_assembly,sum)) |>
+	ggplot(aes(y=resistance_name,x=n_assembly,fill=species_name)) + 
+		facet_grid(res_group+res_subgroup~source,scales="free",space="free") +
+		geom_col(,color="black") +
+		geom_text(aes(label=n_assembly),position = position_stack(vjust=0.5),size=3) + 
+		ggtitle("Plasmid resitances") + xlab("Num. sample with a resistant plasmid") +
+	theme_bw() +
+	theme(legend.position = "top")+
+	theme(
+		panel.spacing = unit(0,"mm"),
+		panel.grid = element_blank(),
+		strip.text.y = element_text(angle = 0),
+		strip.placement = "outside"
+	)
+```
+
+
+
+
+# Carba+ESLB plasmids map
+
+```{r fig.height=8, fig.width=25}
+roi <- filter(res_pheno,res_subgroup %in% c("Carba","ESBL")) |> pull(resistance_name)
+pl_contigs <- db$contigs |>
+	filter(is_plasmid) |>
+	filter(map_lgl(resistances,~any(. %in% roi))) |>
+	left_join(ss,by="assembly_id") |>
+	left_join(db$SPECIES,by="assembly_id") |>
+	left_join(db$mlst,by="assembly_id") |>
+	mutate(mlst_type=replace_na(mlst_type,"?") |> fct_recode("?"="Unknown")) |>	
+	ungroup() |>
+	mutate(contig_id=fct_reorder(contig_id,contig_length,mean))
+	
+
+p1 <- ggplot(pl_contigs,aes(y=contig_id,x=contig_length)) + 
+		geom_col(fill="grey") + 
+		scale_y_discrete(drop=FALSE) + 
+		ylab("plasmid")
+
+p2 <- ggplot(pl_contigs,aes(y=contig_id,x=species_name)) + 
+		geom_tile(fill="grey") + 
+		geom_text(aes(label=mlst_type),size=3) +
+		scale_y_discrete(drop=FALSE) + ylab("") +
+		theme(axis.text.x=element_text(angle=30,hjust = 1,vjust=1),panel.spacing = unit(0,"mm"))
+
+p3 <- ggplot(pl_contigs,aes(y=contig_id,x=source)) + 
+		geom_tile(fill="grey") +
+		scale_y_discrete(drop=FALSE) + ylab("") +
+		theme(axis.text.x=element_text(angle=30,hjust = 1,vjust=1),panel.spacing = unit(0,"mm"))
+
+p4 <- pl_contigs |>
+	unnest_longer(resistances,values_to = "resistance_name") |>
+	distinct(contig_id,resistance_name) |>
+	ungroup() |>
+	left_join(res_pheno,by="resistance_name") |>
+	mutate(res_group=replace_na(res_group,"Other") |> fct_relevel("Other",after=+Inf)) |>
+	mutate(res_subgroup=replace_na(res_subgroup,"-") |> fct_relevel("-",after=+Inf)) |>
+	mutate(resistance_name=fct_reorder2_hclust(resistance_name,contig_id,rep_along(contig_id,1))) |>
+	ggplot(aes(y=contig_id,x=resistance_name)) + 
+		facet_grid(~res_group+res_subgroup,space="free_x",scales="free_x") +
+		geom_tile(fill="grey") +
+		scale_y_discrete(drop=FALSE) + ylab("")+
+		theme(axis.text.x=element_text(angle=30,hjust = 1,vjust=1),panel.spacing = unit(0,"mm"))
+
+p5 <- pl_contigs |>
+	unnest_longer(plasmid_types,values_to = "plasmid_type") |>
+	distinct(contig_id,plasmid_type) |>
+	ungroup() |>
+	mutate(plasmid_type=fct_reorder2_hclust(plasmid_type,contig_id,rep_along(contig_id,1))) |>
+	ggplot(aes(y=contig_id,x=plasmid_type)) + 
+		geom_tile(fill="grey") +
+		scale_y_discrete(drop=FALSE) + ylab("")+
+		theme(axis.text.x=element_text(angle=30,hjust = 1,vjust=1),panel.spacing = unit(0,"mm"))
+
+
+p1 + p2 + p3 + p4 + p5 + plot_layout(axes="collect",width=c(3,3,1,16,8))
+```
+
+

@@ -6,7 +6,10 @@ library(Biostrings)
 read_runinfo_json <- function(json_file) {
 	#json_file <- "results/samples/r62b17.hdr/runinfo.json"
 	json <- jsonlite::fromJSON(json_file,simplifyVector=FALSE)
-	tibble(json) |> unnest_wider(1) |> unnest_wider(c(meta,org_detection),names_sep=".")
+	tibble(json) |> 
+		unnest_wider(1) |> 
+		unnest_wider(c(meta,org_detection),names_sep=".") |>
+		mutate(across(any_of("org_detection.org_ani"),as.numeric))
 }
 
 
@@ -64,10 +67,12 @@ read_plasmidfinder_json <- function(json_file) {
 
 
 read_mlst_json <- function(json_file) {
+	if (!file.exists(json_file)) return(tibble(mlst_type="?"))
 	#json_file <- "results/samples/r62b17.hdr/mlst/data.json"
 	json <- jsonlite::fromJSON(json_file,simplifyVector=FALSE)
 	json$mlst$results$sequence_type |>
-		enframe(value = "mlst_type",name = NULL)
+		enframe(value = "mlst_type",name = NULL) |>
+		mutate(mlst_type=fct_recode(mlst_type,"?"="Unknown"))
 }
 #fs::dir_ls("results/samples/",glob = "*/mlst",recurse = 1,type = "dir") |> fs::path("data.json") |> tail(1) |> read_mlst_json()
 
@@ -129,38 +134,45 @@ contig_meta <- function(fasta_filename) {
 
 
 db_load <- function(amr_dir) {
-	message("Load contigs metadata (name, length, %GC, tags)")
-	fs::dir_ls(fs::path(amr_dir,"samples"),recurse = 1,glob = "*/assembly.fasta") |>
-		fs::path_dir() |>
-		enframe(name=NULL,value = "basepath") |>
-		mutate(assembly_id=basename(basepath)) |>
-		mutate(runinfo = map(fs::path(basepath,"runinfo.json"),read_runinfo_json)) |>
-		mutate(contigs = map(fs::path(basepath,"assembly.fasta"),contig_meta)) |>
-		mutate(mlst = map(fs::path(basepath,"mlst","data.json"),read_mlst_json)) |>
-		mutate(plasmidfinder = map(fs::path(basepath,"plasmidfinder","data.json"),read_plasmidfinder_json)) |>
-		mutate(resfinder = map(fs::path(basepath,"resfinder","data.json"),read_resfinder_json)) |>
-		mutate(amrfinderplus = map(fs::path(basepath,"amrfinderplus","report.tsv"),read_amrfinderplus_tsv)) |>		
-		mutate(mobtyper = map(fs::path(basepath,"mobtyper.tsv"),read_mobtyper_tsv))
+	list(
+		tax = read_tsv(fs::path(amr_dir,"db/org_db/db_tax.tsv")),
+		assemblies = fs::dir_ls(fs::path(amr_dir,"samples"),recurse = 1,glob = "*/assembly.fasta") |>
+			fs::path_dir() |>
+			enframe(name=NULL,value = "basepath") |>
+			mutate(assembly_id=basename(basepath)) |>
+			mutate(runinfo = map(fs::path(basepath,"runinfo.json"),read_runinfo_json)) |>
+			mutate(contigs = map(fs::path(basepath,"assembly.fasta"),contig_meta)) |>
+			mutate(mlst = map(fs::path(basepath,"mlst","data.json"),read_mlst_json)) |>
+			mutate(plasmidfinder = map(fs::path(basepath,"plasmidfinder","data.json"),read_plasmidfinder_json)) |>
+			mutate(resfinder = map(fs::path(basepath,"resfinder","data.json"),read_resfinder_json)) |>
+			mutate(amrfinderplus = map(fs::path(basepath,"amrfinderplus","report.tsv"),read_amrfinderplus_tsv)) |>		
+			mutate(mobtyper = map(fs::path(basepath,"mobtyper.tsv"),read_mobtyper_tsv))
+	)
 }
 
 
 summarise_assembly <- function(db) {
 	#db <- db_load("results") 
-	assemlbies <- select(db,assembly_id,contigs) |> unnest(contigs) |> group_by(assembly_id) |> summarise(num_contig=n(),assembly_length=sum(contig_length)) 
-	mlst <- select(db,assembly_id,mlst) |> unnest(mlst) 
-	runinfo <- select(db,assembly_id,runinfo) |> unnest(runinfo) 
+	assemlbies <- db |> pluck("assemblies") |> select(assembly_id,contigs) |> unnest(contigs) |> group_by(assembly_id) |> summarise(num_contig=n(),assembly_length=sum(contig_length)) 
+	mlst <- db |> pluck("assemblies") |> select(assembly_id,mlst) |> unnest(mlst) 
+	runinfo <- db |> pluck("assemblies") |> select(assembly_id,runinfo) |> unnest(runinfo) 
+	tax <- db |> pluck("tax") |> select(org_name,species_name,genus_name)
 	assemlbies |>
 		left_join(runinfo,by="assembly_id",relationship = "one-to-one")	|>
-		left_join(mlst,by="assembly_id",relationship = "one-to-one")
+		left_join(mlst,by="assembly_id",relationship = "one-to-one") |>
+		left_join(tax,by="org_name",relationship = "many-to-one") |>
+		left_join(tax,by=c("org_detection.org_name"="org_name"),relationship = "many-to-one",suffix = c("",".detected"))
 }
 
 summarise_resistances <- function(db) {
 	#db <- db_load("results")
 	bind_rows(
-		resfinder = select(db,assembly_id,resfinder) |> 
+		resfinder = db |> pluck("assemblies") |> 
+			select(assembly_id,resfinder) |> 
 			unnest(resfinder) |>
 			select(assembly_id,contig_id,resistance_name,coverage,identity,position),
-		amrfinderplus = select(db,assembly_id,amrfinderplus) |> 
+		amrfinderplus = db |> pluck("assemblies") |> 
+			select(assembly_id,amrfinderplus) |> 
 			unnest(amrfinderplus) |>
 			select(assembly_id,contig_id,resistance_name,coverage,identity,position),
 		.id = "source"
@@ -172,16 +184,19 @@ summarise_resistances <- function(db) {
 
 summarise_contigs <- function(db) {
 	#db <- db_load("results") 
-	contigs <- select(db,assembly_id,contigs) |> 
+	contigs <- db |> pluck("assemblies") |> 
+		select(assembly_id,contigs) |> 
 		unnest(contigs)
 	res <- summarise_resistances(db) |>
 		group_by(assembly_id,contig_id) |>
 		summarise(resistance_names = list(resistance_name))
-	plf <- select(db,assembly_id,plasmidfinder) |> 
+	plf <- db |> pluck("assemblies") |> 
+		select(assembly_id,plasmidfinder) |> 
 		unnest(plasmidfinder) |>
 		group_by(assembly_id,contig_id) |>
 		summarise(plasmid_types=list(plasmid_type))
-	mob <- select(db,assembly_id,mobtyper) |> 
+	mob <- db |> pluck("assemblies") |> 
+		select(assembly_id,mobtyper) |> 
 		unnest(mobtyper) |>
 		mutate(relaxase_types=str_split(relaxase_types,",")) |>
 		select(assembly_id,contig_id,relaxase_types)

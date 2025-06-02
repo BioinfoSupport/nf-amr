@@ -108,12 +108,13 @@ nf-core pipelines create --name americ -a "J. Prados" --organisation "amr-genomi
 
 
 # TODO:
- - add sample sheet from CSV file (with id, org_name)
-
  - OrgDB and Org detection
    * custom ord_db is not functional yet because it uses absolute path
    * add module to generate db_tax.tsv
- 
+
+ - Rename species_profiler en orgfinder
+ - Setup all tools so they use external DB given in param: orgfinder, plasmidfinder, resfinder, amrfinder, mlst
+ - add sample sheet from CSV file (with id, org_name)
  - add multi-reporting / aggregator (which include independant report)
 
  - add ISfinder annotations (mobile elements)
@@ -121,7 +122,6 @@ nf-core pipelines create --name americ -a "J. Prados" --organisation "amr-genomi
  - add hybracter assembly ?
  - add cgMLST analysis
  - add plasmid cgMLST
- 
  - après assemblage ajouter les mapping des reads sur l'assemblage 
  
  

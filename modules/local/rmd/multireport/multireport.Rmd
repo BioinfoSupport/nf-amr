@@ -1,0 +1,122 @@
+---
+title: "QC"
+author: "`r Sys.getenv('USER')`"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  html_document:
+    code_download: true
+    code_folding: hide
+    toc: true
+    toc_float: true
+    fig_caption: true
+params:
+    indir: "../../../../results"
+    outdir: "out/qc_oxa48_r88"
+---
+
+```{r setup}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = TRUE,
+	warning = TRUE
+)
+```
+
+
+```{r include=FALSE}
+library(tidyverse)
+library(BiocParallel)
+library(gt)
+library(patchwork)
+BiocParallel::register(BiocParallel::MulticoreParam(workers=6,progress=TRUE))
+source("lib_typing.R")
+```
+
+
+```{r include=FALSE}
+db <- db_load(params$indir)
+assemblies <- summarise_assembly(db)
+contigs <- summarise_contigs(db) |>
+	mutate(is_plasmid = (contig_length<=500000) & lengths(plasmid_types)>0)
+```
+
+
+# Summary
+```{r}
+message(str_glue("Number of assembly: {nrow(assemblies)}"))
+message(str_glue("Total number of contig: {nrow(contigs)}"))
+```
+
+
+# Assembly typing {.tabset}
+
+## Overview
+```{r,fig.height=4, fig.width=8}
+assemblies |>
+	group_by(genus_name,species_name,mlst_type) |>
+	count() |>
+	arrange(species_name,mlst_type) |>
+	rowid_to_column() |>
+	ggplot(aes(y=species_name,x=n,fill=mlst_type)) +
+		facet_grid(genus_name~.,space="free",scales = "free") + 
+		geom_col(color="black") +
+		geom_text(aes(label=mlst_type),position = position_stack(vjust=0.5),size=3,angle=90) +
+		theme_bw() +
+		theme(legend.position = "none")+
+		theme(
+			panel.spacing = unit(0,"mm"),
+			panel.grid = element_blank(),
+			strip.text.y = element_text(angle = 0),
+			strip.placement = "outside"
+		) + 
+		xlab("Num. sample") + ylab("")
+```
+
+## Table
+```{r}
+assemblies |>
+	select(assembly_id,num_contig,assembly_length,species_name,mlst_type,detected.species_name=species_name.detected,detected.ANI=org_detection.org_ani) |>
+	group_by(species_name) |>
+	gt::gt(row_group_as_column=TRUE,caption = "Assemblies overview") |>
+	gt::tab_stubhead("Species Name")  |>
+	gt::tab_style(list(gt::cell_text(weight="bold"),gt::cell_fill()),locations=gt::cells_column_labels()) |>
+	gt::tab_style(list(gt::cell_text(weight="bold"),gt::cell_fill()),locations=gt::cells_stubhead()) |>		
+	gt::fmt_number(c(assembly_length),decimals = 0,pattern="{x} bp") |>
+	gt::fmt_number(c(detected.ANI),decimals = 1,pattern="{x}%") |>
+	gt::tab_style(list(gt::cell_fill(color = "tomato")),locations=gt::cells_body(detected.ANI,rows = detected.ANI<=97)) |>
+	gt::tab_style(list(gt::cell_fill(color = "tomato")),locations=gt::cells_body(detected.species_name,rows = detected.species_name!=species_name))
+```
+
+
+
+
+# Assembly QC {.tabset}
+
+## Overview
+```{r}
+assemblies |>
+    ggplot(aes(x=num_contig,y=assembly_length)) + 
+        geom_point(aes(color=genus_name)) + 
+        ggrepel::geom_text_repel(aes(label=assembly_id),size=2) + 
+      	scale_y_continuous(labels = scales::label_number(scale_cut = scales::cut_short_scale())) +
+        theme_bw() + scale_x_log10()
+```
+
+
+## Detail
+```{r}
+contigs |>
+	left_join(select(assemblies,assembly_id,species_name,genus_name),by="assembly_id") |>
+  mutate(assembly_id = fct_reorder(assembly_id,contig_length,sum)) |>
+  mutate(contig_id = fct_reorder(contig_id,contig_length,sum)) |>
+  ggplot() + 
+      facet_grid(genus_name~.,space = "free_y",scales="free_y") +
+      geom_col(aes(x=contig_length,y=assembly_id,group=contig_id,fill=is_plasmid),color="black",position="stack") + 
+      scale_x_continuous(position="top",labels = scales::label_number(scale_cut = scales::cut_short_scale())) +
+      theme_bw() + theme(legend.position="top") +
+			theme(strip.text.y = element_text(angle=0))
+```
+
+
+
+
