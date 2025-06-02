@@ -42,10 +42,10 @@ library(tidygraph)
 
 # Load NCBI taxonomy
 read_tax <- function() {
-	SN <- read_tsv("taxdump/names.dmp",col_names = c("tax_id","tax_name","name_class"),col_types="c_c___c_") |> 
+	SN <- read_tsv("genomes/taxdump/names.dmp",col_names = c("tax_id","tax_name","name_class"),col_types="c_c___c_") |> 
 		filter(name_class=="scientific name") |>
 		mutate(name_class=NULL)
-	N <- read_tsv("taxdump/nodes.dmp",col_names = c("tax_id","parent","rank"),col_types="c_c_c_____________________") |>
+	N <- read_tsv("genomes/taxdump/nodes.dmp",col_names = c("tax_id","parent","rank"),col_types="c_c_c_____________________") |>
 		left_join(SN,by="tax_id",relationship="one-to-one")
 	tax <- tbl_graph(N,select(N,parent,tax_id),node_key = "tax_id")
 	tax

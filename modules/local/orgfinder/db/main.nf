@@ -1,8 +1,8 @@
 
 process ORGFINDER_DB_DOWNLOAD_GENOMES {
-		container 'docker.io/staphb/ncbi-datasets:16.30.0'
-		memory '6 GB'
-		cpus 1
+		container 'docker.io/staphb/ncbi-datasets:18.0.2'
+		memory '8 GB'
+		cpus 2
 		output:
 		    path("genomes", type: 'dir')
 		script:
@@ -32,12 +32,12 @@ wget https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz && mkdir -p genome
 }
 
 
-
 process ORGFINDER_DB_BUILD {
+	  container "registry.gitlab.unige.ch/amr-genomics/rscript:main"
 		memory '6 GB'
 		cpus 1
 		input:
-		    path("genomes", type: 'dir')
+		    path("genomes")
 		output:
 		    path("db", type: 'dir')
 		script:
@@ -47,8 +47,11 @@ process ORGFINDER_DB_BUILD {
 }
 
 workflow ORGFINDER_DB {
-	ORGFINDER_DB_DOWNLOAD_GENOMES 
-	| ORGFINDER_DB_BUILD
+  main:
+		ORGFINDER_DB_DOWNLOAD_GENOMES 
+		| ORGFINDER_DB_BUILD
+  emit:
+    db = ORGFINDER_DB_BUILD.out
 }
 
 
