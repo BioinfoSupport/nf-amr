@@ -33,13 +33,13 @@ process ORGFINDER_FASTANI_REFORMAT {
 		    #!/usr/bin/env Rscript
 		    db <- readr::read_tsv("org_db/db.tsv",col_types = "ccc")
 				ani <- readr::read_tsv('fastANI.tsv',col_names = c('query','ref','ANI','bi_frag','query_frag')) |>
-						mutate(assembly_acc = str_replace(basename(ref),".fna$",""),ref=NULL) |>
+						mutate(assembly_acc = str_replace(basename(ref),".fna\$",""),ref=NULL) |>
 						left_join(db,by="assembly_acc",relationship="many-to-one") |>
 						relocate(query,assembly_acc)
 				readr::write_tsv(ani,file='org.ani')
 		    ani |> 
 		    	dplyr::slice_max(ANI,n=1,with_ties = FALSE) |>
-          group_walk(~{Sys.setenv(ORG_ANI=.x$ANI,ORG_ACC=.x$assembly_acc,ORG_NAME=.x$org_name)})
+          group_walk(~{Sys.setenv(ORG_ANI=.x\$ANI,ORG_ACC=.x\$assembly_acc,ORG_NAME=.x\$org_name)})
 		    """
 }
 
@@ -50,7 +50,7 @@ workflow ORGFINDER_DETECT {
     		org_db   // path to orgfinder_db
     main:
 		    fastani = ORGFINDER_FASTANI_RUN(fa_ch,org_db)
-		    orgfinder = ORGFINDER_FASTANI_REFORMAT(fastani.all_ani,org_db)
+		    orgfinder = ORGFINDER_FASTANI_REFORMAT(fastani,org_db)
 		emit:
 		    all_ani   = orgfinder.all_ani  // channel: [ val(meta), path(resfinder) ]
 		    org_name  = orgfinder.org_name // channel: [ val(meta), path(fai) ]

@@ -2,10 +2,11 @@
 
 nextflow.preview.output = true
 
-params.orgfinder_db = "data/orgfinder_db"
+params.orgfinder_db = "data/db/org_db"
 
 include { ASSEMBLE_READS } from './workflows/assemble_reads'
-include { ORGFINDER_DB } from './modules/local/orgfinder/db'
+//include { ORGFINDER_DB } from './modules/local/orgfinder/db'
+//include { ORGFINDER_DETECT } from './modules/local/orgfinder/detect'
 include { ANNOTATE_ASSEMBLY } from './workflows/annotate_assembly'
 include { MULTI_REPORT } from './workflows/multi_report'
 include { validateParameters; paramsSummaryLog; samplesheetToList } from 'plugin/nf-schema'
@@ -27,16 +28,18 @@ workflow {
 			//ch_input = Channel.fromList(samplesheetToList(params.samplesheet, "assets/schema_input.json"))
 			//ASSEMBLE_READS(Channel.empty())
 			
-			if (params.orgfinder_db) {
-				orgfinder_db = file(params.orgfinder_db, checkIfExists:true)
-			} else {
-				orgfinder_db = ORGFINDER_DB()
-			}
-			
 			fa_ch = Channel.fromPath(params.input)
 					.map({x -> tuple(["id":x.baseName],x)})
-			amr_ch = ANNOTATE_ASSEMBLY(fa_ch)
 
+/*
+			if (params.orgfinder_db) {
+					orgfinder_db = file(params.orgfinder_db, checkIfExists:true)
+			} else {
+					orgfinder_db = ORGFINDER_DB()
+			}
+			ORGFINDER_DETECT(fa_ch,orgfinder_db)
+*/
+			amr_ch = ANNOTATE_ASSEMBLY(fa_ch)
 			
 			MULTI_REPORT(amr_ch.runinfo)
 			
