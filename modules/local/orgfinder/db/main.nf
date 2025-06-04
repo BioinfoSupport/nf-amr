@@ -1,6 +1,6 @@
 
-process ORG_DB {
-		container 'registry.gitlab.unige.ch/amr-genomics/species_profiler:main'
+process ORGFINDER_DB {
+		container 'registry.gitlab.unige.ch/amr-genomics/orgfinder:main'
 		memory '2 GB'
 		cpus 1
 		output:

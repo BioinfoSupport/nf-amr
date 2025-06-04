@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 
-include { ORG_DB        } from '../modules/local/org/db'
-include { ORG_DETECT       } from '../modules/local/org/detect'
+include { ORGFINDER_DB        } from '../modules/local/orgfinder/db'
+include { ORGFINDER_DETECT       } from '../modules/local/orgfinder/detect'
 
 include { AMRFINDERPLUS_UPDATE } from '../modules/local/amrfinderplus/update'
 include { AMRFINDERPLUS_RUN } from '../modules/local/amrfinderplus/run'
@@ -107,9 +107,9 @@ workflow ANNOTATE_ASSEMBLY {
 	      // Tools specific to an organism
 	      // ----------------------------------------------------
 				// Run organism detection on all assemblies (no matter if it is known or not)
-				ORG_DB()
+				ORGFINDER_DB()
 				//detected_org_ch = ORG_DETECT(fa_ch.filter({meta,fa -> org_name(meta)==null}),ORG_DB.out)
-				detected_org_ch = ORG_DETECT(fa_ch,ORG_DB.out)
+				detected_org_ch = ORGFINDER_DETECT(fa_ch,ORGFINDER_DB.out)
 				
 				// Update fa_ch to add detected organism
 				fa_org_ch = fa_ch
@@ -183,7 +183,7 @@ workflow ANNOTATE_ASSEMBLY {
 				resfinder        = resfinder_ch     // channel: [ val(meta), path(resfinder) ]
 				mobtyper         = mobtyper_ch      // channel: [ val(meta), path(mobtyper) ]
         org_ani          = detected_org_ch.all_ani // channel: [ val(meta), val(org_name) ]
-        org_db           = ORG_DB.out // channel: path(org_db) ]
+        org_db           = ORGFINDER_DB.out // channel: path(org_db) ]
 				plasmidfinder    = plf_ch     // channel: [ val(meta), path(plasmidfinder) ]
 				mlst             = mlst_ch    // channel: [ val(meta), path(mlst) ]
 				report_html      = report_ch  // channel: [ val(meta), path(html) ]
