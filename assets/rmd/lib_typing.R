@@ -140,8 +140,7 @@ contig_meta <- function(fasta_filename) {
 
 
 db_load <- function(amr_dir) {
-	list(
-		assemblies = fs::dir_ls(fs::path(amr_dir,"samples"),recurse = 1,glob = "*/assembly.fasta") |>
+	fs::dir_ls(amr_dir,recurse = 1,glob = "*/assembly.fasta") |>
 			fs::path_dir() |>
 			enframe(name = NULL,value = "basepath") |>
 			mutate(assembly_id = basename(basepath)) |>
@@ -153,16 +152,15 @@ db_load <- function(amr_dir) {
 			mutate(resfinder = map(fs::path(basepath,"resfinder","data.json"),read_resfinder_json)) |>
 			mutate(amrfinderplus = map(fs::path(basepath,"amrfinderplus","report.tsv"),read_amrfinderplus_tsv)) |>		
 			mutate(mobtyper = map(fs::path(basepath,"mobtyper.tsv"),read_mobtyper_tsv))
-	)
 }
 
 
 summarise_assembly <- function(db) {
 	#db <- db_load("results") 
-	assemlbies <- db |> pluck("assemblies") |> select(assembly_id,contigs) |> unnest(contigs) |> group_by(assembly_id) |> summarise(num_contig=n(),assembly_length=sum(contig_length)) 
-	mlst <- db |> pluck("assemblies") |> select(assembly_id,mlst) |> unnest(mlst)
-	runinfo <- db |> pluck("assemblies") |> select(assembly_id,runinfo) |> unnest(runinfo) 
-	orgfinder <- db |> pluck("assemblies") |> select(assembly_id,orgfinder) |> unnest(orgfinder) |> select(assembly_id,org_name,species_name,genus_name)
+	assemlbies <- db |> select(assembly_id,contigs) |> unnest(contigs) |> group_by(assembly_id) |> summarise(num_contig=n(),assembly_length=sum(contig_length)) 
+	mlst <- db |> select(assembly_id,mlst) |> unnest(mlst)
+	runinfo <- db |> select(assembly_id,runinfo) |> unnest(runinfo) 
+	orgfinder <- db |> select(assembly_id,orgfinder) |> unnest(orgfinder) |> select(assembly_id,org_name,species_name,genus_name)
 	assemlbies |>
 		left_join(runinfo,by="assembly_id",relationship = "one-to-one")	|>
 		left_join(mlst,by="assembly_id",relationship = "one-to-one") |>
@@ -173,11 +171,11 @@ summarise_assembly <- function(db) {
 summarise_resistances <- function(db) {
 	#db <- db_load("results")
 	bind_rows(
-		resfinder = db |> pluck("assemblies") |> 
+		resfinder = db |> 
 			select(assembly_id,resfinder) |> 
 			unnest(resfinder) |>
 			select(assembly_id,contig_id,resistance_name,coverage,identity,position),
-		amrfinderplus = db |> pluck("assemblies") |> 
+		amrfinderplus = db |> 
 			select(assembly_id,amrfinderplus) |> 
 			unnest(amrfinderplus) |>
 			select(assembly_id,contig_id,resistance_name,coverage,identity,position),
@@ -190,18 +188,18 @@ summarise_resistances <- function(db) {
 
 summarise_contigs <- function(db) {
 	#db <- db_load("results") 
-	contigs <- db |> pluck("assemblies") |> 
+	contigs <- db |> 
 		select(assembly_id,contigs) |> 
 		unnest(contigs)
 	res <- summarise_resistances(db) |>
 		group_by(assembly_id,contig_id) |>
 		summarise(resistance_names = list(resistance_name))
-	plf <- db |> pluck("assemblies") |> 
+	plf <- db |> 
 		select(assembly_id,plasmidfinder) |> 
 		unnest(plasmidfinder) |>
 		group_by(assembly_id,contig_id) |>
 		summarise(plasmid_types=list(plasmid_type))
-	mob <- db |> pluck("assemblies") |> 
+	mob <- db |> 
 		select(assembly_id,mobtyper) |> 
 		unnest(mobtyper) |>
 		mutate(relaxase_types=str_split(relaxase_types,",")) |>

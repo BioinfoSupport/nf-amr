@@ -1,6 +1,7 @@
 
 process RMD_RENDER {
 	  container "registry.gitlab.unige.ch/amr-genomics/rscript:main"
+	  errorStrategy 'ignore'
     memory '8 GB'
     cpus 2
     input:

@@ -31,72 +31,23 @@ workflow {
 			amr_ch = ANNOTATE_ASSEMBLY(fa_ch)
 
 	publish:
-	    fa_ch                   >> 'assembly_fa'
-			amr_ch.runinfo          >> 'runinfo'
-			amr_ch.faidx            >> 'faidx'
-			amr_ch.resfinder        >> 'resfinder'
-			amr_ch.mobtyper         >> 'mobtyper'
-			amr_ch.orgfinder        >> 'orgfinder'
-			amr_ch.plasmidfinder    >> 'plasmidfinder'
-			amr_ch.mlst             >> 'mlst'
+			amr_ch.results          >> 'results'
 			amr_ch.report_html      >> 'report_html'
-			amr_ch.prokka           >> 'prokka'
-			amr_ch.amrfinderplus_db >> 'amrfinderplus_db'
-			amr_ch.amrfinderplus    >> 'amrfinderplus'
 }
 
 
 output {
-	amrfinderplus_db {
-		path({x -> {filename -> "db/${filename}"}})
-		mode 'copy'
-	}
 
-	orgfinder {
-		path({x -> {filename -> "samples/${x[0].id}/${filename}"}})
-		mode 'copy'
-	}
-	resfinder {
-		path({x -> {filename -> "samples/${x[0].id}/${filename}"}})
-		mode 'copy'
-	}
-	mobtyper {
-		path({x -> {filename -> "samples/${x[0].id}/${filename}"}})
-		mode 'copy'
-	}
-	prokka {
-		path({x -> {filename -> "samples/${x[0].id}/${filename}"}})
-		mode 'copy'
-	}	
-	plasmidfinder {
-		path({x -> {filename -> "samples/${x[0].id}/${filename}"}})
-		mode 'copy'
-	}
-	mlst {
-		path({x -> {filename -> "samples/${x[0].id}/${filename}"}})
-		mode 'copy'
-	}
-	report_html {
-		path({x -> {filename -> "samples/${x[0].id}/${filename}"}})
-		mode 'copy'
-	}
-	runinfo {
-		path({x -> {filename -> "samples/${x[0].id}/runinfo.json"}})
-		mode 'copy'
-	}
-	assembly_fa {
-		path({x -> {filename -> "samples/${x[0].id}/assembly.fasta"}})
-		mode 'copy'
-	}
-	faidx {
-		path({x -> {filename -> "samples/${x[0].id}/assembly.fasta.fai"}})
+	results {
+		path({x -> {filename -> "samples}"}})
 		mode 'copy'
 	}
 	
-	amrfinderplus {
-		path({x -> {filename -> "samples/${x[0].id}/${filename}"}})
+	report_html {
+		path({x -> {filename -> "multireport.html"}})
 		mode 'copy'
 	}
+	
 } // required to publish the output !
 
 

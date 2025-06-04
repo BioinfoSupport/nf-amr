@@ -176,20 +176,10 @@ workflow ANNOTATE_ASSEMBLY {
 					file("assets/rmd/multireport.Rmd"),
 					file("assets/rmd/lib_typing.R")
 				)
-				//report_ch = Channel.empty()
 				
 		emit:
-				faidx            = fai_ch             // channel: [ val(meta), path(fai) ]
-				orgfinder        = orgfinder_ch.orgfinder // channel: [ val(meta), val(org_name) ]
-		    runinfo          = runinfo_ch         // channel: [ val(meta), path(resfinder) ]
-		    amrfinderplus_db = amrfinderplus_db   // channel: path(amrfinderplus_db) ]
-		    amrfinderplus    = amrfinderplus_ch   // channel: val(meta), path(amrfinderplus) ]
-				resfinder        = resfinder_ch       // channel: [ val(meta), path(resfinder) ]
-				mobtyper         = mobtyper_ch        // channel: [ val(meta), path(mobtyper) ]
-				plasmidfinder    = plasmidfinder_ch   // channel: [ val(meta), path(plasmidfinder) ]
-				mlst             = mlst_ch            // channel: [ val(meta), path(mlst) ]
-		    prokka           = prokka_ch          // channel: [ val(meta), path(prokka) ]
-		    report_html      = report_ch          // channel: [ val(meta), path(html) ]
+				results     = results_ch
+		    report_html = report_ch          // channel: [ val(meta), path(html) ]
 }
 	
 
