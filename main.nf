@@ -4,9 +4,9 @@ nextflow.preview.output = true
 
 params.orgfinder_db = "data/db/org_db"
 
-include { ASSEMBLE_READS } from './workflows/assemble_reads'
+include { ASSEMBLE_READS    } from './workflows/assemble_reads'
 include { ANNOTATE_ASSEMBLY } from './workflows/annotate_assembly'
-include { MULTI_REPORT } from './workflows/multi_report'
+include { MULTI_REPORT      } from './workflows/multi_report'
 include { validateParameters; paramsSummaryLog; samplesheetToList } from 'plugin/nf-schema'
 
 workflow {
@@ -32,32 +32,31 @@ workflow {
 			MULTI_REPORT(amr_ch.runinfo)
 			
 	publish:
-			amr_ch.runinfo >> 'runinfo'
-			amr_ch.faidx >> 'faidx'
-			amr_ch.resfinder >> 'resfinder'
-			amr_ch.mobtyper >> 'mobtyper'
-			amr_ch.org_ani >> 'org_ani'
-			amr_ch.org_db >> 'org_db'
-			amr_ch.plasmidfinder >> 'plasmidfinder'
-			amr_ch.mlst >> 'mlst'
-			amr_ch.report_html >> 'report_html'
-			amr_ch.prokka >> 'prokka'
+	    fa_ch                   >> 'assembly_fa'
+			amr_ch.runinfo          >> 'runinfo'
+			amr_ch.faidx            >> 'faidx'
+			amr_ch.resfinder        >> 'resfinder'
+			amr_ch.mobtyper         >> 'mobtyper'
+			amr_ch.orgfinder        >> 'orgfinder'
+			amr_ch.plasmidfinder    >> 'plasmidfinder'
+			amr_ch.mlst             >> 'mlst'
+			amr_ch.report_html      >> 'report_html'
+			amr_ch.prokka           >> 'prokka'
 			amr_ch.amrfinderplus_db >> 'amrfinderplus_db'
-			amr_ch.amrfinderplus >> 'amrfinderplus'
-			fa_ch >> 'assembly_fa'
+			amr_ch.amrfinderplus    >> 'amrfinderplus'
 }
 
 
 output {
-	org_db {
-		path({x -> {filename -> "db/${filename}"}})
-		mode 'copy'
-	}
 	amrfinderplus_db {
 		path({x -> {filename -> "db/${filename}"}})
 		mode 'copy'
 	}
-	
+
+	orgfinder {
+		path({x -> {filename -> "samples/${x[0].id}/${filename}"}})
+		mode 'copy'
+	}
 	resfinder {
 		path({x -> {filename -> "samples/${x[0].id}/${filename}"}})
 		mode 'copy'
@@ -75,10 +74,6 @@ output {
 		mode 'copy'
 	}
 	mlst {
-		path({x -> {filename -> "samples/${x[0].id}/${filename}"}})
-		mode 'copy'
-	}
-	org_ani {
 		path({x -> {filename -> "samples/${x[0].id}/${filename}"}})
 		mode 'copy'
 	}

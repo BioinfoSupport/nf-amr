@@ -8,3 +8,4 @@ data/
 .nextflow*
 results
 *.Rproj
+*.html

@@ -1,7 +1,6 @@
 #!/usr/bin/env nextflow
 
-include { ORGFINDER_DB        } from '../modules/local/orgfinder/db'
-include { ORGFINDER_DETECT       } from '../modules/local/orgfinder/detect'
+include { ORGFINDER_DETECT    } from '../modules/local/orgfinder/detect'
 
 include { AMRFINDERPLUS_UPDATE } from '../modules/local/amrfinderplus/update'
 include { AMRFINDERPLUS_RUN } from '../modules/local/amrfinderplus/run'
@@ -106,10 +105,8 @@ workflow ANNOTATE_ASSEMBLY {
 	      // ----------------------------------------------------
 	      // Tools specific to an organism
 	      // ----------------------------------------------------
-				// Run organism detection on all assemblies (no matter if it is known or not)
-				ORGFINDER_DB()
 				//detected_org_ch = ORG_DETECT(fa_ch.filter({meta,fa -> org_name(meta)==null}),ORG_DB.out)
-				detected_org_ch = ORGFINDER_DETECT(fa_ch,ORGFINDER_DB.out)
+				detected_org_ch = ORGFINDER_DETECT(fa_ch)
 				
 				// Update fa_ch to add detected organism
 				fa_org_ch = fa_ch
@@ -175,18 +172,17 @@ workflow ANNOTATE_ASSEMBLY {
 				report_ch = Channel.empty()
 				
 		emit:
-		    runinfo          = runinfo_json_ch  // channel: [ val(meta), path(resfinder) ]
+		    runinfo          = runinfo_json_ch    // channel: [ val(meta), path(resfinder) ]
 		    faidx            = SAMTOOLS_FAIDX.out // channel: [ val(meta), path(fai) ]
-		    prokka           = prokka_ch        // channel: [ val(meta), path(prokka) ]
-		    amrfinderplus_db = amrfinderplus_db // channel: path(amrfinderplus_db) ]
-		    amrfinderplus    = amrfinderplus_ch // channel: val(meta), path(amrfinderplus) ]
-				resfinder        = resfinder_ch     // channel: [ val(meta), path(resfinder) ]
-				mobtyper         = mobtyper_ch      // channel: [ val(meta), path(mobtyper) ]
-        org_ani          = detected_org_ch.all_ani // channel: [ val(meta), val(org_name) ]
-        org_db           = ORGFINDER_DB.out // channel: path(org_db) ]
-				plasmidfinder    = plf_ch     // channel: [ val(meta), path(plasmidfinder) ]
-				mlst             = mlst_ch    // channel: [ val(meta), path(mlst) ]
-				report_html      = report_ch  // channel: [ val(meta), path(html) ]
+		    prokka           = prokka_ch          // channel: [ val(meta), path(prokka) ]
+		    amrfinderplus_db = amrfinderplus_db   // channel: path(amrfinderplus_db) ]
+		    amrfinderplus    = amrfinderplus_ch   // channel: val(meta), path(amrfinderplus) ]
+				resfinder        = resfinder_ch       // channel: [ val(meta), path(resfinder) ]
+				mobtyper         = mobtyper_ch        // channel: [ val(meta), path(mobtyper) ]
+				plasmidfinder    = plf_ch             // channel: [ val(meta), path(plasmidfinder) ]
+				mlst             = mlst_ch            // channel: [ val(meta), path(mlst) ]
+				report_html      = report_ch          // channel: [ val(meta), path(html) ]
+				orgfinder        = detected_org_ch.orgfinder // channel: [ val(meta), val(org_name) ]
 }
 	
 
