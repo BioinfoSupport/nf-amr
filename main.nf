@@ -39,7 +39,7 @@ workflow {
 output {
 
 	results {
-		path({x -> {filename -> "samples}"}})
+		path({x -> {filename -> "samples"}})
 		mode 'copy'
 	}
 	
