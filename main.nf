@@ -6,7 +6,7 @@ params.orgfinder_db = "data/db/org_db"
 
 include { ASSEMBLE_READS    } from './workflows/assemble_reads'
 include { ANNOTATE_ASSEMBLY } from './workflows/annotate_assembly'
-include { MULTI_REPORT      } from './workflows/multi_report'
+include { RMD_RENDER        } from './modules/local/rmd/render'
 include { validateParameters; paramsSummaryLog; samplesheetToList } from 'plugin/nf-schema'
 
 workflow {
@@ -29,8 +29,7 @@ workflow {
 			fa_ch = Channel.fromPath(params.input)
 					.map({x -> tuple(["id":x.baseName],x)})
 			amr_ch = ANNOTATE_ASSEMBLY(fa_ch)
-			MULTI_REPORT(amr_ch.runinfo)
-			
+
 	publish:
 	    fa_ch                   >> 'assembly_fa'
 			amr_ch.runinfo          >> 'runinfo'

@@ -13,7 +13,8 @@ include { MOBTYPER_RUN      } from '../modules/local/mobsuite/mobtyper'
 
 include { TO_JSON           } from '../modules/local/tojson'
 include { SAMTOOLS_FAIDX    } from '../modules/local/samtools/faidx'
-//include { RMD_RENDER        } from '../modules/local/rmd/render'
+include { RMD_RENDER        } from '../modules/local/rmd/render'
+include { COLLECT_FILES     } from '../modules/local/collect_files'
 
 params.skip_prokka = true
 
@@ -58,6 +59,7 @@ def tool_args(tool_name, meta, org_name=null) {
 }
 
 
+
 workflow ANNOTATE_ASSEMBLY {
 		take:
 	    	fa_ch    // channel: [ val(meta), path(assembly_fna) ]
@@ -66,7 +68,7 @@ workflow ANNOTATE_ASSEMBLY {
 	      // ---------------------------------------------------------------------
 	      // Tools that can run directly on a FASTA witout specifying an organism
 	      // ---------------------------------------------------------------------
-				SAMTOOLS_FAIDX(fa_ch)
+				fai_ch = SAMTOOLS_FAIDX(fa_ch)
 	      
 				// CGE - RESFINDER
 				if (skip_tool('resfinder')) {
@@ -105,19 +107,19 @@ workflow ANNOTATE_ASSEMBLY {
 	      // ----------------------------------------------------
 	      // Tools specific to an organism
 	      // ----------------------------------------------------
-				//detected_org_ch = ORG_DETECT(fa_ch.filter({meta,fa -> org_name(meta)==null}),ORG_DB.out)
-				detected_org_ch = ORGFINDER_DETECT(fa_ch)
+				//orgfinder_ch = ORG_DETECT(fa_ch.filter({meta,fa -> org_name(meta)==null}),ORG_DB.out)
+				orgfinder_ch = ORGFINDER_DETECT(fa_ch)
 				
 				// Update fa_ch to add detected organism
 				fa_org_ch = fa_ch
-					.join(detected_org_ch.org_name,remainder:true)
+					.join(orgfinder_ch.org_name,remainder:true)
 					.map({meta,fa,detected_org_name -> [meta,fa,org_name(meta)?:detected_org_name]})
 				
 				// Plasmid typing
 				if (skip_tool('plasmidfinder')) {
-					plf_ch = Channel.empty()
+						plasmidfinder_ch = Channel.empty()
 				} else {
-						plf_ch = fa_org_ch
+						plasmidfinder_ch = fa_org_ch
 							.map({meta,fa,org_name -> [meta, fa, tool_args('plasmidfinder',meta, org_name)]})
 							.filter({meta,fasta,args -> args!=null})
 							| PLASMIDFINDER_RUN
@@ -143,46 +145,51 @@ workflow ANNOTATE_ASSEMBLY {
 							| PROKKA_RUN
 				}
 
-				runinfo_json_ch = fa_org_ch
-					.join(detected_org_ch.org_name,remainder:true)
-					.join(detected_org_ch.org_ani,remainder:true)
-					.join(detected_org_ch.org_acc,remainder:true)
-					.map({meta,fa,org_name,detected_org_name,detected_org_ani,detected_org_acc -> [
+				runinfo_ch = fa_org_ch
+					.join(orgfinder_ch.org_name,remainder:true)
+					.join(orgfinder_ch.ani,remainder:true)
+					.join(orgfinder_ch.org_acc,remainder:true)
+					.map({meta,fa,org_name,orgfinder_org_name,orgfinder_ani,orgfinder_org_acc -> [
 						meta, 
 						[runinfo: [
 							meta: meta, 
 							org_name: org_name,
-							org_detection: [org_name: detected_org_name, org_ani: detected_org_ani, org_acc: detected_org_acc]
+							orgfinder: [org_name: orgfinder_org_name, ani: orgfinder_ani, org_acc: orgfinder_org_acc]
 						]]]})
-					| TO_JSON
+				runinfo_ch = TO_JSON(runinfo_ch)
 
-/*
-				// Aggregate isolate annotations
-				isolate_ch = fa_ch
-					.join(res_ch,remainder:true)
-					.join(mlst_ch,remainder:true)
-					.join(plf_ch,remainder:true)
-					.join(org_ch,remainder:true)
-					.join(meta_json_ch,remainder:true)
-					.map({meta,fa,res,mlst,plf,meta_org,ani,meta_json -> 
-							[meta,fa,meta_json,[ani,res,mlst,plf].findAll({x->x!=null})]
-					})
-					//report_ch = RMD_RENDER(isolate_ch,file("${moduleDir}/isolate_report.Rmd"))
-*/
-				report_ch = Channel.empty()
+				results_ch = fa_ch.map({meta,file -> [meta,file,"assembly.fasta"]})
+					.concat(fai_ch.map({meta,file -> [meta,file,"assembly.fasta.fai"]}))
+					.concat(runinfo_ch.map({meta,file -> [meta,file,"runinfo.json"]}))
+					.concat(orgfinder_ch.orgfinder)
+					.concat(amrfinderplus_ch)
+					.concat(resfinder_ch)
+					.concat(mobtyper_ch)
+					.concat(plasmidfinder_ch)
+					.concat(mlst_ch)
+					.concat(prokka_ch)
+					.collect({x -> [x]})
+					| COLLECT_FILES
+
+				report_ch = RMD_RENDER(
+					results_ch.map({x -> ["multireport",x,null]}),
+					file("assets/rmd/multireport.Rmd"),
+					file("assets/rmd/lib_typing.R")
+				)
+				//report_ch = Channel.empty()
 				
 		emit:
-		    runinfo          = runinfo_json_ch    // channel: [ val(meta), path(resfinder) ]
-		    faidx            = SAMTOOLS_FAIDX.out // channel: [ val(meta), path(fai) ]
-		    prokka           = prokka_ch          // channel: [ val(meta), path(prokka) ]
+				faidx            = fai_ch             // channel: [ val(meta), path(fai) ]
+				orgfinder        = orgfinder_ch.orgfinder // channel: [ val(meta), val(org_name) ]
+		    runinfo          = runinfo_ch         // channel: [ val(meta), path(resfinder) ]
 		    amrfinderplus_db = amrfinderplus_db   // channel: path(amrfinderplus_db) ]
 		    amrfinderplus    = amrfinderplus_ch   // channel: val(meta), path(amrfinderplus) ]
 				resfinder        = resfinder_ch       // channel: [ val(meta), path(resfinder) ]
 				mobtyper         = mobtyper_ch        // channel: [ val(meta), path(mobtyper) ]
-				plasmidfinder    = plf_ch             // channel: [ val(meta), path(plasmidfinder) ]
+				plasmidfinder    = plasmidfinder_ch   // channel: [ val(meta), path(plasmidfinder) ]
 				mlst             = mlst_ch            // channel: [ val(meta), path(mlst) ]
-				report_html      = report_ch          // channel: [ val(meta), path(html) ]
-				orgfinder        = detected_org_ch.orgfinder // channel: [ val(meta), val(org_name) ]
+		    prokka           = prokka_ch          // channel: [ val(meta), path(prokka) ]
+		    report_html      = report_ch          // channel: [ val(meta), path(html) ]
 }
 	
 

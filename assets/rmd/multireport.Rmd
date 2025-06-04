@@ -11,7 +11,6 @@ output:
     fig_caption: true
 params:
     indir: "results"
-    outdir: "out/qc_oxa48_r88"
 ---
 
 ```{r setup}
@@ -72,16 +71,16 @@ assemblies |>
 ## Table
 ```{r}
 assemblies |>
-	select(assembly_id,num_contig,assembly_length,species_name,mlst_type,detected.species_name=species_name.detected,detected.ANI=org_detection.org_ani) |>
+	select(assembly_id,num_contig,assembly_length,species_name,mlst_type,orgfinder.species_name,orgfinder.ani) |>
 	group_by(species_name) |>
 	gt::gt(row_group_as_column=TRUE,caption = "Assemblies overview") |>
 	gt::tab_stubhead("Species Name")  |>
 	gt::tab_style(list(gt::cell_text(weight="bold"),gt::cell_fill()),locations=gt::cells_column_labels()) |>
 	gt::tab_style(list(gt::cell_text(weight="bold"),gt::cell_fill()),locations=gt::cells_stubhead()) |>		
 	gt::fmt_number(c(assembly_length),decimals = 0,pattern="{x} bp") |>
-	gt::fmt_number(c(detected.ANI),decimals = 1,pattern="{x}%") |>
-	gt::tab_style(list(gt::cell_fill(color = "tomato")),locations=gt::cells_body(detected.ANI,rows = detected.ANI<=97)) |>
-	gt::tab_style(list(gt::cell_fill(color = "tomato")),locations=gt::cells_body(detected.species_name,rows = detected.species_name!=species_name))
+	gt::fmt_number(c(orgfinder.ani),decimals = 1,pattern="{x}%") |>
+	gt::tab_style(list(gt::cell_fill(color = "tomato")),locations=gt::cells_body(orgfinder.ani,rows = orgfinder.ani<=97)) |>
+	gt::tab_style(list(gt::cell_fill(color = "tomato")),locations=gt::cells_body(orgfinder.species_name,rows = orgfinder.species_name!=species_name))
 ```
 
 

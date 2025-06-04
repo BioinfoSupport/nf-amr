@@ -9,7 +9,7 @@ process ORGFINDER_DETECT {
     		tuple val(meta), path("orgfinder",type: 'dir'), emit: orgfinder
         tuple val(meta), env("ORG_NAME"), emit: org_name
         tuple val(meta), env("ORG_ACC"), emit: org_acc
-        tuple val(meta), env("ORG_ANI"), emit: org_ani
+        tuple val(meta), env("ORG_ANI"), emit: ani
     script:
 		    """
 		    mkdir ./orgfinder && cp /app/db/tax.tsv /app/db/tax.rds /app/db/db.tsv ./orgfinder

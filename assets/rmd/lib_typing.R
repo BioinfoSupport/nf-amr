@@ -8,8 +8,8 @@ read_runinfo_json <- function(json_file) {
 	json <- jsonlite::fromJSON(json_file,simplifyVector=FALSE)
 	tibble(json) |> 
 		unnest_wider(1) |> 
-		unnest_wider(c(meta,org_detection),names_sep=".") |>
-		mutate(across(any_of("org_detection.org_ani"),as.numeric))
+		unnest_wider(c(meta,orgfinder),names_sep=".") |>
+		mutate(across(any_of("orgfinder.ani"),as.numeric))
 }
 
 
@@ -72,7 +72,7 @@ read_mlst_json <- function(json_file) {
 	json <- jsonlite::fromJSON(json_file,simplifyVector=FALSE)
 	json$mlst$results$sequence_type |>
 		enframe(value = "mlst_type",name = NULL) |>
-		mutate(mlst_type=fct_recode(mlst_type,"?"="Unknown"))
+		mutate(mlst_type=if_else(mlst_type %in% c("Unknown",NA),"?",mlst_type))
 }
 #fs::dir_ls("results/samples/",glob = "*/mlst",recurse = 1,type = "dir") |> fs::path("data.json") |> tail(1) |> read_mlst_json()
 
@@ -85,8 +85,14 @@ read_mobtyper_tsv <- function(tsv_file) {
 			relocate(contig_id)
 }
 
-read_species_tsv <- function(tsv_file) {
-	#tsv_file <- "results/samples/r62b17.hdr/org.ani"
+
+read_orgfinder_tax <- function(tsv_file) {
+	#tsv_file <- "results/samples/r62b17.hdr/orgfinder/tax.tsv"
+	read_tsv(tsv_file,show_col_types = FALSE,col_types = cols(.default = "c"))	
+}
+
+read_orgfinder_tsv <- function(tsv_file) {
+	#tsv_file <- "results/samples/r62b17.hdr/orgfinder/ani.tsv"
 	read_tsv(tsv_file,show_col_types = FALSE,col_types = cols(ANI = "n",bi_frag="i",query_frag="i",.default = "c"))
 }
 
@@ -135,12 +141,12 @@ contig_meta <- function(fasta_filename) {
 
 db_load <- function(amr_dir) {
 	list(
-		tax = read_tsv(fs::path(amr_dir,"db/org_db/db_tax.tsv")),
 		assemblies = fs::dir_ls(fs::path(amr_dir,"samples"),recurse = 1,glob = "*/assembly.fasta") |>
 			fs::path_dir() |>
-			enframe(name=NULL,value = "basepath") |>
-			mutate(assembly_id=basename(basepath)) |>
+			enframe(name = NULL,value = "basepath") |>
+			mutate(assembly_id = basename(basepath)) |>
 			mutate(runinfo = map(fs::path(basepath,"runinfo.json"),read_runinfo_json)) |>
+			mutate(orgfinder = map(fs::path(basepath,"orgfinder","tax.tsv"),read_orgfinder_tax)) |>
 			mutate(contigs = map(fs::path(basepath,"assembly.fasta"),contig_meta)) |>
 			mutate(mlst = map(fs::path(basepath,"mlst","data.json"),read_mlst_json)) |>
 			mutate(plasmidfinder = map(fs::path(basepath,"plasmidfinder","data.json"),read_plasmidfinder_json)) |>
@@ -154,14 +160,14 @@ db_load <- function(amr_dir) {
 summarise_assembly <- function(db) {
 	#db <- db_load("results") 
 	assemlbies <- db |> pluck("assemblies") |> select(assembly_id,contigs) |> unnest(contigs) |> group_by(assembly_id) |> summarise(num_contig=n(),assembly_length=sum(contig_length)) 
-	mlst <- db |> pluck("assemblies") |> select(assembly_id,mlst) |> unnest(mlst) 
+	mlst <- db |> pluck("assemblies") |> select(assembly_id,mlst) |> unnest(mlst)
 	runinfo <- db |> pluck("assemblies") |> select(assembly_id,runinfo) |> unnest(runinfo) 
-	tax <- db |> pluck("tax") |> select(org_name,species_name,genus_name)
+	orgfinder <- db |> pluck("assemblies") |> select(assembly_id,orgfinder) |> unnest(orgfinder) |> select(assembly_id,org_name,species_name,genus_name)
 	assemlbies |>
 		left_join(runinfo,by="assembly_id",relationship = "one-to-one")	|>
 		left_join(mlst,by="assembly_id",relationship = "one-to-one") |>
-		left_join(tax,by="org_name",relationship = "many-to-one") |>
-		left_join(tax,by=c("org_detection.org_name"="org_name"),relationship = "many-to-one",suffix = c("",".detected"))
+		left_join(orgfinder,by=c("assembly_id","org_name"),relationship = "many-to-one") |>
+		left_join(rename_with(orgfinder,.cols=!assembly_id,~str_c("orgfinder.",.)),by=c("assembly_id","orgfinder.org_name"),relationship = "one-to-one")
 }
 
 summarise_resistances <- function(db) {
