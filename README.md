@@ -5,30 +5,51 @@
 
 The pipeline:
 
- 1) Detect the species by comparing the assembly to a reference species database.
+ 1) Detect the organism by comparing the assembly to a reference species database with [`orgfinder`](https://gitlab.unige.ch/amr-genomics/orgfinder).
  
- 2) Run `ResFinder` and `PlasmidFinder`.
+ 2) Run `ResFinder`, `amrfinder+`, `mobtyper`, `PlasmidFinder`.
  
- 3) Run `MLST` with the schema automatically selected from detected species.
+ 3) Run `MLST` with the schema automatically selected from detected species. 
 
  4) Generate a HTML report.
+ 
  
 ## Usage
 
 ### Local computer
 
-To run the pipeline on your local computer (with `docker`  and `nextflow` already installed):
+Running the pipeline on a local computer requires [`docker`](https://www.docker.com) 
+(to run containerized software) and [`nextflow`](https://www.nextflow.io).
+`nextflow` is however optional as containerized version exists (see section **Nextflow container** below).
+
+**Note:** The pipeline cannot be run directly on the NAS but only on a local folder of your hard-drive.
 
 ```bash
-nextflow run -r main BioinfoSupport/nf-amr -resume --input=data/r62b14.hdr.fasta
+nextflow run -r main BioinfoSupport/nf-amr -resume --input=data/*.fasta
 ```
 
+#### Nextflow container
+
+Nextflow installation is optional as containerized versions of nextflow exists. 
+For example, on MacOS, to run a nextflow container with access to docker daemon
+of the host, we use:
+
+```bash
+docker run --rm -it \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v $(pwd):$(pwd) \
+  --platform linux/amd64 \
+  --workdir $(pwd) \
+  --env NXF_HOME=$(pwd)/.nextflow_home \
+  nextflow/nextflow:25.04.2 bash
+```
 
 ### HPC
 
 To run the pipeline on a HPC cluster with `slurm` and `singularity` use `-profile=hpc`:
 
 ```bash
+ml Nextflow/24.04.2
 nextflow run -r main BioinfoSupport/nf-amr -profile hpc -resume
 ```
 
@@ -41,69 +62,10 @@ curl -s https://get.nextflow.io | bash
 
 
 
-
+## Input
 
 If `--input` argument is missing, the pipeline process all FASTA files located 
 in subfolder `data/` (`--input='data/*.fasta'` by default).
-
-If only `docker` is installed on your computer, but not `nextflow`, 
-you can run a docker environment with `nextflow` inside:
-
-```bash
-docker run --rm -it \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  -v $(pwd):$(pwd) \
-  --platform linux/amd64 \
-  --workdir $(pwd) \
-  --env NXF_HOME=$(pwd)/.nextflow_home \
-  nextflow/nextflow:24.10.4 bash
-```
-
-If in addition you need `nf-core` toolbox:
-
-```bash
-docker run --rm \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  -v $(pwd):$(pwd) \
-  --platform linux/amd64 \
-  --workdir $(pwd) \
-  --env NXF_HOME=$(pwd)/.nextflow_home \
-  nfcore/tools \
-  pipelines schema build
-```
-
-
-# Parking 
-
-### Cleaning
-
-```bash
-rm -rf results/ .nextflow* work/
-```
-
-```bash
-nextflow run . -resume
-nextflow run . -resume --org_name="Citrobacter freundii"
-```
-
-# Test ANI speed
-```bash
-nextflow run . --input=data/r62b14.hdr.fasta --skip_plasmidfinder --skip_resfinder --skip_mlst --skip_prokka
-```
-
-
-
-```bash
-docker run --rm nfcore/tools --help
-docker run --rm nfcore/tools modules list remote
-docker run --rm nfcore/tools pipelines list
-
-docker run -it --rm --entrypoint bash nfcore/tools
-nf-core pipelines create
-nf-core pipelines create --name americ -a "J. Prados" --organisation "amr-genomics" --description "anti-microbial resistance infection control pipeline"
-```
-
-
 
 
 
@@ -120,5 +82,52 @@ nf-core pipelines create --name americ -a "J. Prados" --organisation "amr-genomi
  - après assemblage ajouter les mapping des reads sur l'assemblage 
  
  
+
+
+
+# Parking 
+
+
+### Cleaning
+
+```bash
+rm -rf results/ .nextflow* work/
+```
+
+```bash
+nextflow run . -resume
+nextflow run . -resume --org_name="Citrobacter freundii"
+```
+
+### Test ANI speed
+```bash
+nextflow run . --input=data/r62b14.hdr.fasta --skip_plasmidfinder --skip_resfinder --skip_mlst --skip_prokka
+```
+
+
+### nf-core
+```bash
+docker run --rm \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v $(pwd):$(pwd) \
+  --platform linux/amd64 \
+  --workdir $(pwd) \
+  --env NXF_HOME=$(pwd)/.nextflow_home \
+  nfcore/tools \
+  pipelines schema build
+```
+
+```bash
+docker run --rm nfcore/tools --help
+docker run --rm nfcore/tools modules list remote
+docker run --rm nfcore/tools pipelines list
+
+docker run -it --rm --entrypoint bash nfcore/tools
+nf-core pipelines create
+nf-core pipelines create --name americ -a "J. Prados" --organisation "amr-genomics" --description "anti-microbial resistance infection control pipeline"
+```
+
+
+
 
 
