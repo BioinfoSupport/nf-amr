@@ -172,14 +172,14 @@ workflow ANNOTATE_ASSEMBLY {
 					| COLLECT_FILES
 
 				report_ch = RMD_RENDER(
-					results_ch.map({x -> ["multireport",x,null]}),
+					results_ch.map({x -> ["multireport",x,"indir='./results'"]}),
 					file("assets/rmd/multireport.Rmd"),
 					file("assets/rmd/lib_typing.R")
 				)
-				
+
 		emit:
-				results     = results_ch
-		    report_html = report_ch          // channel: [ val(meta), path(html) ]
+				results     = results_ch  // channel: [ val(meta), path(results) ]
+		    report_html = report_ch   // channel: [ path(html) ]
 }
 	
 

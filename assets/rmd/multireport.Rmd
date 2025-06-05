@@ -1,30 +1,23 @@
 ---
-title: "QC"
+title: "Report"
 author: "`r Sys.getenv('USER')`"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: 
-  html_document:
-    code_download: true
-    code_folding: hide
-    toc: true
-    toc_float: true
-    fig_caption: true
+    flexdashboard::flex_dashboard:
+        orientation: rows
 params:
     indir: "../../results/samples"
 ---
 
 ```{r setup}
-knitr::opts_chunk$set(
-	echo = TRUE,
-	message = TRUE,
-	warning = TRUE
-)
+knitr::opts_chunk$set(echo = FALSE)
 ```
 
 
 ```{r include=FALSE}
 library(tidyverse)
 library(gt)
+library(flexdashboard)
 source("lib_typing.R")
 ```
 
@@ -37,38 +30,68 @@ contigs <- summarise_contigs(db) |>
 ```
 
 
-# Summary
+# Species
+
+Row
+-------------------------
+
+### Assemblies
 ```{r}
-message(str_glue("Number of assembly: {nrow(assemblies)}"))
-message(str_glue("Total number of contig: {nrow(contigs)}"))
+valueBox(nrow(assemblies),"Samples")
+```
+
+### Contigs
+```{r}
+valueBox(nrow(contigs),"Contigs")
+```
+
+### Plasmids
+```{r}
+valueBox(sum(contigs$is_plasmid),"Plasmids")
+```
+
+Row
+-------------------------
+
+
+### Species
+```{r}
+bind_rows(
+		assemblies |> 
+			group_by(
+				id=str_c("lev1",genus_name,sep="-"),
+				label=genus_name,
+				parent=""
+			) |> count(),
+		assemblies |> 
+			group_by(
+				id = str_c("lev2",genus_name,species_name,sep="-"),
+				label = species_name,
+				parent = str_c("lev1",genus_name,sep="-")
+			) |> count(),
+		assemblies |> 
+			group_by(
+				id = str_c("lev3",genus_name,species_name,mlst_type,sep="-"),
+				label = mlst_type,
+				parent = str_c("lev2",genus_name,species_name,sep="-")
+			) |> count()
+) |>
+plotly::plot_ly(
+		ids = ~id,
+		labels = ~label,
+	  parents = ~parent,
+	  values = ~n,
+	  type = 'sunburst',
+	  branchvalues = 'total'
+) %>%
+plotly::config(displayModeBar=FALSE)
 ```
 
 
-# Assembly typing {.tabset}
 
-## Overview
-```{r,fig.height=4, fig.width=8}
-assemblies |>
-	group_by(genus_name,species_name,mlst_type) |>
-	count() |>
-	arrange(species_name,mlst_type) |>
-	rowid_to_column() |>
-	ggplot(aes(y=species_name,x=n,fill=mlst_type)) +
-		facet_grid(genus_name~.,space="free",scales = "free") + 
-		geom_col(color="black") +
-		geom_text(aes(label=mlst_type),position = position_stack(vjust=0.5),size=3,angle=90) +
-		theme_bw() +
-		theme(legend.position = "none")+
-		theme(
-			panel.spacing = unit(0,"mm"),
-			panel.grid = element_blank(),
-			strip.text.y = element_text(angle = 0),
-			strip.placement = "outside"
-		) + 
-		xlab("Num. sample") + ylab("")
-```
 
-## Table
+
+# Assemblies
 ```{r}
 assemblies |>
 	select(mlst_type,assembly_id,num_contig,assembly_length,GC,species_name,orgfinder.species_name,orgfinder.ani) |>
@@ -90,16 +113,8 @@ assemblies |>
 # Assembly QC {.tabset}
 
 ## Overview
-```{r}
-assemblies |>
-    ggplot(aes(x=num_contig,y=assembly_length)) + 
-        geom_point(aes(color=genus_name)) + 
-        ggrepel::geom_text_repel(aes(label=assembly_id),size=2) + 
-      	scale_y_continuous(labels = scales::label_number(scale_cut = scales::cut_short_scale())) +
-        theme_bw() + scale_x_log10()
-```
 
-```{r eval=FALSE, include=FALSE}
+```{r}
 plotly::plot_ly(
 	data = assemblies,
 	x = ~num_contig,
@@ -111,7 +126,7 @@ plotly::plot_ly(
 		GC: {sprintf("%.1f%%",100*GC)}
 	')
 ) %>%
-config(displayModeBar=FALSE)
+plotly::config(displayModeBar=FALSE)
 ```
 
 
