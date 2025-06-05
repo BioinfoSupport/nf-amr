@@ -54,7 +54,7 @@ Row
 -------------------------
 
 
-### Species
+### Samples Identity: Species/ST
 ```{r}
 bind_rows(
 		assemblies |> 
@@ -88,7 +88,7 @@ plotly::config(displayModeBar=FALSE)
 ```
 
 
-
+### Resistances
 
 
 # Assemblies
@@ -112,7 +112,7 @@ assemblies |>
 
 # Assembly QC {.tabset}
 
-## Overview
+### Overview
 
 ```{r}
 plotly::plot_ly(
@@ -130,7 +130,7 @@ plotly::config(displayModeBar=FALSE)
 ```
 
 
-## Detail
+### Detail
 ```{r}
 contigs |>
 	left_join(select(assemblies,assembly_id,species_name,genus_name),by="assembly_id") |>
