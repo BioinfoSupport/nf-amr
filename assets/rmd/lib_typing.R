@@ -157,7 +157,11 @@ db_load <- function(amr_dir) {
 
 summarise_assembly <- function(db) {
 	#db <- db_load("results") 
-	assemlbies <- db |> select(assembly_id,contigs) |> unnest(contigs) |> group_by(assembly_id) |> summarise(num_contig=n(),assembly_length=sum(contig_length)) 
+	assemlbies <- db |> 
+		select(assembly_id,contigs) |> 
+		unnest(contigs) |> 
+		group_by(assembly_id) |> 
+		summarise(num_contig=n(),assembly_length=sum(contig_length),GC=weighted.mean(GC,contig_length)) 
 	mlst <- db |> select(assembly_id,mlst) |> unnest(mlst)
 	runinfo <- db |> select(assembly_id,runinfo) |> unnest(runinfo) 
 	orgfinder <- db |> select(assembly_id,orgfinder) |> unnest(orgfinder) |> select(assembly_id,org_name,species_name,genus_name)
