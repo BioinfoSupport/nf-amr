@@ -10,7 +10,7 @@ output:
     toc_float: true
     fig_caption: true
 params:
-    indir: "results"
+    indir: "../../results/samples"
 ---
 
 ```{r setup}
@@ -71,14 +71,15 @@ assemblies |>
 ## Table
 ```{r}
 assemblies |>
-	select(assembly_id,num_contig,assembly_length,species_name,mlst_type,orgfinder.species_name,orgfinder.ani) |>
+	select(mlst_type,assembly_id,num_contig,assembly_length,GC,species_name,orgfinder.species_name,orgfinder.ani) |>
+	mutate(GC=100*GC) |>
 	group_by(species_name) |>
 	gt::gt(row_group_as_column=TRUE,caption = "Assemblies overview") |>
 	gt::tab_stubhead("Species Name")  |>
 	gt::tab_style(list(gt::cell_text(weight="bold"),gt::cell_fill()),locations=gt::cells_column_labels()) |>
 	gt::tab_style(list(gt::cell_text(weight="bold"),gt::cell_fill()),locations=gt::cells_stubhead()) |>		
 	gt::fmt_number(c(assembly_length),decimals = 0,pattern="{x} bp") |>
-	gt::fmt_number(c(orgfinder.ani),decimals = 1,pattern="{x}%") |>
+	gt::fmt_number(c(orgfinder.ani,GC),decimals = 1,pattern="{x}%") |>
 	gt::tab_style(list(gt::cell_fill(color = "tomato")),locations=gt::cells_body(orgfinder.ani,rows = orgfinder.ani<=97)) |>
 	gt::tab_style(list(gt::cell_fill(color = "tomato")),locations=gt::cells_body(orgfinder.species_name,rows = orgfinder.species_name!=species_name))
 ```
@@ -96,6 +97,21 @@ assemblies |>
         ggrepel::geom_text_repel(aes(label=assembly_id),size=2) + 
       	scale_y_continuous(labels = scales::label_number(scale_cut = scales::cut_short_scale())) +
         theme_bw() + scale_x_log10()
+```
+
+```{r eval=FALSE, include=FALSE}
+plotly::plot_ly(
+	data = assemblies,
+	x = ~num_contig,
+	y = ~assembly_length,
+	text = ~str_glue('
+		{assembly_id}
+		{sprintf("%s (%.1f%%)",orgfinder.species_name,orgfinder.ani)}
+		ST: {mlst_type}
+		GC: {sprintf("%.1f%%",100*GC)}
+	')
+) %>%
+config(displayModeBar=FALSE)
 ```
 
 
