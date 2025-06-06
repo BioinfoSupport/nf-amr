@@ -30,7 +30,7 @@ contigs <- summarise_contigs(db) |>
 ```
 
 
-# Species
+# Summary
 
 Row
 -------------------------
@@ -92,12 +92,17 @@ plotly::config(displayModeBar=FALSE)
 
 
 # Assemblies
+
+Row
+-------------------------
+
+### Assemblies
 ```{r}
 assemblies |>
 	select(mlst_type,assembly_id,num_contig,assembly_length,GC,species_name,orgfinder.species_name,orgfinder.ani) |>
 	mutate(GC=100*GC) |>
 	group_by(species_name) |>
-	gt::gt(row_group_as_column=TRUE,caption = "Assemblies overview") |>
+	gt::gt(row_group_as_column=TRUE) |>
 	gt::tab_stubhead("Species Name")  |>
 	gt::tab_style(list(gt::cell_text(weight="bold"),gt::cell_fill()),locations=gt::cells_column_labels()) |>
 	gt::tab_style(list(gt::cell_text(weight="bold"),gt::cell_fill()),locations=gt::cells_stubhead()) |>		
@@ -108,11 +113,10 @@ assemblies |>
 ```
 
 
+Row
+-------------------------
 
-
-# Assembly QC {.tabset}
-
-### Overview
+### Assembly Lengths
 
 ```{r}
 plotly::plot_ly(
@@ -130,7 +134,7 @@ plotly::config(displayModeBar=FALSE)
 ```
 
 
-### Detail
+### Assembly Lengths
 ```{r}
 contigs |>
 	left_join(select(assemblies,assembly_id,species_name,genus_name),by="assembly_id") |>
