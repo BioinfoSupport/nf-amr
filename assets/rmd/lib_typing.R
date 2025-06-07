@@ -161,7 +161,7 @@ summarise_assembly <- function(db) {
 		select(assembly_id,contigs) |> 
 		unnest(contigs) |> 
 		group_by(assembly_id) |> 
-		summarise(num_contig=n(),assembly_length=sum(contig_length),GC=weighted.mean(GC,contig_length)) 
+		summarise(num_contig=n(),assembly_length=sum(contig_length),GC=weighted.mean(GC,contig_length),N50=N50(contig_length)) 
 	mlst <- db |> select(assembly_id,mlst) |> unnest(mlst)
 	runinfo <- db |> select(assembly_id,runinfo) |> unnest(runinfo) 
 	orgfinder <- db |> select(assembly_id,orgfinder) |> unnest(orgfinder) |> select(assembly_id,org_name,species_name,genus_name)

@@ -11,14 +11,6 @@ include { validateParameters; paramsSummaryLog; samplesheetToList } from 'plugin
 
 workflow {
 	main:
-			println("""
-			 8888b.  88888b.d88b.  888d888 
-			    "88b 888 "888 "88b 888P"   
-			.d888888 888  888  888 888     
-			888  888 888  888  888 888     
-			"Y888888 888  888  888 888     
-			""")
-			
 			// Validate parameters and print summary of supplied ones
 			validateParameters()
 			log.info(paramsSummaryLog(workflow))

@@ -99,14 +99,14 @@ Row
 ### Assemblies
 ```{r}
 assemblies |>
-	select(mlst_type,assembly_id,num_contig,assembly_length,GC,species_name,orgfinder.species_name,orgfinder.ani) |>
+	select(mlst_type,assembly_id,num_contig,assembly_length,N50,GC,species_name,orgfinder.species_name,orgfinder.ani) |>
 	mutate(GC=100*GC) |>
 	group_by(species_name) |>
 	gt::gt(row_group_as_column=TRUE) |>
 	gt::tab_stubhead("Species Name")  |>
 	gt::tab_style(list(gt::cell_text(weight="bold"),gt::cell_fill()),locations=gt::cells_column_labels()) |>
 	gt::tab_style(list(gt::cell_text(weight="bold"),gt::cell_fill()),locations=gt::cells_stubhead()) |>		
-	gt::fmt_number(c(assembly_length),decimals = 0,pattern="{x} bp") |>
+	gt::fmt_number(c(assembly_length,N50),decimals = 0,pattern="{x} bp") |>
 	gt::fmt_number(c(orgfinder.ani,GC),decimals = 1,pattern="{x}%") |>
 	gt::tab_style(list(gt::cell_fill(color = "tomato")),locations=gt::cells_body(orgfinder.ani,rows = orgfinder.ani<=97)) |>
 	gt::tab_style(list(gt::cell_fill(color = "tomato")),locations=gt::cells_body(orgfinder.species_name,rows = orgfinder.species_name!=species_name))
