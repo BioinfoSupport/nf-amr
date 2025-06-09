@@ -18,7 +18,18 @@ knitr::opts_chunk$set(echo = FALSE)
 library(tidyverse)
 library(gt)
 library(flexdashboard)
+library(patchwork)
 source("lib_typing.R")
+
+fct_reorder2_hclust <- function(.f, .y, .value) {
+  wide <- tibble(f = .f, y = .y, value = .value) %>%
+    pivot_wider(names_from = f, values_from = value,values_fill = 0) %>%
+    column_to_rownames("y") %>%
+    as.matrix() %>%
+    t()
+  h <- hclust(dist(wide),method="ward.D2")
+  fct_relevel(.f,h$labels[h$order])
+}
 ```
 
 
@@ -37,17 +48,17 @@ Row
 
 ### Assemblies
 ```{r}
-valueBox(nrow(assemblies),"Samples")
+valueBox(nrow(assemblies),"Samples",color = "coral")
 ```
 
 ### Contigs
 ```{r}
-valueBox(nrow(contigs),"Contigs")
+valueBox(nrow(contigs),"Contigs",color = "info")
 ```
 
 ### Plasmids
 ```{r}
-valueBox(sum(contigs$is_plasmid),"Plasmids")
+valueBox(sum(contigs$is_plasmid),"Plasmids",color = "info")
 ```
 
 Row
@@ -90,6 +101,37 @@ plotly::config(displayModeBar=FALSE)
 
 ### Resistances
 
+
+```{r fig.height=6, fig.width=4}
+R <- summarise_resistances(db) |>
+	mutate(resistance_name = fct_reorder2_hclust(resistance_name,contig_id,rep(1,n())))
+
+R |>
+	distinct(assembly_id,resistance_name) |>
+	ggplot(aes(y=resistance_name)) +
+	geom_bar() +
+	geom_text(aes(x=max(after_stat(count)),label=resistance_name),stat="count",angle=90,hjust=0,size=3) +
+	coord_radial("y",rotate.angle = TRUE) + theme_bw() + theme(axis.text = element_blank(),axis.ticks = element_blank(),panel.border = element_blank(),axis.title = element_blank())
+```
+
+# Full Map
+
+
+```{r fig.height=6, fig.width=4}
+R <- summarise_resistances(db) |>
+	mutate(resistance_name = fct_reorder2_hclust(resistance_name,contig_id,rep(1,n())))
+	
+p1 <- ggplot(R,aes(y=resistance_name,x=contig_id)) +
+	facet_grid(.~assembly_id,scales="free_x",space="free_x") +
+	geom_tile() +
+	theme(axis.text.x=element_blank())
+
+p2 <- R |>
+	distinct(assembly_id,resistance_name) |>
+	ggplot(aes(y=resistance_name)) +
+	geom_bar()
+p1+p2 + plot_layout(axes = "collect_y")
+```
 
 # Assemblies
 

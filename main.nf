@@ -6,7 +6,6 @@ params.orgfinder_db = "data/db/org_db"
 
 include { ASSEMBLE_READS    } from './workflows/assemble_reads'
 include { ANNOTATE_ASSEMBLY } from './workflows/annotate_assembly'
-include { RMD_RENDER        } from './modules/local/rmd/render'
 include { validateParameters; paramsSummaryLog; samplesheetToList } from 'plugin/nf-schema'
 
 workflow {
@@ -23,8 +22,8 @@ workflow {
 			amr_ch = ANNOTATE_ASSEMBLY(fa_ch)
 
 	publish:
-			amr_ch.results          >> 'results'
-			amr_ch.report_html      >> 'report_html'
+      results = amr_ch.results
+      report_html = amr_ch.report_html
 }
 
 
