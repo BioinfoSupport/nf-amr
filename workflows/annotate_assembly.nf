@@ -4,7 +4,8 @@ include { ORGFINDER_DETECT    } from '../modules/local/orgfinder/detect'
 
 include { AMRFINDERPLUS_UPDATE } from '../modules/local/amrfinderplus/update'
 include { AMRFINDERPLUS_RUN } from '../modules/local/amrfinderplus/run'
-include { PROKKA_RUN        } from '../modules/local/prokka'
+include { PROKKA_RUN        } from '../modules/local/tseemann/prokka'
+include { TSEEMANN_MLST     } from '../modules/local/tseemann/mlst'
 
 include { RESFINDER_FA_RUN  } from '../modules/local/cgetools/resfinder'
 include { PLASMIDFINDER_RUN } from '../modules/local/cgetools/plasmidfinder'
@@ -23,7 +24,9 @@ params.mobtyper_default_args = ''
 params.amrfinderplus_default_args = ''
 params.plasmidfinder_default_args = ''
 params.mlst_default_args = null // do not run by default
+params.MLST_default_args = ''   // autodetect species by default
 params.prokka_default_args = '--kingdom Bacteria'
+
 
 
 // Return a boolean of whether the tool should be skip or not
@@ -135,6 +138,15 @@ workflow ANNOTATE_ASSEMBLY {
 							| MLST_RUN
 				}
 				
+				if (skip_tool('MLST')) {
+						MLST_ch = Channel.empty()
+				} else {
+						MLST_ch = fa_org_ch
+						  .map({meta,fa,org_name -> [meta, fa, tool_args('MLST',meta,org_name)]})
+						  .filter({meta,fasta,args -> args!=null})
+							| TSEEMANN_MLST
+				}
+
 				// PROKKA annotations
 				if (skip_tool('prokka')) {
 						prokka_ch = Channel.empty()
@@ -167,6 +179,7 @@ workflow ANNOTATE_ASSEMBLY {
 					.concat(mobtyper_ch)
 					.concat(plasmidfinder_ch)
 					.concat(mlst_ch)
+					.concat(MLST_ch)
 					.concat(prokka_ch)
 					.collect({x -> [x]})
 					| COLLECT_FILES
