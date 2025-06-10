@@ -19,6 +19,7 @@ library(tidyverse)
 library(gt)
 library(flexdashboard)
 library(patchwork)
+#library(reactable) # for extended tables, voir ici: https://glin.github.io/reactable/articles/examples.html
 source("lib_typing.R")
 
 fct_reorder2_hclust <- function(.f, .y, .value) {
@@ -118,19 +119,48 @@ R |>
 
 
 ```{r fig.height=6, fig.width=4}
-R <- summarise_resistances(db) |>
-	mutate(resistance_name = fct_reorder2_hclust(resistance_name,contig_id,rep(1,n())))
-	
-p1 <- ggplot(R,aes(y=resistance_name,x=contig_id)) +
-	facet_grid(.~assembly_id,scales="free_x",space="free_x") +
-	geom_tile() +
-	theme(axis.text.x=element_blank())
+CONTIGS <- contigs |>
+	mutate(id = str_c(assembly_id,contig_id)) |>
+	filter(is_plasmid) |>
+	filter(lengths(resistance_names)>0) |>
+	mutate(id=fct_reorder(id,contig_length,mean)) 
 
-p2 <- R |>
-	distinct(assembly_id,resistance_name) |>
-	ggplot(aes(y=resistance_name)) +
-	geom_bar()
-p1+p2 + plot_layout(axes = "collect_y")
+p1 <- CONTIGS |>
+	ggplot(aes(x=id,y=contig_length)) +
+	geom_col()
+
+p2 <- CONTIGS |>
+	select(id,resistance_names) |>
+	unnest_longer(resistance_names) |> 
+	ungroup() |>
+	distinct() |>
+	mutate(resistance_names=fct_reorder2_hclust(resistance_names,id,rep(1,n()))) |>
+	ggplot(aes(x=id,y=resistance_names)) +
+	geom_tile() +
+	scale_x_discrete(drop=FALSE)
+
+p3 <- CONTIGS |>
+	select(id,plasmid_types) |>
+	unnest_longer(plasmid_types) |>
+	ungroup() |>
+	distinct() |>
+	mutate(plasmid_types=fct_reorder2_hclust(plasmid_types,id,rep(1,n()))) |>
+	ggplot(aes(x=id,y=plasmid_types)) +
+	geom_tile() +
+	scale_x_discrete(drop=FALSE)
+
+p4 <- CONTIGS |>
+	select(id,relaxase_types) |>
+	unnest_longer(relaxase_types) |>
+	ungroup() |>
+	distinct() |>
+	filter(relaxase_types!="-") |>
+	mutate(relaxase_types=fct_reorder2_hclust(relaxase_types,id,rep(1,n()))) |>
+	ggplot(aes(x=id,y=relaxase_types)) +
+	geom_tile() +
+	scale_x_discrete(drop=FALSE)
+
+p1/p2/p3/p4 + plot_layout(axes = "collect_x",heights=c(1,3,3,1))
 ```
 
 # Assemblies
