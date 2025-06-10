@@ -66,9 +66,9 @@ read_plasmidfinder_json <- function(json_file) {
 
 
 
-read_mlst_json <- function(json_file) {
+read_cgemlst_json <- function(json_file) {
 	if (!file.exists(json_file)) return(tibble(mlst_type="?"))
-	#json_file <- "results/samples/r62b17.hdr/mlst/data.json"
+	#json_file <- "results/samples/r62b17.hdr/cge_mlst/data.json"
 	json <- jsonlite::fromJSON(json_file,simplifyVector=FALSE)
 	json$mlst$results$sequence_type |>
 		enframe(value = "mlst_type",name = NULL) |>
@@ -147,7 +147,7 @@ db_load <- function(amr_dir) {
 			mutate(runinfo = map(fs::path(basepath,"runinfo.json"),read_runinfo_json)) |>
 			mutate(orgfinder = map(fs::path(basepath,"orgfinder","tax.tsv"),read_orgfinder_tax)) |>
 			mutate(contigs = map(fs::path(basepath,"assembly.fasta"),contig_meta)) |>
-			mutate(mlst = map(fs::path(basepath,"mlst","data.json"),read_mlst_json)) |>
+			mutate(mlst = map(fs::path(basepath,"cge_mlst","data.json"),read_cgemlst_json)) |>
 			mutate(plasmidfinder = map(fs::path(basepath,"plasmidfinder","data.json"),read_plasmidfinder_json)) |>
 			mutate(resfinder = map(fs::path(basepath,"resfinder","data.json"),read_resfinder_json)) |>
 			mutate(amrfinderplus = map(fs::path(basepath,"amrfinderplus","report.tsv"),read_amrfinderplus_tsv)) |>		
