@@ -30,12 +30,12 @@ workflow {
 output {
 	
 	results {
-		path('samples')
+		path {x -> 'samples'}
 		mode 'copy'
 	}
 	
 	report_html {
-		path('multireport.html')
+		path {x -> 'multireport.html'}
 		mode 'copy'
 	}
 	

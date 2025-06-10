@@ -22,10 +22,12 @@ Running the pipeline on a local computer requires [`docker`](https://www.docker.
 (to run containerized software) and [`nextflow`](https://www.nextflow.io).
 `nextflow` is however optional as containerized version exists (see section **Nextflow container** below).
 
-**Note:** The pipeline cannot be run directly on the NAS but only on a local folder of your hard-drive.
+**Note:** The pipeline cannot be run directly on a NAS but only on a local folder of your hard-drive.
+
+If the FASTA files to process are in subfolder 'data/' of your working directory
 
 ```bash
-nextflow run -r main BioinfoSupport/nf-amr -resume --input=data/*.fasta
+nextflow run BioinfoSupport/nf-amr -resume --input=data/*.fasta
 ```
 
 #### Nextflow container
@@ -50,7 +52,7 @@ To run the pipeline on a HPC cluster with `slurm` and `singularity` use `-profil
 
 ```bash
 ml Nextflow/24.04.2
-nextflow run -r main BioinfoSupport/nf-amr -profile hpc -resume
+nextflow run BioinfoSupport/nf-amr -profile hpc -resume
 ```
 
 If `nextflow` is not installed on your HPC, it can be installed with:

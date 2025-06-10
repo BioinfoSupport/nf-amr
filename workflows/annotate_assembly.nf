@@ -5,11 +5,11 @@ include { ORGFINDER_DETECT    } from '../modules/local/orgfinder/detect'
 include { AMRFINDERPLUS_UPDATE } from '../modules/local/amrfinderplus/update'
 include { AMRFINDERPLUS_RUN } from '../modules/local/amrfinderplus/run'
 include { PROKKA_RUN        } from '../modules/local/tseemann/prokka'
-include { TSEEMANN_MLST     } from '../modules/local/tseemann/mlst'
+include { MLST_RUN          } from '../modules/local/tseemann/mlst'
 
 include { RESFINDER_FA_RUN  } from '../modules/local/cgetools/resfinder'
 include { PLASMIDFINDER_RUN } from '../modules/local/cgetools/plasmidfinder'
-include { MLST_RUN          } from '../modules/local/cgetools/mlst'
+include { CGEMLST_RUN          } from '../modules/local/cgetools/cgemlst'
 include { MOBTYPER_RUN      } from '../modules/local/mobsuite/mobtyper'
 
 include { TO_JSON           } from '../modules/local/tojson'
@@ -18,13 +18,12 @@ include { RMD_RENDER        } from '../modules/local/rmd/render'
 include { COLLECT_FILES     } from '../modules/local/collect_files'
 
 params.skip_prokka = true
-
 params.resfinder_default_args = ''
 params.mobtyper_default_args = ''
 params.amrfinderplus_default_args = ''
 params.plasmidfinder_default_args = ''
-params.mlst_default_args = null // do not run by default
-params.MLST_default_args = ''   // autodetect species by default
+params.cgemlst_default_args = null // do not run by default
+params.MLST_default_args = ''      // autodetect species by default
 params.prokka_default_args = '--kingdom Bacteria'
 
 
@@ -129,13 +128,13 @@ workflow ANNOTATE_ASSEMBLY {
 				}
 				
 				// MLST typing
-				if (skip_tool('mlst')) {
-						mlst_ch = Channel.empty()
+				if (skip_tool('cgemlst')) {
+						cgemlst_ch = Channel.empty()
 				} else {
-						mlst_ch = fa_org_ch
-							.map({meta,fa,org_name -> [meta, fa, tool_args('mlst',meta,org_name)]})
+						cgemlst_ch = fa_org_ch
+							.map({meta,fa,org_name -> [meta, fa, tool_args('cgemlst',meta,org_name)]})
 							.filter({meta,fasta,args -> args!=null})
-							| MLST_RUN
+							| CGEMLST_RUN
 				}
 				
 				if (skip_tool('MLST')) {
@@ -144,7 +143,7 @@ workflow ANNOTATE_ASSEMBLY {
 						MLST_ch = fa_org_ch
 						  .map({meta,fa,org_name -> [meta, fa, tool_args('MLST',meta,org_name)]})
 						  .filter({meta,fasta,args -> args!=null})
-							| TSEEMANN_MLST
+							| MLST_RUN
 				}
 
 				// PROKKA annotations
@@ -178,7 +177,7 @@ workflow ANNOTATE_ASSEMBLY {
 					.concat(resfinder_ch)
 					.concat(mobtyper_ch)
 					.concat(plasmidfinder_ch)
-					.concat(mlst_ch)
+					.concat(cgemlst_ch)
 					.concat(MLST_ch)
 					.concat(prokka_ch)
 					.collect({x -> [x]})
