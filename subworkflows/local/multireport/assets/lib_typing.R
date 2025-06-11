@@ -139,7 +139,11 @@ contig_meta <- function(fasta_filename) {
 		)
 	
 	stopifnot("Some modifiers are set several times in the same header" = !(summarize(tags,.by=c(contig_id,tag_name),any(n()>1)) |> pull() |> any()))
-	tags <- pivot_wider(tags,id_cols="contig_id",names_from = "tag_name",values_from = "tag_value",names_prefix = "tag_")
+	expected_tags_structure <- tibble(
+		tag_topology = character(0)
+	)
+	tags <- pivot_wider(tags,id_cols="contig_id",names_from = "tag_name",values_from = "tag_value",names_prefix = "tag_") |>
+		bind_rows(expected_tags_structure)
 	
 	left_join(meta,tags,by="contig_id",relationship = "one-to-one") |>
 		select(!c(tags_str,header))
