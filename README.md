@@ -51,8 +51,14 @@ docker run --rm -it \
 To run the pipeline on a HPC cluster with `slurm` and `singularity` use `-profile=hpc`:
 
 ```bash
-ml Nextflow/24.04.2
-nextflow run BioinfoSupport/nf-amr -profile hpc -resume
+# Install nextflow if not already installed
+curl -s https://get.nextflow.io | bash && chmod +x nextflow
+
+# Update pipeline (optional)
+./nextflow pull BioinfoSupport/nf-amr
+
+# Run pipeline on given FASTA files
+./nextflow run BioinfoSupport/nf-amr -profile hpc -bg -resume --input=data/*.fasta
 ```
 
 If `nextflow` is not installed on your HPC, it can be installed with:
