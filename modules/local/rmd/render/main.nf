@@ -6,10 +6,10 @@ process RMD_RENDER {
     cpus 2
     input:
     		tuple(val(meta),path(files),val(render_params))
-    		each path("report_template.Rmd")
+    		each path('report_template.Rmd')
     		each path(extra)
     output:
-        tuple(val(meta),path("report.html"))
+        tuple(val(meta),path('report.html'),emit:'html')
     script:
 				"""
 				#!/usr/bin/env Rscript

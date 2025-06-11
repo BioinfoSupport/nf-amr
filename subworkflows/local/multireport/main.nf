@@ -1,6 +1,6 @@
 
 include { RMD_RENDER        } from '../../../modules/local/rmd/render'
-include { COLLECT_FILES     } from '../../../modules/local/collect_files'
+include { ORGANIZE_FILES    } from '../../../modules/local/organize_files'
 
 workflow MULTIREPORT {
 		take:
@@ -17,29 +17,31 @@ workflow MULTIREPORT {
 	    	prokka_ch
 	    	
 		main:
-			COLLECT_FILES(
-				"assemblies_annotations",
-				fa_ch.map({meta,file -> [meta,file,"assembly.fasta"]})
-					.concat(fai_ch.map({meta,file -> [meta,file,"assembly.fasta.fai"]}))
-					.concat(runinfo_ch.map({meta,file -> [meta,file,"runinfo.json"]}))
-					.concat(orgfinder_ch)
-					.concat(amrfinderplus_ch)
-					.concat(resfinder_ch)
-					.concat(mobtyper_ch)
-					.concat(plasmidfinder_ch)
-					.concat(cgemlst_ch)
-					.concat(MLST_ch)
-					.concat(prokka_ch)
+			ORGANIZE_FILES(
+				Channel.empty()
+					.mix(
+					  fa_ch.map(           {meta,file -> [file,"${meta.id}/assembly.fasta"]}),
+						fai_ch.map(          {meta,file -> [file,"${meta.id}/assembly.fasta.fai"]}),
+						runinfo_ch.map(      {meta,file -> [file,"${meta.id}/runinfo.json"]}),
+						orgfinder_ch.map(    {meta,file -> [file,"${meta.id}/${file.baseName}"]}),
+						amrfinderplus_ch.map({meta,file -> [file,"${meta.id}/${file.baseName}"]}),
+						resfinder_ch.map(    {meta,file -> [file,"${meta.id}/${file.baseName}"]}),
+						mobtyper_ch.map(     {meta,file -> [file,"${meta.id}/${file.baseName}"]}),
+						plasmidfinder_ch.map({meta,file -> [file,"${meta.id}/${file.baseName}"]}),
+						cgemlst_ch.map(      {meta,file -> [file,"${meta.id}/${file.baseName}"]}),
+						MLST_ch.map(         {meta,file -> [file,"${meta.id}/${file.baseName}"]}),
+						prokka_ch.map(       {meta,file -> [file,"${meta.id}/${file.baseName}"]})
+					)
 					.collect({x -> [x]})
 			)
 			RMD_RENDER(
-				COLLECT_FILES.out.map({x -> ["multireport.html",x,"indir='./assemblies_annotations'"]}),
+				ORGANIZE_FILES.out.map({x -> ["multireport.html",x,"indir='${x}'"]}),
 				file("${moduleDir}/assets/multireport.Rmd"),
 				file("${moduleDir}/assets/lib_typing.R")
 			)
 			
 		emit:
-	    html    = RMD_RENDER.out  // channel: [ meta, path(html) ]
+	    html = RMD_RENDER.out  // channel: [ meta, path(html) ]
 }
 
 
