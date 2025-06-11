@@ -14,8 +14,6 @@ include { MOBTYPER_RUN      } from '../modules/local/mobsuite/mobtyper'
 
 include { TO_JSON           } from '../modules/local/tojson'
 include { SAMTOOLS_FAIDX    } from '../modules/local/samtools/faidx'
-include { RMD_RENDER        } from '../modules/local/rmd/render'
-include { COLLECT_FILES     } from '../modules/local/collect_files'
 
 params.skip_prokka = true
 params.resfinder_default_args = ''
@@ -169,29 +167,17 @@ workflow ANNOTATE_ASSEMBLY {
 						]]]})
 				runinfo_ch = TO_JSON(runinfo_ch)
 
-				ann_ch = fa_ch.map({meta,file -> [meta,file,"assembly.fasta"]})
-					.concat(fai_ch.map({meta,file -> [meta,file,"assembly.fasta.fai"]}))
-					.concat(runinfo_ch.map({meta,file -> [meta,file,"runinfo.json"]}))
-					.concat(orgfinder_ch.orgfinder)
-					.concat(amrfinderplus_ch)
-					.concat(resfinder_ch)
-					.concat(mobtyper_ch)
-					.concat(plasmidfinder_ch)
-					.concat(cgemlst_ch)
-					.concat(MLST_ch)
-					.concat(prokka_ch)
-					.collect({x -> [x]})
-				ann_ch = COLLECT_FILES(ann_ch,"assembly_annotations")
-
-				report_ch = RMD_RENDER(
-					ann_ch.map({x -> ["multireport.html",x,"indir='./assembly_annotations'"]}),
-					file("assets/rmd/multireport.Rmd"),
-					file("assets/rmd/lib_typing.R")
-				)
-
 		emit:
-				results     = ann_ch     // channel: [ val(meta), path(results) ]
-		    report_html = report_ch  // channel: [ path(html) ]
+				fai = fai_ch
+				runinfo = runinfo_ch
+				orgfinder = orgfinder_ch.orgfinder
+				amrfinderplus = amrfinderplus_ch
+				resfinder = resfinder_ch
+				mobtyper = mobtyper_ch
+				plasmidfinder = plasmidfinder_ch
+				cgemlst = cgemlst_ch
+				MLST = MLST_ch
+				prokka = prokka_ch
 }
 	
 

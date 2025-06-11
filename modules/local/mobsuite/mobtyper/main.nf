@@ -2,6 +2,7 @@
 
 process MOBTYPER_RUN {
 	  container "quay.io/biocontainers/mob_suite:3.1.9--pyhdfd78af_0"
+	  errorStrategy 'ignore'
     memory '4 GB'
     cpus 1
     input:

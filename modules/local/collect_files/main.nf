@@ -1,8 +1,8 @@
 
 process COLLECT_FILES {
 	input:
-		val(all_files)
 		val(outdir)
+		val(all_files)
 	output:
 		path("${outdir}")
 	script:

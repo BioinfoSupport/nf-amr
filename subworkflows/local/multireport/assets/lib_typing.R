@@ -78,10 +78,18 @@ read_cgemlst_json <- function(json_file) {
 
 
 read_mobtyper_tsv <- function(tsv_file) {
+		expected_structure <- tibble(
+			contig_id = character(0),
+			contig_name = character(0),
+			relaxase_types = character(0),
+			rep_types = character(0)
+		)	
+		if (!file.exists(tsv_file)) return(expected_structure)
 		#tsv_file <- "results/samples/r62b17.hdr/mobtyper.tsv"
 		read_tsv(tsv_file,show_col_types = FALSE) |>
 			mutate(contig_id=str_replace(sample_id," .*","")) |>
 			dplyr::rename(contig_name=sample_id,relaxase_types=`relaxase_type(s)`,rep_types=`rep_type(s)`) |>
+			bind_rows(expected_structure) |>
 			relocate(contig_id)
 }
 

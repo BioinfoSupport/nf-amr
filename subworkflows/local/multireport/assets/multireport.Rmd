@@ -23,8 +23,10 @@ library(patchwork)
 source("lib_typing.R")
 
 fct_reorder2_hclust <- function(.f, .y, .value) {
+	.f <- as_factor(.f)
+	if (nlevels(.f)<2) return(.f)
   wide <- tibble(f = .f, y = .y, value = .value) %>%
-    pivot_wider(names_from = f, values_from = value,values_fill = 0) %>%
+    pivot_wider(names_from = f, names_expand = TRUE, id_expand = TRUE, values_from = value,values_fill = 0) %>%
     column_to_rownames("y") %>%
     as.matrix() %>%
     t()
@@ -118,7 +120,7 @@ R |>
 # Full Map
 
 
-```{r fig.height=6, fig.width=4}
+```{r fig.height=6, fig.width=4, eval=FALSE}
 CONTIGS <- contigs |>
 	mutate(id = str_c(assembly_id,contig_id)) |>
 	filter(is_plasmid) |>
@@ -149,9 +151,10 @@ p3 <- CONTIGS |>
 	geom_tile() +
 	scale_x_discrete(drop=FALSE)
 
+
 p4 <- CONTIGS |>
 	select(id,relaxase_types) |>
-	unnest_longer(relaxase_types) |>
+	unnest_longer(relaxase_types,keep_empty = TRUE) |>
 	ungroup() |>
 	distinct() |>
 	filter(relaxase_types!="-") |>
@@ -223,3 +226,9 @@ contigs |>
 
 
 
+
+```{css}
+.chart-shim {
+  overflow: auto;
+}
+```

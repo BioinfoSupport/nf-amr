@@ -7,11 +7,12 @@
 	      "type": "object",
 	      "required": ["input"], 
 	      "properties": {
-	        "samplesheet": { 
+	        "input": { 
 	          "type": "string",
-	          "format": "file-path"
+	          "format": "file-path-pattern"
 	        },
-	        "assembly_fasta": { 
+	      	
+	        "samplesheet": { 
 	          "type": "string",
 	          "format": "file-path"
 	        },
