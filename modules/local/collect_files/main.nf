@@ -1,17 +1,18 @@
 
 process COLLECT_FILES {
 	input:
-		val all_files
+		val(all_files)
+		val(outdir)
 	output:
-		path('results')
+		path("${outdir}")
 	script:
 	"""
-  mkdir -p results
+  mkdir -p ${outdir}
   ${ 
   	all_files
   		.findAll({it.size()==2})
 	  	.collect({
-	  			meta, file -> "mkdir -p 'results/${meta.id}' && ln -s '${file}' 'results/${meta.id}/'"
+	  			meta, file -> "mkdir -p '${outdir}/${meta.id}' && ln -s '${file}' '${outdir}/${meta.id}/'"
 	  	})
 	  	.join('\n')
   }
@@ -19,7 +20,7 @@ process COLLECT_FILES {
   	all_files
   		.findAll({it.size()==3})
 	  	.collect({
-	  			meta, file, target -> "mkdir -p 'results/${meta.id}' && ln -s '${file}' 'results/${meta.id}/${target}'"
+	  			meta, file, target -> "mkdir -p '${outdir}/${meta.id}' && ln -s '${file}' '${outdir}/${meta.id}/${target}'"
 	  	})
 	  	.join('\n')
   }

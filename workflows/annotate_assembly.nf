@@ -9,7 +9,7 @@ include { MLST_RUN          } from '../modules/local/tseemann/mlst'
 
 include { RESFINDER_FA_RUN  } from '../modules/local/cgetools/resfinder'
 include { PLASMIDFINDER_RUN } from '../modules/local/cgetools/plasmidfinder'
-include { CGEMLST_RUN          } from '../modules/local/cgetools/cgemlst'
+include { CGEMLST_RUN       } from '../modules/local/cgetools/cgemlst'
 include { MOBTYPER_RUN      } from '../modules/local/mobsuite/mobtyper'
 
 include { TO_JSON           } from '../modules/local/tojson'
@@ -169,7 +169,7 @@ workflow ANNOTATE_ASSEMBLY {
 						]]]})
 				runinfo_ch = TO_JSON(runinfo_ch)
 
-				results_ch = fa_ch.map({meta,file -> [meta,file,"assembly.fasta"]})
+				ann_ch = fa_ch.map({meta,file -> [meta,file,"assembly.fasta"]})
 					.concat(fai_ch.map({meta,file -> [meta,file,"assembly.fasta.fai"]}))
 					.concat(runinfo_ch.map({meta,file -> [meta,file,"runinfo.json"]}))
 					.concat(orgfinder_ch.orgfinder)
@@ -181,17 +181,17 @@ workflow ANNOTATE_ASSEMBLY {
 					.concat(MLST_ch)
 					.concat(prokka_ch)
 					.collect({x -> [x]})
-					| COLLECT_FILES
+				ann_ch = COLLECT_FILES(ann_ch,"assembly_annotations")
 
 				report_ch = RMD_RENDER(
-					results_ch.map({x -> ["multireport.html",x,"indir='./results'"]}),
+					ann_ch.map({x -> ["multireport.html",x,"indir='./assembly_annotations'"]}),
 					file("assets/rmd/multireport.Rmd"),
 					file("assets/rmd/lib_typing.R")
 				)
 
 		emit:
-				results     = results_ch  // channel: [ val(meta), path(results) ]
-		    report_html = report_ch   // channel: [ path(html) ]
+				results     = ann_ch     // channel: [ val(meta), path(results) ]
+		    report_html = report_ch  // channel: [ path(html) ]
 }
 	
 

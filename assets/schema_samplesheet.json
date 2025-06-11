@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/BioinfoSupport/nf-amr/refs/heads/master/assets/schema_samplesheet.json",
+  "title": "nf-amr pipeline - params.sample_sheet schema",
+  "description": "Schema for the file provided with params.sample_sheet",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["sample_id"],
+    "properties": {
+      "sample_id": {
+        "type": "string",
+        "pattern": "^\\S+$",
+        "errorMessage": "Sample name must be provided and cannot contain spaces",
+        "meta": ["sample_id"]
+      },
+      "assembly_fasta": {
+        "type": "string",
+        "format": "file-path",
+        "pattern": "^\\S+\\.(fasta|fa)$",
+        "errorMessage": "Wrong assembly_fasta path provided (cannot contain spaces and must end with .fasta)"
+      },      
+      "fastq_1": {
+        "type": "string",
+        "format": "file-path",
+        "pattern": "^\\S+\\.(fastq|fq)\\.gz$",
+        "errorMessage": "Wrong fastq_1 path provided (cannot contain spaces and must end with .fastq.gz)"
+      },
+      "fastq_2": {
+        "type": "string",
+        "format": "file-path",
+        "pattern": "^\\S+\\.(fastq|fq)\\.gz$",
+        "errorMessage": "Wrong fastq_2 path provided (cannot contain spaces and must end with .fastq.gz)"
+      },
+      "fastq_long": {
+        "type": "string",
+        "format": "file-path",
+        "pattern": "^\\S+\\.(fastq|fq)\\.gz$",
+        "errorMessage": "Wrong fastq_long path provided (cannot contain spaces and must end with .fastq.gz)"
+      },
+      "org_name": {
+        "type": "string",
+        "errorMessage": "Bad org_name specified"
+      }
+    }
+  }
+}

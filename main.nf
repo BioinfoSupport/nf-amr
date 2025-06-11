@@ -2,8 +2,6 @@
 
 nextflow.preview.output = true
 
-params.orgfinder_db = "data/db/org_db"
-
 include { ASSEMBLE_READS    } from './workflows/assemble_reads'
 include { ANNOTATE_ASSEMBLY } from './workflows/annotate_assembly'
 include { validateParameters; paramsSummaryLog; samplesheetToList } from 'plugin/nf-schema'
@@ -14,7 +12,7 @@ workflow {
 			validateParameters()
 			log.info(paramsSummaryLog(workflow))
 			
-			//ch_input = Channel.fromList(samplesheetToList(params.samplesheet, "assets/schema_input.json"))
+			//ch_input = Channel.fromList(samplesheetToList(params.samplesheet, "assets/schema_samplesheet.json"))
 			//ASSEMBLE_READS(Channel.empty())
 			
 			fa_ch = Channel.fromPath(params.input)
@@ -39,7 +37,7 @@ output {
 		mode 'copy'
 	}
 	
-} // required to publish the output !
+}
 
 
 

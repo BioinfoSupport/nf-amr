@@ -6,9 +6,14 @@
 	      "title": "Assembly parameters",
 	      "type": "object",
 	      "required": ["input"], 
-	      "properties": { 
-	        "input": { 
-	          "type": "string"
+	      "properties": {
+	        "samplesheet": { 
+	          "type": "string",
+	          "format": "file-path"
+	        },
+	        "assembly_fasta": { 
+	          "type": "string",
+	          "format": "file-path"
 	        },
 	        "org_name": {
 	          "type": "string"
@@ -20,4 +25,3 @@
     { "$ref": "#/$defs/assembly_params" } 
   ]
 }
-
