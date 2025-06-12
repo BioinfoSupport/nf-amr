@@ -47,6 +47,7 @@ workflow {
     	MLST          = ann_ch.MLST
     	prokka        = ann_ch.prokka
     	html_report   = MULTIREPORT.out.html
+    	xlsx_report   = MULTIREPORT.out.xlsx
 }
 
 
@@ -103,6 +104,10 @@ output {
 	}
 	
 	html_report {
+		path { x -> x[1] >> "${x[0]}" }
+		mode 'copy'
+	}
+	xlsx_report {
 		path { x -> x[1] >> "${x[0]}" }
 		mode 'copy'
 	}

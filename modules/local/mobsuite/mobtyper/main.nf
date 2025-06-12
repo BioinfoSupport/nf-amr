@@ -2,7 +2,7 @@
 
 process MOBTYPER_RUN {
 	  container "quay.io/biocontainers/mob_suite:3.1.9--pyhdfd78af_0"
-    memory '4 GB'
+    memory '12 GB'
     cpus 1
     input:
         tuple val(meta), path('assembly.fna'), val(args)

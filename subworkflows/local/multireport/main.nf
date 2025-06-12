@@ -2,6 +2,32 @@
 include { RMD_RENDER        } from '../../../modules/local/rmd/render'
 include { ORGANIZE_FILES    } from '../../../modules/local/organize_files'
 
+
+
+process MULTITABLE {
+	  container "registry.gitlab.unige.ch/amr-genomics/rscript:main"
+    memory '8 GB'
+    cpus 2
+    input:
+    		tuple val(meta),path("db")
+    		each path("lib_typing.R")
+    output:
+        tuple val(meta), path('multitable.xlsx'), emit:"xlsx"
+    script:
+				"""
+				#!/usr/bin/env Rscript
+				source("lib_typing.R")
+				db <- db_load("db")
+				list(
+					assemblies = summarise_assembly(db),
+					contigs = summarise_contigs(db),
+					resistances = summarise_resistances(db)
+				) |>
+				openxlsx::write.xlsx(file="multitable.xlsx")
+				"""
+}
+
+
 workflow MULTIREPORT {
 		take:
 	    	fa_ch
@@ -39,9 +65,14 @@ workflow MULTIREPORT {
 				file("${moduleDir}/assets/multireport.Rmd"),
 				file("${moduleDir}/assets/lib_typing.R")
 			)
+			MULTITABLE(
+				ORGANIZE_FILES.out.map({x -> ["multitable.xlsx",x]}),
+				file("${moduleDir}/assets/lib_typing.R")
+			)
 			
 		emit:
 	    html = RMD_RENDER.out  // channel: [ meta, path(html) ]
+	    xlsx = MULTITABLE.out  // channel: [ meta, path(xlsx) ]
 }
 
 

@@ -198,8 +198,6 @@ summarise_resistances <- function(db) {
 		.id = "source"
 	) |>
 		arrange(assembly_id,contig_id,resistance_name,desc(coverage),desc(identity)) |>
-		group_by(assembly_id,contig_id,resistance_name) |>
-		slice_head(n = 1) |>
 		ungroup()
 }
 

@@ -6,7 +6,7 @@ output:
     flexdashboard::flex_dashboard:
         orientation: rows
 params:
-    indir: "../../results/samples"
+    indir: "../../../../results/samples"
 ---
 
 ```{r setup}
@@ -106,11 +106,9 @@ plotly::config(displayModeBar=FALSE)
 
 
 ```{r fig.height=6, fig.width=4}
-R <- summarise_resistances(db) |>
-	mutate(resistance_name = fct_reorder2_hclust(resistance_name,contig_id,rep(1,n())))
-
-R |>
+summarise_resistances(db) |>
 	distinct(assembly_id,resistance_name) |>
+	mutate(resistance_name = fct_reorder2_hclust(resistance_name,assembly_id,rep(1,n()))) |>
 	ggplot(aes(y=resistance_name)) +
 	geom_bar() +
 	geom_text(aes(x=max(after_stat(count)),label=resistance_name),stat="count",angle=90,hjust=0,size=3) +
