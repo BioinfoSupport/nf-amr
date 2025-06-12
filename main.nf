@@ -3,10 +3,10 @@
 nextflow.preview.output = true
 
 //include { ASSEMBLE_READS    } from './workflows/assemble_reads'
+include { IDENTITY          } from './modules/local/identity'
 include { ANNOTATE_ASSEMBLY } from './workflows/annotate_assembly'
 include { MULTIREPORT       } from './subworkflows/local/multireport'
 include { validateParameters; paramsSummaryLog; samplesheetToList } from 'plugin/nf-schema'
-
 
 workflow {
 	main:
@@ -20,7 +20,7 @@ workflow {
 			fa_ch = Channel.fromPath(params.input)
 					.map({x -> tuple(["id":x.baseName],x)})
 			ann_ch = ANNOTATE_ASSEMBLY(fa_ch)
-			
+			IDENTITY(fa_ch)
 			MULTIREPORT(
 				fa_ch,
 				ann_ch.fai,
@@ -36,6 +36,7 @@ workflow {
 			)
 
 	publish:
+			fasta         = IDENTITY.out
       fai           = ann_ch.fai
 	    runinfo       = ann_ch.runinfo
 	    orgfinder     = ann_ch.orgfinder
@@ -52,6 +53,10 @@ workflow {
 
 
 output {
+	fasta {
+		path { x -> x[1] >> "samples/${x[0].id}/assembly.fasta" }
+		mode 'copy'
+	}
 
 	fai {
 		path { x -> x[1] >> "samples/${x[0].id}/assembly.fasta.fai" }
