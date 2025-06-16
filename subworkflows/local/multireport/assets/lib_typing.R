@@ -202,7 +202,7 @@ summarise_resistances <- function(db) {
 }
 
 summarise_contigs <- function(db) {
-	#db <- db_load("results") 
+	#db <- db_load("results")
 	contigs <- db |> 
 		select(assembly_id,contigs) |> 
 		unnest(contigs)
@@ -217,13 +217,14 @@ summarise_contigs <- function(db) {
 	mob <- db |> 
 		select(assembly_id,mobtyper) |> 
 		unnest(mobtyper) |>
-		mutate(relaxase_types=str_split(relaxase_types,",")) |>
+		mutate(relaxase_types = str_split(relaxase_types,",") |> map(str_unique)) |>
 		select(assembly_id,contig_id,relaxase_types)
 	contigs |>
 		select(assembly_id,contig_id,contig_length,GC,topology=tag_topology) |>
 		left_join(res,by=c("assembly_id","contig_id"),relationship = "one-to-one") |>
 		left_join(plf,by=c("assembly_id","contig_id"),relationship = "one-to-one") |>
-		left_join(mob,by=c("assembly_id","contig_id"),relationship = "one-to-one")
+		left_join(mob,by=c("assembly_id","contig_id"),relationship = "one-to-one")  |>
+		mutate(is_plasmid = (contig_length<=500000) & lengths(plasmid_types)>0)
 }
 
 

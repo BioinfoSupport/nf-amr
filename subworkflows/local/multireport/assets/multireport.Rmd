@@ -80,8 +80,7 @@ reactable_percent_colDef <- function() {
 ```{r include=FALSE}
 db <- db_load(params$indir)
 assemblies <- summarise_assembly(db)
-contigs <- summarise_contigs(db) |>
-	mutate(is_plasmid = (contig_length<=500000) & lengths(plasmid_types)>0)
+contigs <- summarise_contigs(db)
 ```
 
 

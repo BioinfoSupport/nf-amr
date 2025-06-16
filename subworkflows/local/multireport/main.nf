@@ -18,11 +18,12 @@ process MULTITABLE {
 				#!/usr/bin/env Rscript
 				source("lib_typing.R")
 				db <- db_load("db")
-				list(
+				tbl <- list(
 					assemblies = summarise_assembly(db),
 					contigs = summarise_contigs(db),
 					resistances = summarise_resistances(db)
-				) |>
+				)
+				tbl\$contigs <- left_join(tbl\$contigs,select(tbl\assemblies,"species_name","mlst_type"))
 				openxlsx::write.xlsx(file="multitable.xlsx")
 				"""
 }
