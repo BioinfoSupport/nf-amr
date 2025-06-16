@@ -155,7 +155,7 @@ bind_rows(
 				parent=""
 			) |> summarize(
 				n = n(),
-				hovertext = str_glue("{n} hits in {n_distinct(assembly_id)} samples\n{str_flatten(unique(assembly_id),'\n')}")
+				hovertext = str_glue("{n} hits in {n_distinct(assembly_id)} samples\n")
 			),
 	 amrfinderplus |>
 			group_by(
@@ -164,7 +164,7 @@ bind_rows(
 				parent=Class
 			) |> summarize(
 				n = n(),
-				hovertext = str_glue("{n} hits in {n_distinct(assembly_id)} samples\n{str_flatten(unique(assembly_id),'\n')}")
+				hovertext = str_glue("{n} hits in {n_distinct(assembly_id)} samples\n")
 			),
 	 amrfinderplus |>
 			group_by(
@@ -173,7 +173,7 @@ bind_rows(
 				parent=str_c(Class,Subclass),
 			) |> summarize(
 				n = n(),
-				hovertext = str_glue("{n} hits in {n_distinct(assembly_id)} samples\n{str_flatten(unique(assembly_id),'\n')}")
+				hovertext = str_glue("{n} hits in {n_distinct(assembly_id)} samples\n")
 			)
 ) %>%
 plotly::plot_ly(
