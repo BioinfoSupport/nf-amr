@@ -140,6 +140,56 @@ plotly::plot_ly(
 plotly::config(displayModeBar=FALSE)
 ```
 
+
+
+### amrfinder+
+```{r}
+amrfinderplus <- db |>
+	select(assembly_id,amrfinderplus) |>
+	unnest(amrfinderplus)
+bind_rows(
+	 amrfinderplus |>
+			group_by(
+				id=str_c(Class),
+				label=Class,
+				parent=""
+			) |> summarize(
+				n = n(),
+				hovertext = str_glue("{n} hits in {n_distinct(assembly_id)} samples\n{str_flatten(unique(assembly_id),'\n')}")
+			),
+	 amrfinderplus |>
+			group_by(
+				id=str_c(Class,Subclass),
+				label=Subclass,
+				parent=Class
+			) |> summarize(
+				n = n(),
+				hovertext = str_glue("{n} hits in {n_distinct(assembly_id)} samples\n{str_flatten(unique(assembly_id),'\n')}")
+			),
+	 amrfinderplus |>
+			group_by(
+				id=str_c(Class,Subclass,resistance_name),
+				label=resistance_name,
+				parent=str_c(Class,Subclass),
+			) |> summarize(
+				n = n(),
+				hovertext = str_glue("{n} hits in {n_distinct(assembly_id)} samples\n{str_flatten(unique(assembly_id),'\n')}")
+			)
+) %>%
+plotly::plot_ly(
+		ids = ~id,
+		labels = ~label,
+	  parents = ~parent,
+	  values = ~n,
+		hovertext = ~hovertext,
+	  type = 'sunburst',
+	  branchvalues = 'total'
+) %>%
+plotly::config(displayModeBar=FALSE)
+```
+
+
+
 # Tables
 
 Row {.tabset}
@@ -253,42 +303,6 @@ contigs |>
 Column
 -------------------------
 
-### amrfinder+
-This can be a nice representation for a single sample
-```{r}
-amrfinderplus <- db |>
-	select(assembly_id,amrfinderplus) |>
-	unnest(amrfinderplus)
-bind_rows(
-	 amrfinderplus |>
-			group_by(
-				id=str_c(Class),
-				label=Class,
-				parent=""
-			) |> count(),
-	 amrfinderplus |>
-			group_by(
-				id=str_c(Class,Subclass),
-				label=Subclass,
-				parent=Class
-			) |> count(),
-	 amrfinderplus |>
-			group_by(
-				id=str_c(Class,Subclass,resistance_name),
-				label=resistance_name,
-				parent=str_c(Class,Subclass)
-			) |> count()
-) %>%
-plotly::plot_ly(
-		ids = ~id,
-		labels = ~label,
-	  parents = ~parent,
-	  values = ~n,
-	  type = 'sunburst',
-	  branchvalues = 'total'
-) %>%
-plotly::config(displayModeBar=FALSE)
-```
 
 
 ### Resfinder
