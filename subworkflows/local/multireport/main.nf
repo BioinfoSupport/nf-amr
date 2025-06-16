@@ -49,14 +49,14 @@ workflow MULTIREPORT {
 					  fa_ch.map(           {meta,file -> [file,"${meta.id}/assembly.fasta"]}),
 						fai_ch.map(          {meta,file -> [file,"${meta.id}/assembly.fasta.fai"]}),
 						runinfo_ch.map(      {meta,file -> [file,"${meta.id}/runinfo.json"]}),
-						orgfinder_ch.map(    {meta,file -> [file,"${meta.id}/${file.baseName}"]}),
-						amrfinderplus_ch.map({meta,file -> [file,"${meta.id}/${file.baseName}"]}),
-						resfinder_ch.map(    {meta,file -> [file,"${meta.id}/${file.baseName}"]}),
-						mobtyper_ch.map(     {meta,file -> [file,"${meta.id}/${file.baseName}"]}),
-						plasmidfinder_ch.map({meta,file -> [file,"${meta.id}/${file.baseName}"]}),
-						cgemlst_ch.map(      {meta,file -> [file,"${meta.id}/${file.baseName}"]}),
-						MLST_ch.map(         {meta,file -> [file,"${meta.id}/${file.baseName}"]}),
-						prokka_ch.map(       {meta,file -> [file,"${meta.id}/${file.baseName}"]})
+						orgfinder_ch.map(    {meta,file -> [file,"${meta.id}/${file.name}"]}),
+						amrfinderplus_ch.map({meta,file -> [file,"${meta.id}/${file.name}"]}),
+						resfinder_ch.map(    {meta,file -> [file,"${meta.id}/${file.name}"]}),
+						plasmidfinder_ch.map({meta,file -> [file,"${meta.id}/${file.name}"]}),
+						cgemlst_ch.map(      {meta,file -> [file,"${meta.id}/${file.name}"]}),
+						mobtyper_ch.map(     {meta,file -> [file,"${meta.id}/${file.name}"]}),
+						MLST_ch.map(         {meta,file -> [file,"${meta.id}/${file.name}"]}),
+						prokka_ch.map(       {meta,file -> [file,"${meta.id}/${file.name}"]})
 					)
 					.collect({x -> [x]})
 			)

@@ -208,12 +208,12 @@ summarise_contigs <- function(db) {
 		unnest(contigs)
 	res <- summarise_resistances(db) |>
 		group_by(assembly_id,contig_id) |>
-		summarise(resistance_names = list(resistance_name))
+		summarise(resistance_names = list(str_unique(resistance_name)))
 	plf <- db |> 
 		select(assembly_id,plasmidfinder) |> 
 		unnest(plasmidfinder) |>
 		group_by(assembly_id,contig_id) |>
-		summarise(plasmid_types=list(plasmid_type))
+		summarise(plasmid_types=list(str_unique(plasmid_type)))
 	mob <- db |> 
 		select(assembly_id,mobtyper) |> 
 		unnest(mobtyper) |>

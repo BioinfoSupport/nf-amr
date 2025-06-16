@@ -14,12 +14,15 @@ knitr::opts_chunk$set(echo = FALSE)
 ```
 
 
+
+
 ```{r include=FALSE}
 library(tidyverse)
 library(gt)
 library(flexdashboard)
 library(patchwork)
-#library(reactable) # for extended tables, voir ici: https://glin.github.io/reactable/articles/examples.html
+library(reactable)
+library(htmltools)
 source("lib_typing.R")
 
 fct_reorder2_hclust <- function(.f, .y, .value) {
@@ -32,6 +35,44 @@ fct_reorder2_hclust <- function(.f, .y, .value) {
     t()
   h <- hclust(dist(wide),method="ward.D2")
   fct_relevel(.f,h$labels[h$order])
+}
+
+reactable_bar_style <- function(width = 1, fill = "#e6e6e6", height = "75%", align = c("left", "right"), color = NULL) {
+  align <- match.arg(align)
+  if (align == "left") {
+    position <- paste0(width * 100, "%")
+    image <- sprintf("linear-gradient(90deg, %1$s %2$s, transparent %2$s)", fill, position)
+  } else {
+    position <- paste0(100 - width * 100, "%")
+    image <- sprintf("linear-gradient(90deg, transparent %1$s, %2$s %1$s)", position, fill)
+  }
+  list(
+    backgroundImage = image,
+    backgroundSize = paste("100%", height),
+    backgroundRepeat = "no-repeat",
+    backgroundPosition = "center",
+    color = color
+  )
+}
+
+reactable_select_filter <- function(element_id) {
+	function(values, name) {
+      tags$select(
+        onchange = sprintf("Reactable.setFilter('%s', '%s', event.target.value || undefined)", element_id, name),
+        tags$option(value = "", "All"),
+        lapply(unique(values), tags$option),
+        "aria-label" = sprintf("Filter %s", name),
+        style = "width: 100%; height: 28px;"
+      )
+  }
+}
+
+reactable_percent_colDef <- function() {
+	colDef(
+				style = 'font-family: "Fira Mono", Consolas, Monaco, monospace; white-space: pre;',
+	      format = colFormat(digits = 1,suffix = "%"),
+				minWidth=40
+	)
 }
 ```
 
@@ -100,45 +141,66 @@ plotly::plot_ly(
 plotly::config(displayModeBar=FALSE)
 ```
 
+# Tables
+
+Row {.tabset}
+-------------------------
+
+
+### assemblies
+```{r}
+assemblies |>
+	select(species_name,mlst_type,assembly_id,num_contig,assembly_length,GC,N50,orgfinder.species_name,orgfinder.ani) |>
+	mutate(GC = 100*GC) |>
+	reactable(
+		pagination = FALSE,
+		compact = TRUE,
+	  defaultSorted = "mlst_type",
+		defaultSortOrder = "desc",
+	  defaultColDef = colDef(headerClass = "header", align = "left"),
+		defaultExpanded = TRUE,
+		groupBy = "species_name",
+		filterable = TRUE,
+		columns = list(
+			mlst_type = colDef(
+				minWidth=40
+	    ),
+			num_contig = colDef(
+				minWidth=40
+	    ),
+			assembly_length = colDef(
+	      style = function(value) {
+	        reactable_bar_style(width = value / max(assemblies$assembly_length), fill = "#DDDDFF", color = "#000000")
+	      },
+	      format = colFormat(digits = 0,separators = TRUE,suffix = " bp"),
+	      minWidth=60
+	    ),
+			GC = reactable_percent_colDef(),
+			orgfinder.ani = reactable_percent_colDef(),
+			N50 = colDef(
+				style = 'font-family: "Fira Mono", Consolas, Monaco, monospace; white-space: pre;',
+				format = colFormat(digits = 0,separators = TRUE,suffix = " bp"),
+				minWidth=60
+	    )
+		),
+		rowStyle = JS("function(rowInfo) {
+	    if (rowInfo.level > 0) {
+	      return { background: '#eee', borderLeft: '2px solid #ffa62d' }
+	    } else {
+	      return { borderLeft: '2px solid transparent' }
+	    }
+	  }"),
+		elementId = "assembly-select",
+		class = "feature-tbl assemblies-tbl"
+	)
+```
+
+
 ### contigs
 ```{r}
-library(reactable)
-library(htmltools)
-
-# Render a bar chart in the background of the cell
-bar_style <- function(width = 1, fill = "#e6e6e6", height = "75%", align = c("left", "right"), color = NULL) {
-  align <- match.arg(align)
-  if (align == "left") {
-    position <- paste0(width * 100, "%")
-    image <- sprintf("linear-gradient(90deg, %1$s %2$s, transparent %2$s)", fill, position)
-  } else {
-    position <- paste0(100 - width * 100, "%")
-    image <- sprintf("linear-gradient(90deg, transparent %1$s, %2$s %1$s)", position, fill)
-  }
-  list(
-    backgroundImage = image,
-    backgroundSize = paste("100%", height),
-    backgroundRepeat = "no-repeat",
-    backgroundPosition = "center",
-    color = color
-  )
-}
-
-select_filter <- function(element_id) {
-	function(values, name) {
-      tags$select(
-        onchange = sprintf("Reactable.setFilter('%s', '%s', event.target.value || undefined)", element_id, name),
-        tags$option(value = "", "All"),
-        lapply(unique(values), tags$option),
-        "aria-label" = sprintf("Filter %s", name),
-        style = "width: 100%; height: 28px;"
-      )
-  }
-}
-
-
 contigs |>
-	select(assembly_id,contig_id,contig_length,GC,topology,is_plasmid) |>
+	left_join(assemblies,by="assembly_id",suffix = c("",".y")) |>
+	select(species_name,assembly_id,contig_id,contig_length,GC,topology,is_plasmid) |>
 	mutate(GC = 100*GC) |>
 	reactable(
 		pagination = FALSE,
@@ -146,28 +208,45 @@ contigs |>
 	  defaultSorted = "contig_length",
 		defaultSortOrder = "desc",
 	  defaultColDef = colDef(headerClass = "header", align = "left"),
-		groupBy = "assembly_id",
+		defaultExpanded = FALSE,
+		groupBy = c("species_name","assembly_id"),
 		filterable = TRUE,
 		columns = list(
+			species_name = colDef(
+				filterInput = reactable_select_filter('contigs-select')
+			),
 			contig_length = colDef(
 	      style = function(value) {
-	        bar_style(width = value / max(contigs$contig_length), fill = "#DDDDFF", color = "#000000")
+	        reactable_bar_style(width = value / max(contigs$contig_length), fill = "#DDDDFF", color = "#000000")
 	      },
-	      format = colFormat(digits = 0,separators = TRUE,suffix = " bp")
+	      format = colFormat(digits = 0,separators = TRUE,suffix = " bp"),
+	      minWidth = 60
 	    ),
-			GC = colDef(
-	      format = colFormat(digits = 1,suffix = "%")
-	    ),
+			GC = reactable_percent_colDef(),
 			topology = colDef(
-				filterInput = select_filter('contigs-select')
+				filterInput = reactable_select_filter('contigs-select'),
+				minWidth=50
 			),
 			is_plasmid = colDef(
-				filterInput = select_filter('contigs-select')
+				filterInput = reactable_select_filter('contigs-select'),
+				minWidth=40
 			)
 		),
-		elementId = "contigs-select"
+		rowStyle = JS("function(rowInfo) {
+	    if (rowInfo.level > 1) {
+	      return { background: '#eee', borderLeft: '2px solid #ffa62d' }
+	    } else if (rowInfo.level > 0) {
+	    	return { background: '#fff', borderLeft: '2px solid #ffa62d' }
+	    } else {
+	      return { borderLeft: '2px solid transparent' }
+	    }
+	  }"),
+		elementId = "contigs-select",
+		class = "feature-tbl contigs-tbl"
 	)
 ```
+
+
 
 
 # Draft
@@ -336,9 +415,25 @@ contigs |>
 
 
 
+```{r}
+htmltools::tags$link(href = "https://fonts.googleapis.com/css?family=Karla:400,700|Fira+Mono&display=fallback", rel = "stylesheet")
+```
 
 ```{css}
 .chart-shim {
   overflow: auto;
+}
+
+
+.feature-tbl {
+  font-size: 1rem;
+  line-height: 1.125rem;
+  font-family: Karla, "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.contigs-tbl {
+}
+
+.assemblies-tbl {
 }
 ```
