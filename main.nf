@@ -14,9 +14,10 @@ workflow {
 			//validateParameters()
 			//log.info(paramsSummaryLog(workflow))
 			
-			//ch_input = Channel.fromList(samplesheetToList(params.samplesheet, "assets/schema_samplesheet.json"))
-			//ASSEMBLE_READS(Channel.empty())
+			//ch_ss = Channel.fromList(samplesheetToList(params.samplesheet, "assets/schema_samplesheet.json"))
 			
+			
+			//ASSEMBLE_READS(Channel.empty())
 			fa_ch = Channel.fromPath(params.input)
 					.map({x -> tuple(["id":x.baseName],x)})
 			ann_ch = ANNOTATE_ASSEMBLY(fa_ch)
@@ -54,57 +55,57 @@ workflow {
 
 output {
 	fasta {
-		path { x -> x[1] >> "samples/${x[0].id}/assembly.fasta" }
+		path { x -> x[1] >> "samples/${x[0].id}/assembly/assembly.fasta" }
 		mode 'copy'
 	}
 
 	fai {
-		path { x -> x[1] >> "samples/${x[0].id}/assembly.fasta.fai" }
+		path { x -> x[1] >> "samples/${x[0].id}/assembly/assembly.fasta.fai" }
 		mode 'copy'
 	}
 	
 	runinfo {
-		path { x -> x[1] >> "samples/${x[0].id}/runinfo.json" }
+		path { x -> x[1] >> "samples/${x[0].id}/assembly/anninfo.json" }
 		mode 'copy'
 	}
 
 	orgfinder {
-		path { x -> "samples/${x[0].id}/" }
+		path { x -> "samples/${x[0].id}/assembly/" }
 		mode 'copy'
 	}
 
 	amrfinderplus {
-		path { x -> "samples/${x[0].id}/" }
+		path { x -> "samples/${x[0].id}/assembly/" }
 		mode 'copy'
 	}
 	
 	resfinder {
-		path { x -> "samples/${x[0].id}/" }
+		path { x -> "samples/${x[0].id}/assembly/" }
 		mode 'copy'
 	}
 	
 	mobtyper {
-		path { x -> "samples/${x[0].id}/" }
+		path { x -> "samples/${x[0].id}/assembly/" }
 		mode 'copy'
 	}
 
 	plasmidfinder {
-		path { x -> "samples/${x[0].id}/" }
+		path { x -> "samples/${x[0].id}/assembly/" }
 		mode 'copy'
 	}
 
 	cgemlst {
-		path { x -> "samples/${x[0].id}/" }
+		path { x -> "samples/${x[0].id}/assembly/" }
 		mode 'copy'
 	}
 
 	MLST {
-		path { x -> "samples/${x[0].id}/" }
+		path { x -> "samples/${x[0].id}/assembly/" }
 		mode 'copy'
 	}
 
 	prokka {
-		path { x -> "samples/${x[0].id}/" }
+		path { x -> "samples/${x[0].id}/assembly/" }
 		mode 'copy'
 	}
 	

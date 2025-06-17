@@ -14,7 +14,7 @@ process MULTITABLE {
     output:
         tuple val(meta), path('multitable.xlsx'), emit:"xlsx"
     script:
-				"""
+        """
 				#!/usr/bin/env Rscript
 				source("lib_typing.R")
 				db <- db_load("db")
@@ -23,9 +23,9 @@ process MULTITABLE {
 					contigs = summarise_contigs(db),
 					resistances = summarise_resistances(db)
 				)
-				tbl\$contigs <- left_join(tbl\$contigs,select(tbl\assemblies,"species_name","mlst_type"))
-				openxlsx::write.xlsx(file="multitable.xlsx")
-				"""
+				tbl\$contigs <- left_join(tbl\$contigs,select(tbl\$assemblies,assembly_id,species_name,mlst_type),by='assembly_id')
+				openxlsx::write.xlsx(tbl,file="multitable.xlsx")
+        """
 }
 
 
@@ -47,17 +47,17 @@ workflow MULTIREPORT {
 			ORGANIZE_FILES(
 				Channel.empty()
 					.mix(
-					  fa_ch.map(           {meta,file -> [file,"${meta.id}/assembly.fasta"]}),
-						fai_ch.map(          {meta,file -> [file,"${meta.id}/assembly.fasta.fai"]}),
-						runinfo_ch.map(      {meta,file -> [file,"${meta.id}/runinfo.json"]}),
-						orgfinder_ch.map(    {meta,file -> [file,"${meta.id}/${file.name}"]}),
-						amrfinderplus_ch.map({meta,file -> [file,"${meta.id}/${file.name}"]}),
-						resfinder_ch.map(    {meta,file -> [file,"${meta.id}/${file.name}"]}),
-						plasmidfinder_ch.map({meta,file -> [file,"${meta.id}/${file.name}"]}),
-						cgemlst_ch.map(      {meta,file -> [file,"${meta.id}/${file.name}"]}),
-						mobtyper_ch.map(     {meta,file -> [file,"${meta.id}/${file.name}"]}),
-						MLST_ch.map(         {meta,file -> [file,"${meta.id}/${file.name}"]}),
-						prokka_ch.map(       {meta,file -> [file,"${meta.id}/${file.name}"]})
+					  fa_ch.map(           {meta,file -> [file,"${meta.id}/assembly/assembly.fasta"]}),
+						fai_ch.map(          {meta,file -> [file,"${meta.id}/assembly/assembly.fasta.fai"]}),
+						runinfo_ch.map(      {meta,file -> [file,"${meta.id}/assembly/anninfo.json"]}),
+						orgfinder_ch.map(    {meta,file -> [file,"${meta.id}/assembly/${file.name}"]}),
+						amrfinderplus_ch.map({meta,file -> [file,"${meta.id}/assembly/${file.name}"]}),
+						resfinder_ch.map(    {meta,file -> [file,"${meta.id}/assembly/${file.name}"]}),
+						plasmidfinder_ch.map({meta,file -> [file,"${meta.id}/assembly/${file.name}"]}),
+						cgemlst_ch.map(      {meta,file -> [file,"${meta.id}/assembly/${file.name}"]}),
+						mobtyper_ch.map(     {meta,file -> [file,"${meta.id}/assembly/${file.name}"]}),
+						MLST_ch.map(         {meta,file -> [file,"${meta.id}/assembly/${file.name}"]}),
+						prokka_ch.map(       {meta,file -> [file,"${meta.id}/assembly/${file.name}"]})
 					)
 					.collect({x -> [x]})
 			)

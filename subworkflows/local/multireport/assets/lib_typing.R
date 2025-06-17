@@ -3,8 +3,8 @@ library(tidyverse)
 library(GenomicRanges)
 library(Biostrings)
 
-read_runinfo_json <- function(json_file) {
-	#json_file <- "results/samples/r62b17.hdr/runinfo.json"
+read_anninfo_json <- function(json_file) {
+	#json_file <- "results/samples/r62b17.hdr/anninfo.json"
 	json <- jsonlite::fromJSON(json_file,simplifyVector=FALSE)
 	tibble(json) |> 
 		unnest_wider(1) |> 
@@ -152,18 +152,18 @@ contig_meta <- function(fasta_filename) {
 
 
 db_load <- function(amr_dir) {
-	fs::dir_ls(amr_dir,recurse = 1,glob = "*/assembly.fasta") |>
-			fs::path_dir() |>
+	fs::dir_ls(amr_dir,recurse = 2,glob = "*/assembly/assembly.fasta") |>
+			fs::path_dir() |> fs::path_dir() |>
 			enframe(name = NULL,value = "basepath") |>
 			mutate(assembly_id = basename(basepath)) |>
-			mutate(runinfo = map(fs::path(basepath,"runinfo.json"),read_runinfo_json)) |>
-			mutate(orgfinder = map(fs::path(basepath,"orgfinder","tax.tsv"),read_orgfinder_tax)) |>
-			mutate(contigs = map(fs::path(basepath,"assembly.fasta"),contig_meta)) |>
-			mutate(mlst = map(fs::path(basepath,"cge_mlst","data.json"),read_cgemlst_json)) |>
-			mutate(plasmidfinder = map(fs::path(basepath,"plasmidfinder","data.json"),read_plasmidfinder_json)) |>
-			mutate(resfinder = map(fs::path(basepath,"resfinder","data.json"),read_resfinder_json)) |>
-			mutate(amrfinderplus = map(fs::path(basepath,"amrfinderplus","report.tsv"),read_amrfinderplus_tsv)) |>		
-			mutate(mobtyper = map(fs::path(basepath,"mobtyper.tsv"),read_mobtyper_tsv))
+			mutate(anninfo = map(fs::path(basepath,"assembly","anninfo.json"),read_anninfo_json)) |>
+			mutate(orgfinder = map(fs::path(basepath,"assembly","orgfinder","tax.tsv"),read_orgfinder_tax)) |>
+			mutate(contigs = map(fs::path(basepath,"assembly","assembly.fasta"),contig_meta)) |>
+			mutate(mlst = map(fs::path(basepath,"assembly","cge_mlst","data.json"),read_cgemlst_json)) |>
+			mutate(plasmidfinder = map(fs::path(basepath,"assembly","plasmidfinder","data.json"),read_plasmidfinder_json)) |>
+			mutate(resfinder = map(fs::path(basepath,"assembly","resfinder","data.json"),read_resfinder_json)) |>
+			mutate(amrfinderplus = map(fs::path(basepath,"assembly","amrfinderplus","report.tsv"),read_amrfinderplus_tsv)) |>		
+			mutate(mobtyper = map(fs::path(basepath,"assembly","mobtyper.tsv"),read_mobtyper_tsv))
 }
 
 
@@ -175,10 +175,10 @@ summarise_assembly <- function(db) {
 		group_by(assembly_id) |> 
 		summarise(num_contig=n(),assembly_length=sum(contig_length),GC=weighted.mean(GC,contig_length),N50=N50(contig_length)) 
 	mlst <- db |> select(assembly_id,mlst) |> unnest(mlst)
-	runinfo <- db |> select(assembly_id,runinfo) |> unnest(runinfo) 
+	anninfo <- db |> select(assembly_id,anninfo) |> unnest(anninfo) 
 	orgfinder <- db |> select(assembly_id,orgfinder) |> unnest(orgfinder) |> select(assembly_id,org_name,species_name,genus_name)
 	assemlbies |>
-		left_join(runinfo,by="assembly_id",relationship = "one-to-one")	|>
+		left_join(anninfo,by="assembly_id",relationship = "one-to-one")	|>
 		left_join(mlst,by="assembly_id",relationship = "one-to-one") |>
 		left_join(orgfinder,by=c("assembly_id","org_name"),relationship = "many-to-one") |>
 		left_join(rename_with(orgfinder,.cols=!assembly_id,~str_c("orgfinder.",.)),by=c("assembly_id","orgfinder.org_name"),relationship = "one-to-one")
