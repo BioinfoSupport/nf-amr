@@ -72,6 +72,9 @@ And if you need to update the pipeline latest version, use:
 If `--input` argument is missing, the pipeline process all FASTA files located 
 in subfolder `data/` (`--input='data/*.fasta'` by default).
 
+## Output
+By default, the results of the pipeline are stored in subfolder `results/` but
+it can controlled with option `-output-dir` 
 
 
 # TODO:

@@ -11,23 +11,42 @@ include { ANNOTATE_ASSEMBLY } from './workflows/annotate_assembly'
 include { MULTIREPORT       } from './subworkflows/local/multireport'
 include { validateParameters; paramsSummaryLog; samplesheetToList } from 'plugin/nf-schema'
 
+params.kraken2_db = null
+params.fastq_long = null
+
 workflow {
 	main:
 			// Validate parameters and print summary of supplied ones
 			//validateParameters()
 			//log.info(paramsSummaryLog(workflow))
 			
-			//ch_ss = Channel.fromList(samplesheetToList(params.samplesheet, "assets/schema_samplesheet.json"))
+			// -------------------
+			// Prepare databases
+			// -------------------
+			k2_db = Channel.empty()
+			if (params.kraken2_db=="download") {
+				k2_db = KRAKEN2_DB()
+			} else if (params.kraken2_db) {
+				k2_db = Channel.fromPath(params.kraken2_db)
+			}
 			
+			// -------------------
+			// Prepare sequences
+			// -------------------
+			//ch_ss = Channel.fromList(samplesheetToList(params.samplesheet, "assets/schema_samplesheet.json"))
+			fql_ch = Channel.empty()
+			fq_ch = Channel.empty()
+			fa_ch = Channel.empty()
+			if (params.fastq_long) {
+				fql_ch = Channel.fromPath(params.fastq_long)
+						.map({x -> tuple(["id":x.baseName],x)})
+			}
 
 			//ASSEMBLE_READS(Channel.empty())
 			fa_ch = Channel.fromPath(params.input)
 					.map({x -> tuple(["id":x.baseName],x)})
 
-			k2_ch = Channel.empty()
-			if (params.test_kraken2) {
-					k2_ch = KRAKEN2_CLASSIFY(KRAKEN2_DB(),fa_ch)	
-			}
+			k2_ch = KRAKEN2_CLASSIFY(k2_db,fa_ch)
 
 			ann_ch = ANNOTATE_ASSEMBLY(fa_ch)
 			IDENTITY(fa_ch)
@@ -48,6 +67,7 @@ workflow {
 	publish:
 			fasta         = IDENTITY.out
       fai           = ann_ch.fai
+      kraken2_db    = k2_db
       kraken2       = k2_ch
 	    runinfo       = ann_ch.runinfo
 	    orgfinder     = ann_ch.orgfinder
@@ -84,6 +104,10 @@ output {
 		mode 'copy'
 	}
 
+	kraken2_db {
+		path { x -> x[1] >> "db/kraken2" }
+		mode 'copy'
+	}
 	kraken2 {
 		path { x -> "samples/${x[0].id}/assembly/" }
 		mode 'copy'
