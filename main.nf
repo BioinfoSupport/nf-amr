@@ -2,6 +2,9 @@
 
 nextflow.preview.output = true
 
+include { KRAKEN2_DB        } from './modules/local/kraken2/db'
+include { KRAKEN2_CLASSIFY  } from './modules/local/kraken2/classify'
+
 //include { ASSEMBLE_READS    } from './workflows/assemble_reads'
 include { IDENTITY          } from './modules/local/identity'
 include { ANNOTATE_ASSEMBLY } from './workflows/annotate_assembly'
@@ -16,10 +19,16 @@ workflow {
 			
 			//ch_ss = Channel.fromList(samplesheetToList(params.samplesheet, "assets/schema_samplesheet.json"))
 			
-			
+
 			//ASSEMBLE_READS(Channel.empty())
 			fa_ch = Channel.fromPath(params.input)
 					.map({x -> tuple(["id":x.baseName],x)})
+
+			k2_ch = Channel.empty()
+			if (params.test_kraken2) {
+					k2_ch = KRAKEN2_CLASSIFY(KRAKEN2_DB(),fa_ch)	
+			}
+
 			ann_ch = ANNOTATE_ASSEMBLY(fa_ch)
 			IDENTITY(fa_ch)
 			MULTIREPORT(
@@ -39,6 +48,7 @@ workflow {
 	publish:
 			fasta         = IDENTITY.out
       fai           = ann_ch.fai
+      kraken2       = k2_ch
 	    runinfo       = ann_ch.runinfo
 	    orgfinder     = ann_ch.orgfinder
       amrfinderplus = ann_ch.amrfinderplus
@@ -70,6 +80,11 @@ output {
 	}
 
 	orgfinder {
+		path { x -> "samples/${x[0].id}/assembly/" }
+		mode 'copy'
+	}
+
+	kraken2 {
 		path { x -> "samples/${x[0].id}/assembly/" }
 		mode 'copy'
 	}
