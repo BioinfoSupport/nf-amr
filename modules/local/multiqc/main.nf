@@ -3,13 +3,13 @@ process MULTIQC {
     cpus = 2
     memory = '2 GB'
     input:
-	    path('?/*')
+	    path('db')
 	    path(multiqc_config)
     output:
 	    path 'multiqc.html', emit: html
     script:
 	    def config = multiqc_config ? "" : ''
 	    """
-	    multiqc ${task.ext.args?:''} --force --config ${multiqc_config} --filename multiqc.html ./
+	    multiqc ${task.ext.args?:''} --force --config ${multiqc_config} --filename multiqc.html db/
 	    """
 }

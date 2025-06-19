@@ -6,6 +6,7 @@ include { MINIMAP2_ALIGN_ONT } from './modules/local/minimap2/align_ont'
 include { SAMTOOLS_STATS     } from './modules/local/samtools/stats'
 include { NANOPLOT           } from './modules/local/nanoplot'
 include { MULTIQC            } from './modules/local/multiqc'
+include { ORGANIZE_FILES     } from './modules/local/organize_files'
 
 
 //include { ASSEMBLE_READS    } from './workflows/assemble_reads'
@@ -52,7 +53,16 @@ workflow {
 			NANOPLOT(fql_ch)
 			MINIMAP2_ALIGN_ONT(fa_ch.join(fql_ch))
 			SAMTOOLS_STATS(MINIMAP2_ALIGN_ONT.out.cram)
-			MULTIQC(SAMTOOLS_STATS.out.map({x,y->y}),file("${moduleDir}/assets/multiqc/config.yml"))
+			MULTIQC(
+				ORGANIZE_FILES(
+					Channel.empty().mix(
+							SAMTOOLS_STATS.out.map({meta,file -> [file,"stats/${meta.id}.cram.stats"]}),
+							NANOPLOT.out.nanostat.map({meta,file -> [file,"nanostat/${meta.id}"]})
+					)
+					.collect({x -> [x]})
+				),
+				file("${moduleDir}/assets/multiqc/config.yml")
+			)
 			
 
 			// -------------------
@@ -98,6 +108,7 @@ workflow {
     	html_report   = MULTIREPORT.out.html
     	xlsx_report   = MULTIREPORT.out.xlsx
     	multiqc       = MULTIQC.out.html
+			nanoplot      = NANOPLOT.out.nanoplot
 }
 
 
@@ -169,6 +180,10 @@ output {
 		path { x -> "./" }
 		mode 'copy'
 	}
+	nanoplot {
+		path { x -> "nanoplot/${x[0].id}/" }
+		mode 'copy'
+	}	
 }
 
 

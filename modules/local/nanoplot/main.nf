@@ -6,7 +6,8 @@ process NANOPLOT {
     input:
     	tuple val(meta), path("reads.fastq.gz")
     output:
-    	tuple val(meta), path("nanoplot",type:'dir')
+    	tuple val(meta), path("nanoplot",type:'dir'), emit: nanoplot
+    	tuple val(meta), path("nanoplot/NanoStats.txt"), emit: nanostat
     script:
     """
     NanoPlot --threads ${task.cpus} --fastq reads.fastq.gz -o nanoplot
