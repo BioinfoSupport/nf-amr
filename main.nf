@@ -3,6 +3,8 @@
 nextflow.preview.output = true
 
 include { MINIMAP2_ALIGN_ONT } from './modules/local/minimap2/align_ont'
+include { SAMTOOLS_STATS     } from './modules/local/samtools/stats'
+include { NANOPLOT           } from './modules/local/nanoplot'
 
 //include { ASSEMBLE_READS    } from './workflows/assemble_reads'
 include { IDENTITY          } from './modules/local/identity'
@@ -32,9 +34,8 @@ workflow {
 			}
 			if (params.fastq_short) {
 				fqs_ch = Channel
-						.fromFilePairs(params.fastq_short,size=-1) { file -> file.name.replaceAll(/(.*)(_R?[12])?(_[0-9][0-9][0-9])?\.fastq|.fq\.gz$/, '$1') }
+						.fromFilePairs(params.fastq_short,size:-1) { file -> file.name.replaceAll(/(.*)(_R?[12])?(_[0-9][0-9][0-9])?(\.fastq|.fq)\.gz$/, '$1') }
 						.map({id,x -> [["id":id],x]})
-						.view()
 			}
 			if (params.input) {
 				fa_ch = Channel.fromPath(params.input)
@@ -46,8 +47,17 @@ workflow {
 			// -------------------
 			// Run long read tools
 			// -------------------
-			//ASSEMBLE_READS(Channel.empty())
-			MINIMAP2_ALIGN_ONT(fa_ch.join(fql_ch).view())
+			NANOPLOT(fql_ch)
+			MINIMAP2_ALIGN_ONT(fa_ch.join(fql_ch))
+			SAMTOOLS_STATS(MINIMAP2_ALIGN_ONT.out.cram)
+
+			// -------------------
+			// Run short read tools
+			// -------------------
+			//FASTQC(fqs_ch)
+			//BWA_MEM(fa_ch.join(fqs_ch))
+
+			
 
 			// -------------------
 			// Run assembly tools
@@ -72,8 +82,6 @@ workflow {
 	publish:
 			fasta         = IDENTITY.out
       fai           = ann_ch.fai
-      kraken2_db    = k2_db
-      kraken2       = k2_ch
 	    runinfo       = ann_ch.runinfo
 	    orgfinder     = ann_ch.orgfinder
       amrfinderplus = ann_ch.amrfinderplus
@@ -105,15 +113,6 @@ output {
 	}
 
 	orgfinder {
-		path { x -> "samples/${x[0].id}/assembly/" }
-		mode 'copy'
-	}
-
-	kraken2_db {
-		path { x -> x[1] >> "db/kraken2" }
-		mode 'copy'
-	}
-	kraken2 {
 		path { x -> "samples/${x[0].id}/assembly/" }
 		mode 'copy'
 	}
