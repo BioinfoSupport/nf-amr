@@ -2,8 +2,7 @@
 
 nextflow.preview.output = true
 
-include { KRAKEN2_DB        } from './modules/local/kraken2/db'
-include { KRAKEN2_CLASSIFY  } from './modules/local/kraken2/classify'
+include { MINIMAP2_ALIGN_ONT } from './modules/local/minimap2/align_ont'
 
 //include { ASSEMBLE_READS    } from './workflows/assemble_reads'
 include { IDENTITY          } from './modules/local/identity'
@@ -11,8 +10,8 @@ include { ANNOTATE_ASSEMBLY } from './workflows/annotate_assembly'
 include { MULTIREPORT       } from './subworkflows/local/multireport'
 include { validateParameters; paramsSummaryLog; samplesheetToList } from 'plugin/nf-schema'
 
-params.kraken2_db = null
 params.fastq_long = null
+params.fastq_short = null
 
 workflow {
 	main:
@@ -21,33 +20,38 @@ workflow {
 			//log.info(paramsSummaryLog(workflow))
 			
 			// -------------------
-			// Prepare databases
-			// -------------------
-			k2_db = Channel.empty()
-			if (params.kraken2_db=="download") {
-				k2_db = KRAKEN2_DB()
-			} else if (params.kraken2_db) {
-				k2_db = Channel.fromPath(params.kraken2_db)
-			}
-			
-			// -------------------
 			// Prepare sequences
 			// -------------------
 			//ch_ss = Channel.fromList(samplesheetToList(params.samplesheet, "assets/schema_samplesheet.json"))
 			fql_ch = Channel.empty()
-			fq_ch = Channel.empty()
+			fqs_ch = Channel.empty()
 			fa_ch = Channel.empty()
 			if (params.fastq_long) {
 				fql_ch = Channel.fromPath(params.fastq_long)
+						.map({x -> tuple(["id":x.name.replaceAll(/(\.fastq|.fq)\.gz$/, "")],x)})
+			}
+			if (params.fastq_short) {
+				fqs_ch = Channel
+						.fromFilePairs(params.fastq_short,size=-1) { file -> file.name.replaceAll(/(.*)(_R?[12])?(_[0-9][0-9][0-9])?\.fastq|.fq\.gz$/, '$1') }
+						.map({id,x -> [["id":id],x]})
+						.view()
+			}
+			if (params.input) {
+				fa_ch = Channel.fromPath(params.input)
 						.map({x -> tuple(["id":x.baseName],x)})
 			}
 
+
+
+			// -------------------
+			// Run long read tools
+			// -------------------
 			//ASSEMBLE_READS(Channel.empty())
-			fa_ch = Channel.fromPath(params.input)
-					.map({x -> tuple(["id":x.baseName],x)})
+			MINIMAP2_ALIGN_ONT(fa_ch.join(fql_ch).view())
 
-			k2_ch = KRAKEN2_CLASSIFY(k2_db,fa_ch)
-
+			// -------------------
+			// Run assembly tools
+			// -------------------
 			ann_ch = ANNOTATE_ASSEMBLY(fa_ch)
 			IDENTITY(fa_ch)
 			MULTIREPORT(
@@ -63,6 +67,7 @@ workflow {
 	    	ann_ch.MLST,
 	    	ann_ch.prokka
 			)
+
 
 	publish:
 			fasta         = IDENTITY.out
