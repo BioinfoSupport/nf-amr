@@ -5,6 +5,8 @@ nextflow.preview.output = true
 include { MINIMAP2_ALIGN_ONT } from './modules/local/minimap2/align_ont'
 include { SAMTOOLS_STATS     } from './modules/local/samtools/stats'
 include { NANOPLOT           } from './modules/local/nanoplot'
+include { MULTIQC            } from './modules/local/multiqc'
+
 
 //include { ASSEMBLE_READS    } from './workflows/assemble_reads'
 include { IDENTITY          } from './modules/local/identity'
@@ -50,6 +52,8 @@ workflow {
 			NANOPLOT(fql_ch)
 			MINIMAP2_ALIGN_ONT(fa_ch.join(fql_ch))
 			SAMTOOLS_STATS(MINIMAP2_ALIGN_ONT.out.cram)
+			MULTIQC(SAMTOOLS_STATS.out.map({x,y->y}),file("${moduleDir}/assets/multiqc/config.yml"))
+			
 
 			// -------------------
 			// Run short read tools
@@ -93,6 +97,7 @@ workflow {
     	prokka        = ann_ch.prokka
     	html_report   = MULTIREPORT.out.html
     	xlsx_report   = MULTIREPORT.out.xlsx
+    	multiqc       = MULTIQC.out.html
 }
 
 
@@ -160,7 +165,10 @@ output {
 		path { x -> x[1] >> "${x[0]}" }
 		mode 'copy'
 	}
-	
+	multiqc {
+		path { x -> "./" }
+		mode 'copy'
+	}
 }
 
 
