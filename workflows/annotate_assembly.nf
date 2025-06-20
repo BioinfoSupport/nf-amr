@@ -7,7 +7,7 @@ include { AMRFINDERPLUS_RUN } from '../modules/local/amrfinderplus/run'
 include { PROKKA_RUN        } from '../modules/local/tseemann/prokka'
 include { MLST_RUN          } from '../modules/local/tseemann/mlst'
 
-include { RESFINDER_FA_RUN  } from '../modules/local/cgetools/resfinder'
+include { RESFINDER_RUN     } from '../modules/local/cgetools/resfinder'
 include { PLASMIDFINDER_RUN } from '../modules/local/cgetools/plasmidfinder'
 include { CGEMLST_RUN       } from '../modules/local/cgetools/cgemlst'
 include { MOBTYPER_RUN      } from '../modules/local/mobsuite/mobtyper'
@@ -16,7 +16,6 @@ include { TO_JSON           } from '../modules/local/tojson'
 include { SAMTOOLS_FAIDX    } from '../modules/local/samtools/faidx'
 
 params.skip_prokka = true
-params.resfinder_default_args = ''
 params.mobtyper_default_args = ''
 params.amrfinderplus_default_args = ''
 params.plasmidfinder_default_args = ''
@@ -74,10 +73,14 @@ workflow ANNOTATE_ASSEMBLY {
 				if (skip_tool('resfinder')) {
 						resfinder_ch = Channel.empty()
 				} else {
-						resfinder_ch = fa_ch
-							.map({meta,fasta -> [meta,fasta,tool_args('resfinder',meta)]})
-							.filter({meta,fasta,args -> args!=null})
-			        | RESFINDER_FA_RUN
+						resfinder_ch = RESFINDER_RUN(fa_ch,"fasta")
+				}
+
+				// Plasmid typing
+				if (skip_tool('plasmidfinder')) {
+						plasmidfinder_ch = Channel.empty()
+				} else {
+						plasmidfinder_ch = PLASMIDFINDER_RUN(fa_ch)
 				}
 				
 				// NCBI AMRfinder+
@@ -114,16 +117,6 @@ workflow ANNOTATE_ASSEMBLY {
 				fa_org_ch = fa_ch
 					.join(orgfinder_ch.org_name,remainder:true)
 					.map({meta,fa,detected_org_name -> [meta,fa,org_name(meta)?:detected_org_name]})
-				
-				// Plasmid typing
-				if (skip_tool('plasmidfinder')) {
-						plasmidfinder_ch = Channel.empty()
-				} else {
-						plasmidfinder_ch = fa_org_ch
-							.map({meta,fa,org_name -> [meta, fa, tool_args('plasmidfinder',meta, org_name)]})
-							.filter({meta,fasta,args -> args!=null})
-							| PLASMIDFINDER_RUN
-				}
 				
 				// MLST typing
 				if (skip_tool('cgemlst')) {

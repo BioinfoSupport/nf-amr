@@ -4,15 +4,14 @@ nextflow.preview.output = true
 
 include { MINIMAP2_ALIGN_ONT } from './modules/local/minimap2/align_ont'
 include { SAMTOOLS_STATS     } from './modules/local/samtools/stats'
-include { NANOPLOT           } from './modules/local/nanoplot'
 include { MULTIQC            } from './modules/local/multiqc'
 include { ORGANIZE_FILES     } from './modules/local/organize_files'
-
 
 //include { ASSEMBLE_READS    } from './workflows/assemble_reads'
 include { IDENTITY          } from './modules/local/identity'
 include { ANNOTATE_ASSEMBLY } from './workflows/annotate_assembly'
-include { MULTIREPORT       } from './subworkflows/local/multireport'
+include { ONT_READS         } from './subworkflows/ont_reads'
+include { MULTIREPORT       } from './subworkflows/multireport'
 include { validateParameters; paramsSummaryLog; samplesheetToList } from 'plugin/nf-schema'
 
 params.fastq_long = null
@@ -50,14 +49,14 @@ workflow {
 			// -------------------
 			// Run long read tools
 			// -------------------
-			NANOPLOT(fql_ch)
+			ONT_READS(fql_ch)
 			MINIMAP2_ALIGN_ONT(fa_ch.join(fql_ch))
 			SAMTOOLS_STATS(MINIMAP2_ALIGN_ONT.out.cram)
 			MULTIQC(
 				ORGANIZE_FILES(
 					Channel.empty().mix(
-							SAMTOOLS_STATS.out.map({meta,file -> [file,"stats/${meta.id}.cram.stats"]}),
-							NANOPLOT.out.nanostat.map({meta,file -> [file,"nanostat/${meta.id}"]})
+							SAMTOOLS_STATS.out.map({meta,file -> [file,"${meta.id}.cram.stats"]}),
+							ONT_READS.out.nanostat.map({meta,file -> [file,"${meta.id}.nanostat"]})
 					)
 					.collect({x -> [x]})
 				),
@@ -71,7 +70,6 @@ workflow {
 			//FASTQC(fqs_ch)
 			//BWA_MEM(fa_ch.join(fqs_ch))
 
-			
 
 			// -------------------
 			// Run assembly tools
@@ -108,7 +106,7 @@ workflow {
     	html_report   = MULTIREPORT.out.html
     	xlsx_report   = MULTIREPORT.out.xlsx
     	multiqc       = MULTIQC.out.html
-			nanoplot      = NANOPLOT.out.nanoplot
+			nanoplot      = ONT_READS.out.nanoplot
 }
 
 
@@ -181,7 +179,7 @@ output {
 		mode 'copy'
 	}
 	nanoplot {
-		path { x -> "nanoplot/${x[0].id}/" }
+		path { x -> "qc/${x[0].id}/" }
 		mode 'copy'
 	}	
 }

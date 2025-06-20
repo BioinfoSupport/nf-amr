@@ -19,7 +19,7 @@
         "format": "file-path",
         "pattern": "^\\S+\\.(fasta|fa)$",
         "errorMessage": "Wrong assembly_fasta path provided (cannot contain spaces and must end with .fasta)"
-      },      
+      },
       "fastq_1": {
         "type": "string",
         "format": "file-path",

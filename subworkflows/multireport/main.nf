@@ -1,6 +1,6 @@
 
-include { RMD_RENDER        } from '../../../modules/local/rmd/render'
-include { ORGANIZE_FILES    } from '../../../modules/local/organize_files'
+include { RMD_RENDER        } from '../../modules/local/rmd/render'
+include { ORGANIZE_FILES    } from '../../modules/local/organize_files'
 
 
 
