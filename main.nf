@@ -2,13 +2,13 @@
 
 nextflow.preview.output = true
 
-include { MINIMAP2_ALIGN_ONT } from './modules/local/minimap2/align_ont'
-include { SAMTOOLS_STATS     } from './modules/local/samtools/stats'
-include { MULTIQC            } from './modules/local/multiqc'
-include { ORGANIZE_FILES     } from './modules/local/organize_files'
+include { MINIMAP2_ALIGN_ONT } from './modules/minimap2/align_ont'
+include { SAMTOOLS_STATS     } from './modules/samtools/stats'
+include { MULTIQC            } from './modules/multiqc'
+include { ORGANIZE_FILES     } from './modules/organize_files'
 
 //include { ASSEMBLE_READS    } from './workflows/assemble_reads'
-include { IDENTITY          } from './modules/local/identity'
+include { IDENTITY          } from './modules/identity'
 include { ANNOTATE_ASSEMBLY } from './workflows/annotate_assembly'
 include { ONT_READS         } from './subworkflows/ont_reads'
 include { MULTIREPORT       } from './subworkflows/multireport'
@@ -67,6 +67,7 @@ workflow {
 			// -------------------
 			// Run short read tools
 			// -------------------
+			fqs_ch.view()
 			//FASTQC(fqs_ch)
 			//BWA_MEM(fa_ch.join(fqs_ch))
 

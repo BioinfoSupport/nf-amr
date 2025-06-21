@@ -1,7 +1,7 @@
 
-include { NANOPLOT       } from '../../modules/local/nanoplot'
-include { RESFINDER      } from '../../modules/local/cgetools/resfinder'
-include { PLASMIDFINDER  } from '../../modules/local/cgetools/plasmidfinder'
+include { NANOPLOT       } from '../../modules/nanoplot'
+include { RESFINDER      } from '../../modules/cgetools/resfinder'
+include { PLASMIDFINDER  } from '../../modules/cgetools/plasmidfinder'
 
 workflow ONT_READS {
 	take:

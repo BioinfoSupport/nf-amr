@@ -1,6 +1,6 @@
 
-include { RMD_RENDER        } from '../../modules/local/rmd/render'
-include { ORGANIZE_FILES    } from '../../modules/local/organize_files'
+include { RMD_RENDER        } from '../../modules/rmd/render'
+include { ORGANIZE_FILES    } from '../../modules/organize_files'
 
 
 
@@ -21,7 +21,8 @@ process MULTITABLE {
 				tbl <- list(
 					assemblies = summarise_assembly(db),
 					contigs = summarise_contigs(db),
-					resistances = summarise_resistances(db)
+					resistances = summarise_resistances(db),
+					plasmidfinder_hits = summarise_plasmidfinder_hits(db)
 				)
 				tbl\$contigs <- left_join(tbl\$contigs,select(tbl\$assemblies,assembly_id,species_name,mlst_type),by='assembly_id')
 				openxlsx::write.xlsx(tbl,file="multitable.xlsx")

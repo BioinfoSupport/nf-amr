@@ -1,19 +1,19 @@
 #!/usr/bin/env nextflow
 
-include { ORGFINDER_DETECT    } from '../modules/local/orgfinder/detect'
+include { ORGFINDER_DETECT    } from '../modules/orgfinder/detect'
 
-include { AMRFINDERPLUS_UPDATE } from '../modules/local/amrfinderplus/update'
-include { AMRFINDERPLUS_RUN } from '../modules/local/amrfinderplus/run'
-include { PROKKA_RUN        } from '../modules/local/tseemann/prokka'
-include { MLST_RUN          } from '../modules/local/tseemann/mlst'
+include { AMRFINDERPLUS_UPDATE } from '../modules/amrfinderplus/update'
+include { AMRFINDERPLUS_RUN } from '../modules/amrfinderplus/run'
+include { PROKKA_RUN        } from '../modules/tseemann/prokka'
+include { MLST_RUN          } from '../modules/tseemann/mlst'
 
-include { RESFINDER         } from '../modules/local/cgetools/resfinder'
-include { PLASMIDFINDER     } from '../modules/local/cgetools/plasmidfinder'
-include { CGEMLST_RUN       } from '../modules/local/cgetools/cgemlst'
-include { MOBTYPER_RUN      } from '../modules/local/mobsuite/mobtyper'
+include { RESFINDER         } from '../modules/cgetools/resfinder'
+include { PLASMIDFINDER     } from '../modules/cgetools/plasmidfinder'
+include { CGEMLST_RUN       } from '../modules/cgetools/cgemlst'
+include { MOBTYPER_RUN      } from '../modules/mobsuite/mobtyper'
 
-include { TO_JSON           } from '../modules/local/tojson'
-include { SAMTOOLS_FAIDX    } from '../modules/local/samtools/faidx'
+include { TO_JSON           } from '../modules/tojson'
+include { SAMTOOLS_FAIDX    } from '../modules/samtools/faidx'
 
 params.skip_prokka = true
 params.mobtyper_default_args = ''
