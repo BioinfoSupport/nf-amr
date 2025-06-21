@@ -7,8 +7,8 @@ include { AMRFINDERPLUS_RUN } from '../modules/local/amrfinderplus/run'
 include { PROKKA_RUN        } from '../modules/local/tseemann/prokka'
 include { MLST_RUN          } from '../modules/local/tseemann/mlst'
 
-include { RESFINDER_RUN     } from '../modules/local/cgetools/resfinder'
-include { PLASMIDFINDER_RUN } from '../modules/local/cgetools/plasmidfinder'
+include { RESFINDER         } from '../modules/local/cgetools/resfinder'
+include { PLASMIDFINDER     } from '../modules/local/cgetools/plasmidfinder'
 include { CGEMLST_RUN       } from '../modules/local/cgetools/cgemlst'
 include { MOBTYPER_RUN      } from '../modules/local/mobsuite/mobtyper'
 
@@ -73,14 +73,14 @@ workflow ANNOTATE_ASSEMBLY {
 				if (skip_tool('resfinder')) {
 						resfinder_ch = Channel.empty()
 				} else {
-						resfinder_ch = RESFINDER_RUN(fa_ch,"fasta")
+						resfinder_ch = RESFINDER(fa_ch,"fasta")
 				}
 
 				// Plasmid typing
 				if (skip_tool('plasmidfinder')) {
 						plasmidfinder_ch = Channel.empty()
 				} else {
-						plasmidfinder_ch = PLASMIDFINDER_RUN(fa_ch)
+						plasmidfinder_ch = PLASMIDFINDER(fa_ch)
 				}
 				
 				// NCBI AMRfinder+

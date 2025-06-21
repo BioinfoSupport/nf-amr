@@ -1,7 +1,7 @@
 
-include { NANOPLOT           } from '../../modules/local/nanoplot'
-include { RESFINDER_RUN      } from '../../modules/local/cgetools/resfinder'
-include { PLASMIDFINDER_RUN  } from '../../modules/local/cgetools/plasmidfinder'
+include { NANOPLOT       } from '../../modules/local/nanoplot'
+include { RESFINDER      } from '../../modules/local/cgetools/resfinder'
+include { PLASMIDFINDER  } from '../../modules/local/cgetools/plasmidfinder'
 
 workflow ONT_READS {
 	take:
@@ -9,14 +9,14 @@ workflow ONT_READS {
 
 	main:
 			NANOPLOT(fql_ch)
-			RESFINDER_RUN(fql_ch,"nanopore")
-			PLASMIDFINDER_RUN(fql_ch)
+			RESFINDER(fql_ch,"nanopore")
+			PLASMIDFINDER(fql_ch)
 			
 	emit:
 			nanostat      = NANOPLOT.out.nanostat
 			nanoplot      = NANOPLOT.out.nanoplot
-			resfinder     = RESFINDER_RUN.out
-			plasmidfinder = PLASMIDFINDER_RUN.out
+			resfinder     = RESFINDER.out
+			plasmidfinder = PLASMIDFINDER.out
 }
 
 

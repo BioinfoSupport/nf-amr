@@ -1,6 +1,6 @@
 
 
-process PLASMIDFINDER_RUN {
+process PLASMIDFINDER {
 	  container "registry.gitlab.unige.ch/amr-genomics/cgetools:main"
     memory '4 GB'
     cpus 1
