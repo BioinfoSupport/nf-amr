@@ -203,10 +203,10 @@ summarise_resistances <- function(db) {
 
 summarise_plasmidfinder_hits <- function(db) {
 	#db <- db_load("results/samples")
-	db |> 
-		select(assembly_id,plasmidfinder) |> 
+	select(db,assembly_id,plasmidfinder) |> 
 		unnest(plasmidfinder) |>
 		select(assembly_id,contig_id,plasmid_type,coverage,identity,position=position_in_ref) |>
+		left_join(summarise_contigs(db) |> select(assembly_id,contig_id,contig_length,contig_is_plasmid=is_plasmid)) |>
 		arrange(assembly_id,contig_id,desc(coverage),desc(identity)) |>
 		ungroup()
 }
