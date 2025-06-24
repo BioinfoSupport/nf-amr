@@ -8,7 +8,7 @@ include { MULTIQC            } from './modules/multiqc'
 include { ORGANIZE_FILES     } from './modules/organize_files'
 
 //include { ASSEMBLE_READS    } from './workflows/assemble_reads'
-include { IDENTITY          } from './modules/identity'
+//include { IDENTITY          } from './modules/identity'
 include { ANNOTATE_ASSEMBLY } from './workflows/annotate_assembly'
 include { ONT_READS         } from './subworkflows/ont_reads'
 include { MULTIREPORT       } from './subworkflows/multireport'
@@ -76,7 +76,7 @@ workflow {
 			// Run assembly tools
 			// -------------------
 			ann_ch = ANNOTATE_ASSEMBLY(fa_ch)
-			IDENTITY(fa_ch)
+			//IDENTITY(fa_ch)
 			MULTIREPORT(
 				fa_ch,
 				ann_ch.fai,
@@ -93,7 +93,7 @@ workflow {
 
 
 	publish:
-			fasta           = IDENTITY.out
+			//fasta           = IDENTITY.out
       fai             = ann_ch.fai
 	    runinfo         = ann_ch.runinfo
 	    orgfinder       = ann_ch.orgfinder
