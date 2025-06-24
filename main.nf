@@ -50,17 +50,18 @@ workflow {
 			}
 
 			// -------------------
-			// Run long read tools
+			// Long/Short read QC
 			// -------------------
 			ONT_READS(fql_ch)
 			FASTQC(fqs_ch)
+			
+			// Long/Short read alignment & stats
 			BWA_MEM(BWA_INDEX(fa_ch).join(fqs_ch))
 			MINIMAP2_ALIGN_ONT(fa_ch.join(fql_ch))
-			
 			SAMTOOLS_STATS_LONG(MINIMAP2_ALIGN_ONT.out.cram)
 			SAMTOOLS_STATS_SHORT(BWA_MEM.out.cram)
 			
-			
+			// MultiQC
 			ORGANIZE_FILES(
 				Channel.empty().mix(
 					SAMTOOLS_STATS_LONG.out.map({meta,file -> [file,"${meta.id}_long.cram.stats"]}),
@@ -72,8 +73,6 @@ workflow {
 				.collect({x -> [x]})
 			)
 			MULTIQC(ORGANIZE_FILES.out,file("${moduleDir}/assets/multiqc/config.yml"))
-
-
 
 
 			// -------------------
