@@ -35,10 +35,19 @@ read_resfinder_json <- function(json_file) {
 
 
 read_amrfinderplus_tsv <- function(tsv_file) {
-	#tsv_file <- "results/samples/r62b17.hdr/amrfinderplus/report.tsv"
-	read_tsv(tsv_file,show_col_types = FALSE) |>
+	#tsv_file <- "results/samples/RH1/assembly/amrfinderplus/report.tsv"
+	expected_structure <- tibble(
+		contig_id = character(0),
+		resistance_name = character(0),
+		coverage = numeric(0),
+		identity = numeric(0),
+		position = character(0)
+	)	
+	if (!file.exists(tsv_file)) return(expected_structure)
+	read_tsv(tsv_file,show_col_types = FALSE,col_types = cols(`Contig id`="c",`% Coverage of reference`="n",`% Identity to reference`="n",`Element symbol`="c",.default="c")) |>
 		dplyr::rename(contig_id=`Contig id`,resistance_name=`Element symbol`,coverage=`% Coverage of reference`,identity=`% Identity to reference`) |>
 		mutate(position=str_glue("{Start}-{Stop}:{Strand}")) |>
+		bind_rows(expected_structure) |>
 		relocate(contig_id,coverage,identity,resistance_name,position)
 }
 

@@ -51,19 +51,14 @@ workflow {
 			ONT_READS(fql_ch)
 			MINIMAP2_ALIGN_ONT(fa_ch.join(fql_ch))
 			SAMTOOLS_STATS(MINIMAP2_ALIGN_ONT.out.cram)
-			/*
-			MULTIQC(
-				ORGANIZE_FILES(
-					Channel.empty().mix(
-							SAMTOOLS_STATS.out.map({meta,file -> [file,"${meta.id}.cram.stats"]}),
-							ONT_READS.out.nanostat.map({meta,file -> [file,"${meta.id}.nanostat"]})
-					)
-					.collect({x -> [x]})
-					.view()
-				),
-				file("${moduleDir}/assets/multiqc/config.yml")
+			ORGANIZE_FILES(
+				Channel.empty().mix(
+					SAMTOOLS_STATS.out.map({meta,file -> [file,"${meta.id}.cram.stats"]}),
+					ONT_READS.out.nanostat.map({meta,file -> [file,"${meta.id}.nanostat"]})
+				)
+				.collect({x -> [x]})
 			)
-			*/
+			MULTIQC(ORGANIZE_FILES.out,file("${moduleDir}/assets/multiqc/config.yml"))
 
 			// -------------------
 			// Run short read tools
