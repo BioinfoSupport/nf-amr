@@ -36,7 +36,7 @@ workflow {
 			}
 			if (params.fastq_short) {
 				fqs_ch = Channel
-						.fromFilePairs(params.fastq_short,size:-1) { file -> file.name.replaceAll(/(.*)(_R?[12])?(_[0-9][0-9][0-9])?(\.fastq|.fq)\.gz$/, '$1') }
+						.fromFilePairs(params.fastq_short,size:-1) { file -> file.name.replaceAll(/(.*)(_R?[12])?(_[0-9][0-9][0-9])?(\.fastq|\.fq)\.gz$/, '$1') }
 						.map({id,x -> [["id":id],x]})
 			}
 			if (params.input) {
@@ -67,7 +67,7 @@ workflow {
 			// -------------------
 			// Run short read tools
 			// -------------------
-			fqs_ch.view()
+			//fqs_ch.view()
 			//FASTQC(fqs_ch)
 			//BWA_MEM(fa_ch.join(fqs_ch))
 
@@ -93,21 +93,24 @@ workflow {
 
 
 	publish:
-			fasta         = IDENTITY.out
-      fai           = ann_ch.fai
-	    runinfo       = ann_ch.runinfo
-	    orgfinder     = ann_ch.orgfinder
-      amrfinderplus = ann_ch.amrfinderplus
-    	resfinder     = ann_ch.resfinder
-    	mobtyper      = ann_ch.mobtyper
-    	plasmidfinder = ann_ch.plasmidfinder
-    	cgemlst       = ann_ch.cgemlst
-    	MLST          = ann_ch.MLST
-    	prokka        = ann_ch.prokka
-    	html_report   = MULTIREPORT.out.html
-    	xlsx_report   = MULTIREPORT.out.xlsx
-    	multiqc       = MULTIQC.out.html
-			nanoplot      = ONT_READS.out.nanoplot
+			fasta           = IDENTITY.out
+      fai             = ann_ch.fai
+	    runinfo         = ann_ch.runinfo
+	    orgfinder       = ann_ch.orgfinder
+      amrfinderplus   = ann_ch.amrfinderplus
+    	resfinder       = ann_ch.resfinder
+    	mobtyper        = ann_ch.mobtyper
+    	plasmidfinder   = ann_ch.plasmidfinder
+    	cgemlst         = ann_ch.cgemlst
+    	MLST            = ann_ch.MLST
+    	prokka          = ann_ch.prokka
+    	long_reads_cram = MINIMAP2_ALIGN_ONT.out.cram
+    	long_reads_crai = MINIMAP2_ALIGN_ONT.out.crai
+    	long_reads_cram_stats = SAMTOOLS_STATS.out
+    	html_report     = MULTIREPORT.out.html
+    	xlsx_report     = MULTIREPORT.out.xlsx
+    	multiqc         = MULTIQC.out.html
+			nanoplot        = ONT_READS.out.nanoplot
 }
 
 
@@ -167,6 +170,21 @@ output {
 		mode 'copy'
 	}
 	
+	long_reads_cram {
+		path { x -> x[1] >> "samples/${x[0].id}/long_reads/long_reads_to_assembly.cram" }
+		mode 'copy'
+	}
+
+	long_reads_cram_stats {
+		path { x -> x[1] >> "samples/${x[0].id}/long_reads/long_reads_to_assembly.cram.stats" }
+		mode 'copy'
+	}
+	
+	long_reads_crai {
+		path { x -> x[1] >> "samples/${x[0].id}/long_reads/long_reads_to_assembly.cram.crai" }
+		mode 'copy'
+	}
+
 	html_report {
 		path { x -> x[1] >> "${x[0]}" }
 		mode 'copy'
@@ -180,7 +198,7 @@ output {
 		mode 'copy'
 	}
 	nanoplot {
-		path { x -> "qc/${x[0].id}/" }
+		path { x -> "samples/${x[0].id}/long_reads/nanoplot" }
 		mode 'copy'
 	}	
 }
