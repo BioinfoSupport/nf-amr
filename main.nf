@@ -115,10 +115,12 @@ workflow {
 
 
 output {
+/*	
 	fasta {
 		path { x -> x[1] >> "samples/${x[0].id}/assembly/assembly.fasta" }
 		mode 'copy'
 	}
+*/
 
 	fai {
 		path { x -> x[1] >> "samples/${x[0].id}/assembly/assembly.fasta.fai" }
