@@ -8,7 +8,7 @@ include { MULTIQC            } from './modules/multiqc'
 include { ORGANIZE_FILES     } from './modules/organize_files'
 
 //include { ASSEMBLE_READS    } from './workflows/assemble_reads'
-//include { IDENTITY          } from './modules/identity'
+include { IDENTITY          } from './modules/identity'
 include { ANNOTATE_ASSEMBLY } from './workflows/annotate_assembly'
 include { ONT_READS         } from './subworkflows/ont_reads'
 include { MULTIREPORT       } from './subworkflows/multireport'
@@ -45,13 +45,13 @@ workflow {
 			}
 
 
-
 			// -------------------
 			// Run long read tools
 			// -------------------
 			ONT_READS(fql_ch)
 			MINIMAP2_ALIGN_ONT(fa_ch.join(fql_ch))
 			SAMTOOLS_STATS(MINIMAP2_ALIGN_ONT.out.cram)
+			/*
 			MULTIQC(
 				ORGANIZE_FILES(
 					Channel.empty().mix(
@@ -59,10 +59,11 @@ workflow {
 							ONT_READS.out.nanostat.map({meta,file -> [file,"${meta.id}.nanostat"]})
 					)
 					.collect({x -> [x]})
+					.view()
 				),
 				file("${moduleDir}/assets/multiqc/config.yml")
 			)
-			
+			*/
 
 			// -------------------
 			// Run short read tools
@@ -76,7 +77,7 @@ workflow {
 			// Run assembly tools
 			// -------------------
 			ann_ch = ANNOTATE_ASSEMBLY(fa_ch)
-			//IDENTITY(fa_ch)
+			IDENTITY(fa_ch)
 			MULTIREPORT(
 				fa_ch,
 				ann_ch.fai,
@@ -93,7 +94,7 @@ workflow {
 
 
 	publish:
-			//fasta           = IDENTITY.out
+			fasta           = IDENTITY.out
       fai             = ann_ch.fai
 	    runinfo         = ann_ch.runinfo
 	    orgfinder       = ann_ch.orgfinder
@@ -107,20 +108,19 @@ workflow {
     	long_reads_cram = MINIMAP2_ALIGN_ONT.out.cram
     	long_reads_crai = MINIMAP2_ALIGN_ONT.out.crai
     	long_reads_cram_stats = SAMTOOLS_STATS.out
+    	//multiqc         = MULTIQC.out
+    	multiqc         = Channel.empty()
+			nanoplot        = ONT_READS.out.nanoplot
     	html_report     = MULTIREPORT.out.html
     	xlsx_report     = MULTIREPORT.out.xlsx
-    	multiqc         = MULTIQC.out.html
-			nanoplot        = ONT_READS.out.nanoplot
 }
 
 
 output {
-/*	
 	fasta {
 		path { x -> x[1] >> "samples/${x[0].id}/assembly/assembly.fasta" }
 		mode 'copy'
 	}
-*/
 
 	fai {
 		path { x -> x[1] >> "samples/${x[0].id}/assembly/assembly.fasta.fai" }
