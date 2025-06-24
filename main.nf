@@ -3,9 +3,14 @@
 nextflow.preview.output = true
 
 include { MINIMAP2_ALIGN_ONT } from './modules/minimap2/align_ont'
-include { SAMTOOLS_STATS     } from './modules/samtools/stats'
+include { SAMTOOLS_STATS as SAMTOOLS_STATS_LONG  } from './modules/samtools/stats'
+include { SAMTOOLS_STATS as SAMTOOLS_STATS_SHORT } from './modules/samtools/stats'
 include { MULTIQC            } from './modules/multiqc'
 include { ORGANIZE_FILES     } from './modules/organize_files'
+
+include { FASTQC             } from './modules/fastqc'
+include { BWA_MEM            } from './modules/bwa/mem'
+include { BWA_INDEX          } from './modules/bwa/index'
 
 //include { ASSEMBLE_READS    } from './workflows/assemble_reads'
 include { IDENTITY          } from './modules/identity'
@@ -36,7 +41,7 @@ workflow {
 			}
 			if (params.fastq_short) {
 				fqs_ch = Channel
-						.fromFilePairs(params.fastq_short,size:-1) { file -> file.name.replaceAll(/(.*)(_R?[12])?(_[0-9][0-9][0-9])?(\.fastq|\.fq)\.gz$/, '$1') }
+						.fromFilePairs(params.fastq_short,size:-1) { file -> file.name.replaceAll(/_(R?[12])(_001)?\.(fq|fastq)\.gz$/, '') }
 						.map({id,x -> [["id":id],x]})
 			}
 			if (params.input) {
@@ -44,28 +49,31 @@ workflow {
 						.map({x -> tuple(["id":x.baseName],x)})
 			}
 
-
 			// -------------------
 			// Run long read tools
 			// -------------------
 			ONT_READS(fql_ch)
+			FASTQC(fqs_ch)
+			BWA_MEM(BWA_INDEX(fa_ch).join(fqs_ch))
 			MINIMAP2_ALIGN_ONT(fa_ch.join(fql_ch))
-			SAMTOOLS_STATS(MINIMAP2_ALIGN_ONT.out.cram)
+			
+			SAMTOOLS_STATS_LONG(MINIMAP2_ALIGN_ONT.out.cram)
+			SAMTOOLS_STATS_SHORT(BWA_MEM.out.cram)
+			
+			
 			ORGANIZE_FILES(
 				Channel.empty().mix(
-					SAMTOOLS_STATS.out.map({meta,file -> [file,"${meta.id}.cram.stats"]}),
-					ONT_READS.out.nanostat.map({meta,file -> [file,"${meta.id}.nanostat"]})
+					SAMTOOLS_STATS_LONG.out.map({meta,file -> [file,"${meta.id}_long.cram.stats"]}),
+					SAMTOOLS_STATS_SHORT.out.map({meta,file -> [file,"${meta.id}_short.cram.stats"]}),
+					ONT_READS.out.nanostat.map({meta,file -> [file,"${meta.id}_long.nanostat"]}),
+					FASTQC.out.zip.map({meta,files -> [files[0],"${meta.id}_short_fastqc.zip"]}),
+					FASTQC.out.zip.map({meta,files -> [files[1],"${meta.id}_short_R2_fastqc.zip"]})
 				)
 				.collect({x -> [x]})
 			)
 			MULTIQC(ORGANIZE_FILES.out,file("${moduleDir}/assets/multiqc/config.yml"))
 
-			// -------------------
-			// Run short read tools
-			// -------------------
-			//fqs_ch.view()
-			//FASTQC(fqs_ch)
-			//BWA_MEM(fa_ch.join(fqs_ch))
+
 
 
 			// -------------------
@@ -89,25 +97,29 @@ workflow {
 
 
 	publish:
-			fasta           = IDENTITY.out
-      fai             = ann_ch.fai
-	    runinfo         = ann_ch.runinfo
-	    orgfinder       = ann_ch.orgfinder
-      amrfinderplus   = ann_ch.amrfinderplus
-    	resfinder       = ann_ch.resfinder
-    	mobtyper        = ann_ch.mobtyper
-    	plasmidfinder   = ann_ch.plasmidfinder
-    	cgemlst         = ann_ch.cgemlst
-    	MLST            = ann_ch.MLST
-    	prokka          = ann_ch.prokka
-    	long_reads_cram = MINIMAP2_ALIGN_ONT.out.cram
-    	long_reads_crai = MINIMAP2_ALIGN_ONT.out.crai
-    	long_reads_cram_stats = SAMTOOLS_STATS.out
-    	//multiqc         = MULTIQC.out
-    	multiqc         = Channel.empty()
-			nanoplot        = ONT_READS.out.nanoplot
-    	html_report     = MULTIREPORT.out.html
-    	xlsx_report     = MULTIREPORT.out.xlsx
+			fasta            = IDENTITY.out
+      fai              = ann_ch.fai
+	    runinfo          = ann_ch.runinfo
+	    orgfinder        = ann_ch.orgfinder
+      amrfinderplus    = ann_ch.amrfinderplus
+    	resfinder        = ann_ch.resfinder
+    	mobtyper         = ann_ch.mobtyper
+    	plasmidfinder    = ann_ch.plasmidfinder
+    	cgemlst          = ann_ch.cgemlst
+    	MLST             = ann_ch.MLST
+    	prokka           = ann_ch.prokka
+    	long_reads_cram  = MINIMAP2_ALIGN_ONT.out.cram
+    	long_reads_crai  = MINIMAP2_ALIGN_ONT.out.crai
+    	long_reads_cram_stats = SAMTOOLS_STATS_LONG.out
+    	multiqc          = Channel.empty() //MULTIQC.out.html
+			nanoplot         = ONT_READS.out.nanoplot
+			fastqc           = FASTQC.out.html
+			short_reads_cram = BWA_MEM.out.cram
+			short_reads_crai = BWA_MEM.out.crai
+			short_reads_cram_stats = SAMTOOLS_STATS_SHORT.out
+			
+    	html_report      = MULTIREPORT.out.html
+    	xlsx_report      = MULTIREPORT.out.xlsx
 }
 
 
@@ -171,14 +183,24 @@ output {
 		path { x -> x[1] >> "samples/${x[0].id}/long_reads/long_reads_to_assembly.cram" }
 		mode 'copy'
 	}
-
+	long_reads_crai {
+		path { x -> x[1] >> "samples/${x[0].id}/long_reads/long_reads_to_assembly.cram.crai" }
+		mode 'copy'
+	}
 	long_reads_cram_stats {
 		path { x -> x[1] >> "samples/${x[0].id}/long_reads/long_reads_to_assembly.cram.stats" }
 		mode 'copy'
 	}
-	
-	long_reads_crai {
-		path { x -> x[1] >> "samples/${x[0].id}/long_reads/long_reads_to_assembly.cram.crai" }
+	short_reads_cram {
+		path { x -> x[1] >> "samples/${x[0].id}/short_reads/short_reads_to_assembly.cram" }
+		mode 'copy'
+	}
+	short_reads_crai {
+		path { x -> x[1] >> "samples/${x[0].id}/short_reads/short_reads_to_assembly.cram.crai" }
+		mode 'copy'
+	}
+	short_reads_cram_stats {
+		path { x -> x[1] >> "samples/${x[0].id}/short_reads/short_reads_to_assembly.cram.stats" }
 		mode 'copy'
 	}
 
@@ -197,7 +219,11 @@ output {
 	nanoplot {
 		path { x -> "samples/${x[0].id}/long_reads/nanoplot" }
 		mode 'copy'
-	}	
+	}
+	fastqc {
+		path { x -> "samples/${x[0].id}/short_reads/fastqc/" }
+		mode 'copy'
+	}		
 }
 
 

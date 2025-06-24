@@ -4,8 +4,8 @@ library(GenomicRanges)
 library(Biostrings)
 
 read_anninfo_json <- function(json_file) {
-	#json_file <- "results/samples/r62b17.hdr/anninfo.json"
-	json <- jsonlite::fromJSON(json_file,simplifyVector=FALSE)
+	#json_file <- "results/samples/r62b17.hdr/assembly/anninfo.json"
+	json <- jsonlite::fromJSON(file(json_file,"rb"),simplifyVector=FALSE)
 	tibble(json) |> 
 		unnest_wider(1) |> 
 		unnest_wider(c(meta,orgfinder),names_sep=".") |>
@@ -161,6 +161,7 @@ contig_meta <- function(fasta_filename) {
 
 
 db_load <- function(amr_dir) {
+	#amr_dir <- "results/samples"
 	fs::dir_ls(amr_dir,recurse = 2,glob = "*/assembly/assembly.fasta") |>
 			fs::path_dir() |> fs::path_dir() |>
 			enframe(name = NULL,value = "basepath") |>

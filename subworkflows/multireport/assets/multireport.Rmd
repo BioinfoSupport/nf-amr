@@ -6,7 +6,7 @@ output:
     flexdashboard::flex_dashboard:
         orientation: rows
 params:
-    indir: "../../../../results/samples"
+    indir: "../../../results/samples"
 ---
 
 ```{r setup}
@@ -187,6 +187,60 @@ plotly::plot_ly(
 ) %>%
 plotly::config(displayModeBar=FALSE)
 ```
+
+
+
+
+
+# Plasmids
+
+Row
+-------------------------
+```{r}
+amrfinderplus <- db |>
+	select(assembly_id,amrfinderplus) |>
+	unnest(amrfinderplus)
+bind_rows(
+	 amrfinderplus |>
+			group_by(
+				id=str_c(Class),
+				label=Class,
+				parent=""
+			) |> summarize(
+				n = n(),
+				hovertext = str_glue("{n} hits in {n_distinct(assembly_id)} samples\n")
+			),
+	 amrfinderplus |>
+			group_by(
+				id=str_c(Class,Subclass),
+				label=Subclass,
+				parent=Class
+			) |> summarize(
+				n = n(),
+				hovertext = str_glue("{n} hits in {n_distinct(assembly_id)} samples\n")
+			),
+	 amrfinderplus |>
+			group_by(
+				id=str_c(Class,Subclass,resistance_name),
+				label=resistance_name,
+				parent=str_c(Class,Subclass),
+			) |> summarize(
+				n = n(),
+				hovertext = str_glue("{n} hits in {n_distinct(assembly_id)} samples\n")
+			)
+) %>%
+plotly::plot_ly(
+		ids = ~id,
+		labels = ~label,
+	  parents = ~parent,
+	  values = ~n,
+		hovertext = ~hovertext,
+	  type = 'sunburst',
+	  branchvalues = 'total'
+) %>%
+plotly::config(displayModeBar=FALSE)
+```
+
 
 
 

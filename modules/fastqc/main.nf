@@ -1,11 +1,12 @@
 process FASTQC {
-    container 'biocontainers/fastqc:0.12.1--hdfd78af_0'
+    container 'quay.io/biocontainers/fastqc:0.12.1--hdfd78af_0'
     cpus 3
     memory '5 GB'
     input:
 	    tuple val(meta), path(reads)
     output:
-	    tuple val(meta), path("report.html"), emit: html
+	    tuple val(meta), path("*_fastqc.html"), emit: html
+	    tuple val(meta), path("*_fastqc.zip"), emit: zip
     script:
 	    """
 	    fastqc \\
