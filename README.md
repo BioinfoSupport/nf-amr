@@ -1,7 +1,7 @@
 
 # nf-amr
 
-`nf-amr` is a nextflow pipeline to annotate FASTA assemblies for Antimicrobial Multi-Resistance.
+`nf-amr` is a nextflow pipeline to process genomic sequencing data of Antimicrobial Multi-Resistant bacteria.
 
 The pipeline:
 
