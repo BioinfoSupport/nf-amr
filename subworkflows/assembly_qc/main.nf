@@ -18,10 +18,11 @@ Short Reads
   - % properly paired
   - Avg coverage
   - Number chimeric pair
+  - Number of identified mutation in the VCF
 Long Reads
   - % mapped
   - Avg coverage
-
+  - Number of identified mutation in the VCF
 */
 
 /* Contigs stats
@@ -66,6 +67,9 @@ workflow ASSEMBLY_QC {
 			MINIMAP2_ALIGN_ONT(fa_ch.join(fql_ch))
 			SAMTOOLS_STATS_LONG(MINIMAP2_ALIGN_ONT.out.cram)
 			SAMTOOLS_STATS_SHORT(BWA_MEM.out.cram)
+			
+			//RUN VCF_LONG
+			//RUN VCF_SHORT
 			//HTML_AND_JSON_QC_REPORT()
 			//CHARACTERIZE_UNMAPPED_READS
 			//QC_AGGREGATOR
@@ -73,10 +77,12 @@ workflow ASSEMBLY_QC {
 		long_reads_cram        = MINIMAP2_ALIGN_ONT.out.cram
 		long_reads_crai        = MINIMAP2_ALIGN_ONT.out.crai
 		long_reads_cram_stats  = SAMTOOLS_STATS_LONG.out
+		long_reads_vcf         = Channel.empty()
 		
 		short_reads_cram       = BWA_MEM.out.cram
 		short_reads_crai       = BWA_MEM.out.crai
 		short_reads_cram_stats = SAMTOOLS_STATS_SHORT.out
+		short_reads_vcf        = Channel.empty()
 }
 
 

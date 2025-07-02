@@ -7,10 +7,10 @@ process HYBRACTER_LONG {
     input:
         tuple val(meta), path('ont_reads.fastq.gz')
     output:
-				tuple val(meta), path("hybracter_out/FINAL_OUTPUT/complete", type: 'dir')
+				tuple val(meta), path("hybracter_out/", type: 'dir')
     script:
 		    """
-				hybracter long-single ${task.ext.args?:''} -l ont_reads.fastq.gz -1 R1.fastq.gz -2 R2.fastq.gz --auto --threads ${task.cpus}
+				hybracter long-single ${task.ext.args?:''} -l ont_reads.fastq.gz --auto --threads ${task.cpus}
 		    """
 }
 

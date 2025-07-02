@@ -5,7 +5,7 @@ nextflow.preview.output = true
 include { MULTIQC            } from './modules/multiqc'
 include { ORGANIZE_FILES     } from './modules/organize_files'
 
-//include { ASSEMBLE_READS    } from './workflows/assemble_reads'
+include { ASSEMBLE_READS    } from './subworkflows/assemble_reads'
 include { IDENTITY          } from './modules/identity'
 include { ANNOTATE_ASSEMBLY } from './workflows/annotate_assembly'
 
@@ -55,7 +55,9 @@ workflow {
 			LONG_READS(fql_ch)
 			SHORT_READS(fqs_ch)
 			ASSEMBLY_QC(fa_ch,fql_ch,fqs_ch)
-			
+
+	
+			ASSEMBLE_READS(fql_ch,fqs_ch)
 
 			// MultiQC
 			ORGANIZE_FILES(
@@ -106,25 +108,24 @@ workflow {
     	multiqc          = Channel.empty() //MULTIQC.out.html
 			
 			// Assembly QC
-    	long_reads_cram        = ASSEMBLY_QC.out.long_reads_cram
-    	long_reads_crai        = ASSEMBLY_QC.out.long_reads_crai
-    	long_reads_cram_stats  = ASSEMBLY_QC.out.long_reads_cram_stats
+    	long_reads_cram           = ASSEMBLY_QC.out.long_reads_cram
+    	long_reads_crai           = ASSEMBLY_QC.out.long_reads_crai
+    	long_reads_cram_stats     = ASSEMBLY_QC.out.long_reads_cram_stats
+			short_reads_cram          = ASSEMBLY_QC.out.short_reads_cram
+			short_reads_crai          = ASSEMBLY_QC.out.short_reads_crai
+			short_reads_cram_stats    = ASSEMBLY_QC.out.short_reads_cram_stats
 
-			short_reads_cram       = ASSEMBLY_QC.out.short_reads_cram
-			short_reads_crai       = ASSEMBLY_QC.out.short_reads_crai
-			short_reads_cram_stats = ASSEMBLY_QC.out.short_reads_cram_stats
-
-			// long-reads
+			// Long-reads
 			long_reads_qc             = LONG_READS.out.nanoplot
 			long_reads_resfinder      = LONG_READS.out.resfinder
 			long_reads_plasmidfinder  = LONG_READS.out.plasmidfinder
 			
-			// short-reads
+			// Short-reads
 			short_reads_qc            = SHORT_READS.out.fastqc_html
 			short_reads_resfinder     = SHORT_READS.out.resfinder
 			short_reads_plasmidfinder = SHORT_READS.out.plasmidfinder
 
-			
+			// Summary reports
     	html_report      = MULTIREPORT.out.html
     	xlsx_report      = MULTIREPORT.out.xlsx
 }
