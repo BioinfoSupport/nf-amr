@@ -106,7 +106,8 @@ read_mobtyper_tsv <- function(tsv_file) {
 
 read_orgfinder_tax <- function(tsv_file) {
 	#tsv_file <- "results/samples/r62b17.hdr/orgfinder/tax.tsv"
-	read_tsv(tsv_file,show_col_types = FALSE,col_types = cols(.default = "c"))	
+	read_tsv(tsv_file,show_col_types = FALSE,col_types = cols(.default = "c")) |>
+		mutate(species_name = if_else(is.na(species_name),org_name,species_name))
 }
 
 read_orgfinder_tsv <- function(tsv_file) {
@@ -163,18 +164,18 @@ contig_meta <- function(fasta_filename) {
 
 db_load <- function(amr_dir) {
 	#amr_dir <- "results/samples"
-	fs::dir_ls(amr_dir,recurse = 2,glob = "*/assembly/assembly.fasta") |>
+	fs::dir_ls(amr_dir,recurse = 2,glob = "*/input_assembly/assembly.fasta") |>
 			fs::path_dir() |> fs::path_dir() |>
 			enframe(name = NULL,value = "basepath") |>
 			mutate(assembly_id = basename(basepath)) |>
-			mutate(anninfo = map(fs::path(basepath,"assembly","anninfo.json"),read_anninfo_json)) |>
-			mutate(orgfinder = map(fs::path(basepath,"assembly","orgfinder","tax.tsv"),read_orgfinder_tax)) |>
-			mutate(contigs = map(fs::path(basepath,"assembly","assembly.fasta"),contig_meta)) |>
-			mutate(mlst = map(fs::path(basepath,"assembly","cge_mlst","data.json"),read_cgemlst_json)) |>
-			mutate(plasmidfinder = map(fs::path(basepath,"assembly","plasmidfinder","data.json"),read_plasmidfinder_json)) |>
-			mutate(resfinder = map(fs::path(basepath,"assembly","resfinder","data.json"),read_resfinder_json)) |>
-			mutate(amrfinderplus = map(fs::path(basepath,"assembly","amrfinderplus","report.tsv"),read_amrfinderplus_tsv)) |>		
-			mutate(mobtyper = map(fs::path(basepath,"assembly","mobtyper.tsv"),read_mobtyper_tsv))
+			mutate(anninfo = map(fs::path(basepath,"input_assembly","anninfo.json"),read_anninfo_json)) |>
+			mutate(orgfinder = map(fs::path(basepath,"input_assembly","orgfinder","tax.tsv"),read_orgfinder_tax)) |>
+			mutate(contigs = map(fs::path(basepath,"input_assembly","assembly.fasta"),contig_meta)) |>
+			mutate(mlst = map(fs::path(basepath,"input_assembly","cge_mlst","data.json"),read_cgemlst_json)) |>
+			mutate(plasmidfinder = map(fs::path(basepath,"input_assembly","plasmidfinder","data.json"),read_plasmidfinder_json)) |>
+			mutate(resfinder = map(fs::path(basepath,"input_assembly","resfinder","data.json"),read_resfinder_json)) |>
+			mutate(amrfinderplus = map(fs::path(basepath,"input_assembly","amrfinderplus","report.tsv"),read_amrfinderplus_tsv)) |>		
+			mutate(mobtyper = map(fs::path(basepath,"input_assembly","mobtyper.tsv"),read_mobtyper_tsv))
 }
 
 

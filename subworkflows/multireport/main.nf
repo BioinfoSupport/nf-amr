@@ -48,17 +48,17 @@ workflow MULTIREPORT {
 			ORGANIZE_FILES(
 				Channel.empty()
 					.mix(
-					  fa_ch.map(           {meta,file -> [file,"${meta.id}/assembly/assembly.fasta"]}),
-						fai_ch.map(          {meta,file -> [file,"${meta.id}/assembly/assembly.fasta.fai"]}),
-						runinfo_ch.map(      {meta,file -> [file,"${meta.id}/assembly/anninfo.json"]}),
-						orgfinder_ch.map(    {meta,file -> [file,"${meta.id}/assembly/${file.name}"]}),
-						amrfinderplus_ch.map({meta,file -> [file,"${meta.id}/assembly/${file.name}"]}),
-						resfinder_ch.map(    {meta,file -> [file,"${meta.id}/assembly/${file.name}"]}),
-						plasmidfinder_ch.map({meta,file -> [file,"${meta.id}/assembly/${file.name}"]}),
-						cgemlst_ch.map(      {meta,file -> [file,"${meta.id}/assembly/${file.name}"]}),
-						mobtyper_ch.map(     {meta,file -> [file,"${meta.id}/assembly/${file.name}"]}),
-						MLST_ch.map(         {meta,file -> [file,"${meta.id}/assembly/${file.name}"]}),
-						prokka_ch.map(       {meta,file -> [file,"${meta.id}/assembly/${file.name}"]})
+					  fa_ch.map(           {meta,file -> [file,"${meta.id}/input_assembly/assembly.fasta"]}),
+						fai_ch.map(          {meta,file -> [file,"${meta.id}/input_assembly/assembly.fasta.fai"]}),
+						runinfo_ch.map(      {meta,file -> [file,"${meta.id}/input_assembly/anninfo.json"]}),
+						orgfinder_ch.map(    {meta,file -> [file,"${meta.id}/input_assembly/${file.name}"]}),
+						amrfinderplus_ch.map({meta,file -> [file,"${meta.id}/input_assembly/${file.name}"]}),
+						resfinder_ch.map(    {meta,file -> [file,"${meta.id}/input_assembly/${file.name}"]}),
+						plasmidfinder_ch.map({meta,file -> [file,"${meta.id}/input_assembly/${file.name}"]}),
+						cgemlst_ch.map(      {meta,file -> [file,"${meta.id}/input_assembly/${file.name}"]}),
+						mobtyper_ch.map(     {meta,file -> [file,"${meta.id}/input_assembly/${file.name}"]}),
+						MLST_ch.map(         {meta,file -> [file,"${meta.id}/input_assembly/${file.name}"]}),
+						prokka_ch.map(       {meta,file -> [file,"${meta.id}/input_assembly/${file.name}"]})
 					)
 					.collect({x -> [x]})
 			)
