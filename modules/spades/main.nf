@@ -8,14 +8,14 @@ process SPADES {
     output:
         tuple val(meta), path('spades',type:'dir')
     script:
-	      def nanopore_reads = nanopore?"--nanopore $nanopore":""
-	      def short_reads = illumina.size()==1?"-s illumina[0]":"-1 ${illumina[0]} -2 ${illumina[1]}"
+	      def nanopore_reads = nanopore?"--nanopore $nanopore":''
+	      def short_reads = illumina?(illumina.size()==1?"-s illumina[0]":"-1 ${illumina[0]} -2 ${illumina[1]}"):''
 		    """
 		    mkdir -p spades && spades.py \\
 		        ${task.ext.args?:''} \\
 		        --threads ${task.cpus} \\
 		        --memory ${task.memory.toGiga()} \\
-		        ${short_reads} \\
+		        ${short_reads} ${nanopore_reads} \\
 		        -o ./spades/
 		    """
 }

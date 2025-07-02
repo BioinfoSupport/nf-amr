@@ -1,8 +1,8 @@
 
-include { HYBRACTER_HYBRID  } from '../../modules/hybracter/hybrid'
-include { HYBRACTER_LONG    } from '../../modules/hybracter/long'
-include { SPADES            } from '../../modules/spades'
-
+include { HYBRACTER as HYBRACTER_LONG   } from '../../modules/hybracter'
+include { HYBRACTER as HYBRACTER_HYBRID } from '../../modules/hybracter'
+include { SPADES    as SPADES_SHORT     } from '../../modules/spades'
+include { FLYE      as FLYE_LONG        } from '../../modules/flye'
 
 workflow ASSEMBLE_READS {
 		take:
@@ -11,22 +11,20 @@ workflow ASSEMBLE_READS {
 		main:
 		
 				// Short reads only assemblies
-				//SPADES(fqs_ch.map({meta,fqs -> [meta,fqs,null]}))
+				SPADES_SHORT(fqs_ch.map({meta,fqs -> [meta,fqs,[]]}))
 				
 				// Long reads only assemblies
-				//HYBRACTER_LONG(fql_ch)
-				//FLYE(fql_ch)
-				
+				//HYBRACTER_LONG(fql_ch.map({meta,fql -> [meta,fql,[]]})
+				FLYE_LONG(fql_ch)
 
 				// Hybrid assemblies
-				//HYBRACTER_HYBRID(['RH1',file('data/hybracter/RH1/barcode01.fastq.gz'),file('data/hybracter/RH1/RH1_S15_L002_R1_001.fastq.gz'),file('data/hybracter/RH1/RH1_S15_L002_R2_001.fastq.gz')])
+				//HYBRACTER_HYBRID(fql_ch.join(fqs_ch).map({meta,fql,fqs -> [meta,fql,fqs]})
 
 		emit:
-		    short_spades     = Channel.empty()
+		    short_spades     = SPADES_SHORT.out
+		    long_flye        = FLYE_LONG.out
+		    hybrid_hybracter = Channel.empty()
 				long_hybracter   = Channel.empty()
-				long_flye        = Channel.empty()
-				long_flye_medaka = Channel.empty()
-				hybrid_hybracter = Channel.empty()
 }
 
 
