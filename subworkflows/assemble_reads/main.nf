@@ -10,7 +10,7 @@ include { FLYE      as FLYE_LONG        } from '../../modules/assembly/flye'
 
 params.unicycler_long = false
 params.unicycler_short = false
-params.unicycler_hybrid = true
+params.unicycler_hybrid = false
 params.hybracter_long = false
 params.hybracter_hybrid = false
 params.spades_short = false
@@ -23,30 +23,29 @@ workflow ASSEMBLE_READS {
 	    	fqs_ch    // channel: [ val(meta), path(short_reads) ]
 		main:
 				// Short reads only assemblies
-				SPADES_SHORT(fqs_ch.map({meta,fqs -> [meta,fqs,[]]}))
-				UNICYCLER_SHORT(fqs_ch.map({meta,fqs -> [meta,fqs,[]]}))
+				SPADES_SHORT(fqs_ch.filter({params.spades_short}).map({meta,fqs -> [meta,fqs,[]]}))
+				UNICYCLER_SHORT(fqs_ch.filter({params.unicycler_short}).map({meta,fqs -> [meta,fqs,[]]}))
 				
 				// Long reads only assemblies
-				FLYE_LONG(fql_ch)
-				//HYBRACTER_LONG(fql_ch.map({meta,fql -> [meta,[],fql]})
-				UNICYCLER_LONG(fql_ch.map({meta,fql -> [meta,[],fql]}))
+				FLYE_LONG(fql_ch.filter({params.flye_long}))
+				HYBRACTER_LONG(fql_ch.filter({params.hybracter_long}).map({meta,fql -> [meta,[],fql]})
+				UNICYCLER_LONG(fql_ch.filter({params.unicycler_long}).map({meta,fql -> [meta,[],fql]}))
 
 				// Hybrid assemblies
-				//HYBRACTER_HYBRID(fql_ch.join(fqs_ch).map({meta,fql,fqs -> [meta,fqs,fql]})
-				UNICYCLER_HYBRID(fql_ch.join(fqs_ch).map({meta,fql,fqs -> [meta,fqs,fql]}))
+				HYBRACTER_HYBRID(fql_ch.join(fqs_ch).filter({params.hybracter_hybrid}).map({meta,fql,fqs -> [meta,fqs,fql]})
+				UNICYCLER_HYBRID(fql_ch.join(fqs_ch).filter({params.unicycler_hybrid}).map({meta,fql,fqs -> [meta,fqs,fql]}))
 
 				// TODO: Run assemblies individual QC 
 				// TODO: Run QC summary report
-
 		emit:
 		    short_spades     = SPADES_SHORT.out
 		    short_unicycler  = UNICYCLER_SHORT.out
 		    
 		    long_flye        = FLYE_LONG.out
 		    long_unicycler   = UNICYCLER_LONG.out
-		    long_hybracter   = Channel.empty()
+		    long_hybracter   = HYBRACTER_LONG.out
 		    
 		    hybrid_unicycler = UNICYCLER_HYBRID.out
-		    hybrid_hybracter = Channel.empty()
+		    hybrid_hybracter = HYBRACTER_HYBRID.out
 }
 
