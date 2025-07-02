@@ -11,7 +11,7 @@ workflow ASSEMBLE_READS {
 		main:
 		
 				// Short reads only assemblies
-				//SPADES(fqs_ch)
+				//SPADES(fqs_ch.map({meta,fqs -> [meta,fqs,null]}))
 				
 				// Long reads only assemblies
 				//HYBRACTER_LONG(fql_ch)

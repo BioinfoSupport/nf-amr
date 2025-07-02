@@ -6,17 +6,16 @@ process SPADES {
     input:
         tuple val(meta), path(illumina), path(nanopore)
     output:
-        tuple val(meta), path('spades',type='dir')
+        tuple val(meta), path('spades',type:'dir')
     script:
-	      def illumina_reads = illumina?( meta.single_end ? "-s $illumina" : "-1 ${illumina[0]} -2 ${illumina[1]}" ):""
 	      def nanopore_reads = nanopore?"--nanopore $nanopore":""
+	      def short_reads = illumina.size()==1?"-s illumina[0]":"-1 ${illumina[0]} -2 ${illumina[1]}"
 		    """
 		    mkdir -p spades && spades.py \\
 		        ${task.ext.args?:''} \\
 		        --threads ${task.cpus} \\
 		        --memory ${task.memory.toGiga()} \\
-		        $illumina_reads \\
-		        $nanopore_reads \\
+		        ${short_reads} \\
 		        -o ./spades/
 		    """
 }
