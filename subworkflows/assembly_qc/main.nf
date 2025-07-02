@@ -42,6 +42,20 @@ Short Reads
 
 */
 
+
+/*
+process IGV_SCRIPT {
+	input:
+	  val(meta)
+  output:
+    tuple val(meta), path("load_in_igv.sh")
+	script:
+	"""
+	file("${moduleDir}/assets/load_in_igv.sh")
+	"""
+}
+*/
+
 workflow ASSEMBLY_QC {
 	take:
 		fa_ch

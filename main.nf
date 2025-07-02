@@ -4,31 +4,20 @@ nextflow.preview.output = true
 
 include { MULTIQC            } from './modules/multiqc'
 include { ORGANIZE_FILES     } from './modules/organize_files'
-include { FASTQC             } from './modules/fastqc'
 
 //include { ASSEMBLE_READS    } from './workflows/assemble_reads'
 include { IDENTITY          } from './modules/identity'
 include { ANNOTATE_ASSEMBLY } from './workflows/annotate_assembly'
 
 include { ASSEMBLY_QC       } from './subworkflows/assembly_qc'
-include { ONT_READS         } from './subworkflows/ont_reads'
+include { LONG_READS        } from './subworkflows/long_reads'
+include { SHORT_READS       } from './subworkflows/short_reads'
+
 include { MULTIREPORT       } from './subworkflows/multireport'
 include { validateParameters; paramsSummaryLog; samplesheetToList } from 'plugin/nf-schema'
 
 params.fastq_long = null
 params.fastq_short = null
-
-
-process IGV_SCRIPT {
-	input:
-	  val(meta)
-  output:
-    tuple val(meta), path("load_in_igv.sh")
-	script:
-	"""
-	file("${moduleDir}/assets/load_in_igv.sh")
-	"""
-}
 
 
 
@@ -63,9 +52,10 @@ workflow {
 			// -------------------
 			// QC
 			// -------------------
-			ONT_READS(fql_ch)
-			FASTQC(fqs_ch)
+			LONG_READS(fql_ch)
+			SHORT_READS(fqs_ch)
 			ASSEMBLY_QC(fa_ch,fql_ch,fqs_ch)
+			
 
 			// MultiQC
 			ORGANIZE_FILES(
