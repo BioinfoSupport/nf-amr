@@ -4,6 +4,7 @@ process MLST_RUN {
 	  container "docker.io/staphb/mlst:2.23.0-2025-02-01"
     memory '4 GB'
     cpus 1
+    time '30 min'
     input:
         tuple val(meta), path("assembly.fasta"), val(args)
     output:

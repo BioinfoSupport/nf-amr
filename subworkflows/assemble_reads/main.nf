@@ -1,4 +1,3 @@
-#!/usr/bin/env nextflow
 
 include { HYBRACTER_HYBRID  } from '../../modules/hybracter/hybrid'
 include { HYBRACTER_LONG  } from '../../modules/hybracter/long'

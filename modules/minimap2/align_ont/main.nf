@@ -1,8 +1,8 @@
-
 process MINIMAP2_ALIGN_ONT {
     container 'community.wave.seqera.io/library/minimap2_samtools:33bb43c18d22e29c'
     memory '10 GB'
-    cpus 4    
+    cpus 4
+    time '1h'
     input:
 	    tuple val(meta), path('ref.fasta'), path('reads.fastq.gz')
     output:

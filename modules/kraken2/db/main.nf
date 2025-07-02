@@ -1,9 +1,8 @@
-
-
 process NCBI_DOWNLOAD_GENOMES {
 		container 'docker.io/staphb/ncbi-datasets:18.0.2'
 		memory '8 GB'
 		cpus 2
+		time '1h'
 		input:
 		    tuple val(taxon),val(args)
 		output:
@@ -15,11 +14,11 @@ process NCBI_DOWNLOAD_GENOMES {
 		"""
 }
 
-
 process KRAKEN2_DB_DOWNLOAD_TAX {
     container 'docker.io/staphb/kraken2:2.1.5'
     memory '10 GB'
     cpus 4
+    time '1h'
     output:
     		path("db/taxonomy",type: 'dir')
     script:
@@ -32,6 +31,7 @@ process KRAKEN2_DB_BUILD {
     container 'docker.io/staphb/kraken2:2.1.5'
     memory '10 GB'
     cpus 4
+    time '1h'
     input:
     		each path("taxonomy")
         path('genomes/*')

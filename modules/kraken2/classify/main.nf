@@ -1,9 +1,8 @@
-
-
 process KRAKEN2_CLASSIFY {
     container 'docker.io/staphb/kraken2:2.1.5'
     memory '5 GB'
     cpus 4
+    time '30 min'
     input:
     		each path("db")
         tuple val(meta), path(seq)

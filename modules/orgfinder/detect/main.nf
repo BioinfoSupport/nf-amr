@@ -3,6 +3,7 @@ process ORGFINDER_DETECT {
     container 'registry.gitlab.unige.ch/amr-genomics/orgfinder:main'
     memory '20 GB'
     cpus 8
+    time '15 min'
     input:
         tuple val(meta), path('assembly.fna')
     output:
