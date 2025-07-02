@@ -28,11 +28,11 @@ workflow ASSEMBLE_READS {
 				
 				// Long reads only assemblies
 				FLYE_LONG(fql_ch.filter({params.flye_long}))
-				HYBRACTER_LONG(fql_ch.filter({params.hybracter_long}).map({meta,fql -> [meta,[],fql]})
+				HYBRACTER_LONG(fql_ch.filter({params.hybracter_long}).map({meta,fql -> [meta,[],fql]}))
 				UNICYCLER_LONG(fql_ch.filter({params.unicycler_long}).map({meta,fql -> [meta,[],fql]}))
 
 				// Hybrid assemblies
-				HYBRACTER_HYBRID(fql_ch.join(fqs_ch).filter({params.hybracter_hybrid}).map({meta,fql,fqs -> [meta,fqs,fql]})
+				HYBRACTER_HYBRID(fql_ch.join(fqs_ch).filter({params.hybracter_hybrid}).map({meta,fql,fqs -> [meta,fqs,fql]}))
 				UNICYCLER_HYBRID(fql_ch.join(fqs_ch).filter({params.unicycler_hybrid}).map({meta,fql,fqs -> [meta,fqs,fql]}))
 
 				// TODO: Run assemblies individual QC 

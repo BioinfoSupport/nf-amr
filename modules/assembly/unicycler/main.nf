@@ -1,6 +1,6 @@
 process UNICYCLER {
     container 'quay.io/biocontainers/unicycler:0.5.1--py312hdcc493e_4'
-    memory '24 GB'
+    memory '20 GB'
     cpus 8
     time '4h'
     input:
