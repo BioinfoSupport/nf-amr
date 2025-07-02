@@ -2,25 +2,35 @@
 
 nextflow.preview.output = true
 
-include { MINIMAP2_ALIGN_ONT } from './modules/minimap2/align_ont'
-include { SAMTOOLS_STATS as SAMTOOLS_STATS_LONG  } from './modules/samtools/stats'
-include { SAMTOOLS_STATS as SAMTOOLS_STATS_SHORT } from './modules/samtools/stats'
 include { MULTIQC            } from './modules/multiqc'
 include { ORGANIZE_FILES     } from './modules/organize_files'
-
 include { FASTQC             } from './modules/fastqc'
-include { BWA_MEM            } from './modules/bwa/mem'
-include { BWA_INDEX          } from './modules/bwa/index'
 
 //include { ASSEMBLE_READS    } from './workflows/assemble_reads'
 include { IDENTITY          } from './modules/identity'
 include { ANNOTATE_ASSEMBLY } from './workflows/annotate_assembly'
+
+include { ASSEMBLY_QC       } from './subworkflows/assembly_qc'
 include { ONT_READS         } from './subworkflows/ont_reads'
 include { MULTIREPORT       } from './subworkflows/multireport'
 include { validateParameters; paramsSummaryLog; samplesheetToList } from 'plugin/nf-schema'
 
 params.fastq_long = null
 params.fastq_short = null
+
+
+process IGV_SCRIPT {
+	input:
+	  val(meta)
+  output:
+    tuple val(meta), path("load_in_igv.sh")
+	script:
+	"""
+	file("${moduleDir}/assets/load_in_igv.sh")
+	"""
+}
+
+
 
 workflow {
 	main:
@@ -48,24 +58,20 @@ workflow {
 				fa_ch = Channel.fromPath(params.input)
 						.map({x -> tuple(["id":x.baseName],x)})
 			}
+			IDENTITY(fa_ch)
 
 			// -------------------
-			// Long/Short read QC
+			// QC
 			// -------------------
 			ONT_READS(fql_ch)
 			FASTQC(fqs_ch)
-			
-			// Long/Short read alignment & stats
-			BWA_MEM(BWA_INDEX(fa_ch).join(fqs_ch))
-			MINIMAP2_ALIGN_ONT(fa_ch.join(fql_ch))
-			SAMTOOLS_STATS_LONG(MINIMAP2_ALIGN_ONT.out.cram)
-			SAMTOOLS_STATS_SHORT(BWA_MEM.out.cram)
-			
+			ASSEMBLY_QC(fa_ch,fql_ch,fqs_ch)
+
 			// MultiQC
 			ORGANIZE_FILES(
 				Channel.empty().mix(
-					SAMTOOLS_STATS_LONG.out.map({meta,file -> [file,"${meta.id}_long.cram.stats"]}),
-					SAMTOOLS_STATS_SHORT.out.map({meta,file -> [file,"${meta.id}_short.cram.stats"]}),
+					ASSEMBLY_QC.out.cram_stats_long.map({meta,file -> [file,"${meta.id}_long.cram.stats"]}),
+					ASSEMBLY_QC.out.cram_stats_short.map({meta,file -> [file,"${meta.id}_short.cram.stats"]}),
 					ONT_READS.out.nanostat.map({meta,file -> [file,"${meta.id}_long.nanostat"]}),
 					FASTQC.out.zip.map({meta,files -> [files[0],"${meta.id}_short_fastqc.zip"]}),
 					FASTQC.out.zip.map({meta,files -> [files[1],"${meta.id}_short_R2_fastqc.zip"]})
@@ -79,7 +85,6 @@ workflow {
 			// Run assembly tools
 			// -------------------
 			ann_ch = ANNOTATE_ASSEMBLY(fa_ch)
-			IDENTITY(fa_ch)
 			MULTIREPORT(
 				fa_ch,
 				ann_ch.fai,
@@ -107,15 +112,15 @@ workflow {
     	cgemlst          = ann_ch.cgemlst
     	MLST             = ann_ch.MLST
     	prokka           = ann_ch.prokka
-    	long_reads_cram  = MINIMAP2_ALIGN_ONT.out.cram
-    	long_reads_crai  = MINIMAP2_ALIGN_ONT.out.crai
-    	long_reads_cram_stats = SAMTOOLS_STATS_LONG.out
+    	long_reads_cram  = ASSEMBLY_QC.out.cram_long
+    	long_reads_crai  = ASSEMBLY_QC.out.crai_long
+    	long_reads_cram_stats = ASSEMBLY_QC.out.cram_stats_long
     	multiqc          = Channel.empty() //MULTIQC.out.html
 			nanoplot         = ONT_READS.out.nanoplot
 			fastqc           = FASTQC.out.html
-			short_reads_cram = BWA_MEM.out.cram
-			short_reads_crai = BWA_MEM.out.crai
-			short_reads_cram_stats = SAMTOOLS_STATS_SHORT.out
+			short_reads_cram = ASSEMBLY_QC.out.cram_short
+			short_reads_crai = ASSEMBLY_QC.out.crai_short
+			short_reads_cram_stats = ASSEMBLY_QC.out.cram_stats_short
 			
     	html_report      = MULTIREPORT.out.html
     	xlsx_report      = MULTIREPORT.out.xlsx
