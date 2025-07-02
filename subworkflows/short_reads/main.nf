@@ -5,7 +5,7 @@ include { PLASMIDFINDER  } from '../../modules/cgetools/plasmidfinder'
 
 workflow SHORT_READS {
 	take:
-		fql_ch
+		fqs_ch
 	main:
 			FASTQC(fqs_ch)
 			RESFINDER(fqs_ch,'illumina')
