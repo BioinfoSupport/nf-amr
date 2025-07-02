@@ -12,15 +12,13 @@ workflow ASSEMBLE_READS {
 				//SPADES(fqs_ch)
 				
 				// Long reads only assemblies
+				//HYBRACTER_LONG(fql_ch)
 				//FLYE(fql_ch)
-				HYBRACTER_LONG(fql_ch)
+				
 
 				// Hybrid assemblies
 				//HYBRACTER_HYBRID(['RH1',file('data/hybracter/RH1/barcode01.fastq.gz'),file('data/hybracter/RH1/RH1_S15_L002_R1_001.fastq.gz'),file('data/hybracter/RH1/RH1_S15_L002_R2_001.fastq.gz')])
-				
-				// HYBRACTER
 
-				
 		emit:
 		    short_spades     = Channel.empty()
 				long_hybracter   = Channel.empty()
