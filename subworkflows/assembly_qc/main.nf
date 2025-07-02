@@ -74,15 +74,15 @@ workflow ASSEMBLY_QC {
 			//CHARACTERIZE_UNMAPPED_READS
 			//QC_AGGREGATOR
 	emit:
-		long_reads_cram        = MINIMAP2_ALIGN_ONT.out.cram
-		long_reads_crai        = MINIMAP2_ALIGN_ONT.out.crai
-		long_reads_cram_stats  = SAMTOOLS_STATS_LONG.out
-		long_reads_vcf         = Channel.empty()
+		long_cram        = MINIMAP2_ALIGN_ONT.out.cram
+		long_crai        = MINIMAP2_ALIGN_ONT.out.crai
+		long_cram_stats  = SAMTOOLS_STATS_LONG.out
+		long_vcf         = Channel.empty()
 		
-		short_reads_cram       = BWA_MEM.out.cram
-		short_reads_crai       = BWA_MEM.out.crai
-		short_reads_cram_stats = SAMTOOLS_STATS_SHORT.out
-		short_reads_vcf        = Channel.empty()
+		short_cram       = BWA_MEM.out.cram
+		short_crai       = BWA_MEM.out.crai
+		short_cram_stats = SAMTOOLS_STATS_SHORT.out
+		short_vcf        = Channel.empty()
 }
 
 

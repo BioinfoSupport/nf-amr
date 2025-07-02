@@ -16,9 +16,8 @@ include { SHORT_READS       } from './subworkflows/short_reads'
 include { MULTIREPORT       } from './subworkflows/multireport'
 include { validateParameters; paramsSummaryLog; samplesheetToList } from 'plugin/nf-schema'
 
-params.fastq_long = null
-params.fastq_short = null
-
+params.fastq_long = []
+params.fastq_short = []
 
 
 workflow {
@@ -56,14 +55,15 @@ workflow {
 			SHORT_READS(fqs_ch)
 			ASSEMBLY_QC(fa_ch,fql_ch,fqs_ch)
 
-	
-			ASSEMBLE_READS(fql_ch,fqs_ch)
+			// Reads assembly
+			ASSEMBLE_READS(fql_ch,fqs_ch)	
+			
 
 			// MultiQC
 			ORGANIZE_FILES(
 				Channel.empty().mix(
-					ASSEMBLY_QC.out.long_reads_cram_stats.map({meta,file -> [file,"${meta.id}_long.cram.stats"]}),
-					ASSEMBLY_QC.out.short_reads_cram_stats.map({meta,file -> [file,"${meta.id}_short.cram.stats"]}),
+					ASSEMBLY_QC.out.long_cram_stats.map({meta,file -> [file,"${meta.id}_long.cram.stats"]}),
+					ASSEMBLY_QC.out.short_cram_stats.map({meta,file -> [file,"${meta.id}_short.cram.stats"]}),
 					LONG_READS.out.nanostat.map({meta,file -> [file,"${meta.id}_long.nanostat"]}),
 					SHORT_READS.out.fastqc_zip.map({meta,files -> [files[0],"${meta.id}_short_fastqc.zip"]}),
 					SHORT_READS.out.fastqc_zip.map({meta,files -> [files[1],"${meta.id}_short_R2_fastqc.zip"]})
@@ -105,29 +105,37 @@ workflow {
     	cgemlst          = ann_ch.cgemlst
     	MLST             = ann_ch.MLST
     	prokka           = ann_ch.prokka
-    	multiqc          = Channel.empty() //MULTIQC.out.html
 			
-			// Assembly QC
-    	long_reads_cram           = ASSEMBLY_QC.out.long_reads_cram
-    	long_reads_crai           = ASSEMBLY_QC.out.long_reads_crai
-    	long_reads_cram_stats     = ASSEMBLY_QC.out.long_reads_cram_stats
-			short_reads_cram          = ASSEMBLY_QC.out.short_reads_cram
-			short_reads_crai          = ASSEMBLY_QC.out.short_reads_crai
-			short_reads_cram_stats    = ASSEMBLY_QC.out.short_reads_cram_stats
+			// Input assembly QC
+    	long_cram           = ASSEMBLY_QC.out.long_cram
+    	long_crai           = ASSEMBLY_QC.out.long_crai
+    	long_cram_stats     = ASSEMBLY_QC.out.long_cram_stats
+			short_cram          = ASSEMBLY_QC.out.short_cram
+			short_crai          = ASSEMBLY_QC.out.short_crai
+			short_cram_stats    = ASSEMBLY_QC.out.short_cram_stats
 
 			// Long-reads
-			long_reads_qc             = LONG_READS.out.nanoplot
-			long_reads_resfinder      = LONG_READS.out.resfinder
-			long_reads_plasmidfinder  = LONG_READS.out.plasmidfinder
-			
-			// Short-reads
-			short_reads_qc            = SHORT_READS.out.fastqc_html
-			short_reads_resfinder     = SHORT_READS.out.resfinder
-			short_reads_plasmidfinder = SHORT_READS.out.plasmidfinder
+			long_qc             = LONG_READS.out.nanoplot
+			long_resfinder      = LONG_READS.out.resfinder
+			long_plasmidfinder  = LONG_READS.out.plasmidfinder
+			long_flye           = ASSEMBLE_READS.out.long_flye
+			long_unicycler      = ASSEMBLE_READS.out.long_unicycler
 
+			// Short-reads
+			short_qc            = SHORT_READS.out.fastqc_html
+			short_resfinder     = SHORT_READS.out.resfinder
+			short_plasmidfinder = SHORT_READS.out.plasmidfinder
+			short_spades        = ASSEMBLE_READS.out.short_spades
+			short_unicycler     = ASSEMBLE_READS.out.short_unicycler
+
+			// Hybrid assembly
+			hybrid_unicycler          = ASSEMBLE_READS.out.hybrid_unicycler
+			hybrid_hybracter          = ASSEMBLE_READS.out.hybrid_hybracter
+			
 			// Summary reports
     	html_report      = MULTIREPORT.out.html
     	xlsx_report      = MULTIREPORT.out.xlsx
+    	multiqc          = Channel.empty() //MULTIQC.out.html
 }
 
 
@@ -187,31 +195,93 @@ output {
 		mode 'copy'
 	}
 	
-	long_reads_cram {
+	long_cram {
 		path { x -> x[1] >> "samples/${x[0].id}/input_assembly/long_reads.cram" }
 		mode 'copy'
 	}
-	long_reads_crai {
+	long_crai {
 		path { x -> x[1] >> "samples/${x[0].id}/input_assembly/long_reads.cram.crai" }
 		mode 'copy'
 	}
-	long_reads_cram_stats {
+	long_cram_stats {
 		path { x -> x[1] >> "samples/${x[0].id}/input_assembly/long_reads.cram.stats" }
 		mode 'copy'
 	}
-	short_reads_cram {
+	short_cram {
 		path { x -> x[1] >> "samples/${x[0].id}/input_assembly/short_reads.cram" }
 		mode 'copy'
 	}
-	short_reads_crai {
+	short_crai {
 		path { x -> x[1] >> "samples/${x[0].id}/input_assembly/short_reads.cram.crai" }
 		mode 'copy'
 	}
-	short_reads_cram_stats {
+	short_cram_stats {
 		path { x -> x[1] >> "samples/${x[0].id}/input_assembly/short_reads.cram.stats" }
 		mode 'copy'
 	}
+	
+	
+	// -------------------
+	// Long-reads
+	// -------------------
+	long_qc {
+		path { x -> "samples/${x[0].id}/long_reads/qc" }
+		mode 'copy'
+	}
+	long_resfinder {
+		path { x -> "samples/${x[0].id}/long_reads/" }
+		mode 'copy'
+	}
+	long_plasmidfinder {
+		path { x -> "samples/${x[0].id}/long_reads/" }
+		mode 'copy'
+	}
+	long_flye {
+		path { x -> "samples/${x[0].id}/long_reads/" }
+		mode 'copy'
+	}
+	long_unicycler {
+		path { x -> "samples/${x[0].id}/long_reads/" }
+		mode 'copy'
+	}
 
+	// -------------------
+	// Short-reads
+	// -------------------
+	short_qc {
+		path { x -> "samples/${x[0].id}/short_reads/qc/" }
+		mode 'copy'
+	}
+	short_resfinder {
+		path { x -> "samples/${x[0].id}/short_reads/" }
+		mode 'copy'
+	}
+	short_plasmidfinder {
+		path { x -> "samples/${x[0].id}/short_reads/" }
+		mode 'copy'
+	}
+	short_spades {
+		path { x -> "samples/${x[0].id}/short_reads/" }
+		mode 'copy'
+	}
+	short_unicycler {
+		path { x -> "samples/${x[0].id}/short_reads/" }
+		mode 'copy'
+	}
+
+
+	hybrid_unicycler {
+		path { x -> "samples/${x[0].id}/hybrid/" }
+		mode 'copy'
+	}
+	hybrid_hybracter {
+		path { x -> "samples/${x[0].id}/hybrid/" }
+		mode 'copy'
+	}
+	
+	// -------------------
+	// Summary reports
+	// -------------------	
 	html_report {
 		path { x -> x[1] >> "${x[0]}" }
 		mode 'copy'
@@ -224,37 +294,7 @@ output {
 		path { x -> "./" }
 		mode 'copy'
 	}
-	
-	
-	
-	long_reads_qc {
-		path { x -> "samples/${x[0].id}/long_reads/qc" }
-		mode 'copy'
-	}
-	long_reads_resfinder {
-		path { x -> "samples/${x[0].id}/long_reads/" }
-		mode 'copy'
-	}
-	long_reads_plasmidfinder {
-		path { x -> "samples/${x[0].id}/long_reads/" }
-		mode 'copy'
-	}
-	
-	short_reads_qc {
-		path { x -> "samples/${x[0].id}/short_reads/qc/" }
-		mode 'copy'
-	}
-	short_reads_resfinder {
-		path { x -> "samples/${x[0].id}/short_reads/" }
-		mode 'copy'
-	}
-	short_reads_plasmidfinder {
-		path { x -> "samples/${x[0].id}/short_reads/" }
-		mode 'copy'
-	}
-	
-	
-	
+
 }
 
 

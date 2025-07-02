@@ -4,7 +4,7 @@ process HYBRACTER {
     cpus 8
     time '4h'
     input:
-        tuple val(meta), path(nanopore), path(illumina)
+        tuple val(meta), path(illumina), path(nanopore)
     output:
 				tuple val(meta), path('hybracter/', type: 'dir')
     script:
