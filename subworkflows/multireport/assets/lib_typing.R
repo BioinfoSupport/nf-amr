@@ -53,14 +53,15 @@ read_amrfinderplus_tsv <- function(tsv_file) {
 
 
 read_plasmidfinder_json <- function(json_file) {
-	#json_file <- "results/samples/r62b17.hdr/plasmidfinder/data.json"
-	#json_file <- "results/samples/RS1357_contig_1/plasmidfinder/data.json"
+	#json_file <- "results/samples/RH1/input_assembly/plasmidfinder/data.json"
+	#json_file <- "results/samples/1717.consensus/input_assembly/plasmidfinder/data.json"
 	json <- jsonlite::fromJSON(json_file,simplifyVector=FALSE)
 	expected_structure <- tibble(
 		contig_name = character(0),
 		plasmid = character(0),
 		coverage = numeric(0),
-		identity = numeric(0)
+		identity = numeric(0),
+		positions_in_contig = character(0)
 	)
 	enframe(json$plasmidfinder$results,name = "db_lev1") |>
 		unnest_longer(value,indices_to = "db_lev2") |>

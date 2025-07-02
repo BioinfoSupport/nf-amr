@@ -1,6 +1,8 @@
 
 include { HYBRACTER_HYBRID  } from '../../modules/hybracter/hybrid'
-include { HYBRACTER_LONG  } from '../../modules/hybracter/long'
+include { HYBRACTER_LONG    } from '../../modules/hybracter/long'
+include { SPADES            } from '../../modules/spades'
+
 
 workflow ASSEMBLE_READS {
 		take:
