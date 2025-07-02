@@ -63,8 +63,8 @@ workflow {
 					ASSEMBLY_QC.out.cram_stats_long.map({meta,file -> [file,"${meta.id}_long.cram.stats"]}),
 					ASSEMBLY_QC.out.cram_stats_short.map({meta,file -> [file,"${meta.id}_short.cram.stats"]}),
 					ONT_READS.out.nanostat.map({meta,file -> [file,"${meta.id}_long.nanostat"]}),
-					FASTQC.out.zip.map({meta,files -> [files[0],"${meta.id}_short_fastqc.zip"]}),
-					FASTQC.out.zip.map({meta,files -> [files[1],"${meta.id}_short_R2_fastqc.zip"]})
+					SHORT_READS.fastqc_zip.map({meta,files -> [files[0],"${meta.id}_short_fastqc.zip"]}),
+					SHORT_READS.fastqc_zip.map({meta,files -> [files[1],"${meta.id}_short_R2_fastqc.zip"]})
 				)
 				.collect({x -> [x]})
 			)
@@ -107,7 +107,7 @@ workflow {
     	long_reads_cram_stats = ASSEMBLY_QC.out.cram_stats_long
     	multiqc          = Channel.empty() //MULTIQC.out.html
 			nanoplot         = ONT_READS.out.nanoplot
-			fastqc           = FASTQC.out.html
+			fastqc           = SHORT_READS.fastqc_html
 			short_reads_cram = ASSEMBLY_QC.out.cram_short
 			short_reads_crai = ASSEMBLY_QC.out.crai_short
 			short_reads_cram_stats = ASSEMBLY_QC.out.cram_stats_short

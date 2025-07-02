@@ -3,7 +3,7 @@ include { NANOPLOT       } from '../../modules/nanoplot'
 include { RESFINDER      } from '../../modules/cgetools/resfinder'
 include { PLASMIDFINDER  } from '../../modules/cgetools/plasmidfinder'
 
-workflow ONT_READS {
+workflow LONG_READS {
 	take:
 		fql_ch
 
