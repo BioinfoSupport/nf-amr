@@ -60,8 +60,8 @@ workflow {
 			// MultiQC
 			ORGANIZE_FILES(
 				Channel.empty().mix(
-					ASSEMBLY_QC.out.cram_stats_long.map({meta,file -> [file,"${meta.id}_long.cram.stats"]}),
-					ASSEMBLY_QC.out.cram_stats_short.map({meta,file -> [file,"${meta.id}_short.cram.stats"]}),
+					ASSEMBLY_QC.out.long_reads_cram_stats.map({meta,file -> [file,"${meta.id}_long.cram.stats"]}),
+					ASSEMBLY_QC.out.short_reads_cram_stats.map({meta,file -> [file,"${meta.id}_short.cram.stats"]}),
 					LONG_READS.out.nanostat.map({meta,file -> [file,"${meta.id}_long.nanostat"]}),
 					SHORT_READS.out.fastqc_zip.map({meta,files -> [files[0],"${meta.id}_short_fastqc.zip"]}),
 					SHORT_READS.out.fastqc_zip.map({meta,files -> [files[1],"${meta.id}_short_R2_fastqc.zip"]})
@@ -91,6 +91,7 @@ workflow {
 
 
 	publish:
+			// Input assembly
 			fasta            = IDENTITY.out
       fai              = ann_ch.fai
 	    runinfo          = ann_ch.runinfo
@@ -102,15 +103,27 @@ workflow {
     	cgemlst          = ann_ch.cgemlst
     	MLST             = ann_ch.MLST
     	prokka           = ann_ch.prokka
-    	long_reads_cram  = ASSEMBLY_QC.out.cram_long
-    	long_reads_crai  = ASSEMBLY_QC.out.crai_long
-    	long_reads_cram_stats = ASSEMBLY_QC.out.cram_stats_long
     	multiqc          = Channel.empty() //MULTIQC.out.html
-			nanoplot         = LONG_READS.out.nanoplot
-			fastqc           = SHORT_READS.out.fastqc_html
-			short_reads_cram = ASSEMBLY_QC.out.cram_short
-			short_reads_crai = ASSEMBLY_QC.out.crai_short
-			short_reads_cram_stats = ASSEMBLY_QC.out.cram_stats_short
+			
+			// Assembly QC
+    	long_reads_cram        = ASSEMBLY_QC.out.long_reads_cram
+    	long_reads_crai        = ASSEMBLY_QC.out.long_reads_crai
+    	long_reads_cram_stats  = ASSEMBLY_QC.out.long_reads_cram_stats
+
+			short_reads_cram       = ASSEMBLY_QC.out.short_reads_cram
+			short_reads_crai       = ASSEMBLY_QC.out.short_reads_crai
+			short_reads_cram_stats = ASSEMBLY_QC.out.short_reads_cram_stats
+
+			// long-reads
+			long_reads_qc             = LONG_READS.out.nanoplot
+			long_reads_resfinder      = LONG_READS.out.resfinder
+			long_reads_plasmidfinder  = LONG_READS.out.plasmidfinder
+			
+			// short-reads
+			short_reads_qc            = SHORT_READS.out.fastqc_html
+			short_reads_resfinder     = SHORT_READS.out.resfinder
+			short_reads_plasmidfinder = SHORT_READS.out.plasmidfinder
+
 			
     	html_report      = MULTIREPORT.out.html
     	xlsx_report      = MULTIREPORT.out.xlsx
@@ -119,82 +132,82 @@ workflow {
 
 output {
 	fasta {
-		path { x -> x[1] >> "samples/${x[0].id}/assembly/assembly.fasta" }
+		path { x -> x[1] >> "samples/${x[0].id}/input_assembly/assembly.fasta" }
 		mode 'copy'
 	}
 
 	fai {
-		path { x -> x[1] >> "samples/${x[0].id}/assembly/assembly.fasta.fai" }
+		path { x -> x[1] >> "samples/${x[0].id}/input_assembly/assembly.fasta.fai" }
 		mode 'copy'
 	}
 	
 	runinfo {
-		path { x -> x[1] >> "samples/${x[0].id}/assembly/anninfo.json" }
+		path { x -> x[1] >> "samples/${x[0].id}/input_assembly/anninfo.json" }
 		mode 'copy'
 	}
 
 	orgfinder {
-		path { x -> "samples/${x[0].id}/assembly/" }
+		path { x -> "samples/${x[0].id}/input_assembly/" }
 		mode 'copy'
 	}
 
 	amrfinderplus {
-		path { x -> "samples/${x[0].id}/assembly/" }
+		path { x -> "samples/${x[0].id}/input_assembly/" }
 		mode 'copy'
 	}
 	
 	resfinder {
-		path { x -> "samples/${x[0].id}/assembly/" }
+		path { x -> "samples/${x[0].id}/input_assembly/" }
 		mode 'copy'
 	}
 	
 	mobtyper {
-		path { x -> "samples/${x[0].id}/assembly/" }
+		path { x -> "samples/${x[0].id}/input_assembly/" }
 		mode 'copy'
 	}
 
 	plasmidfinder {
-		path { x -> "samples/${x[0].id}/assembly/" }
+		path { x -> "samples/${x[0].id}/input_assembly/" }
 		mode 'copy'
 	}
 
 	cgemlst {
-		path { x -> "samples/${x[0].id}/assembly/" }
+		path { x -> "samples/${x[0].id}/input_assembly/" }
 		mode 'copy'
 	}
 
 	MLST {
-		path { x -> "samples/${x[0].id}/assembly/" }
+		path { x -> "samples/${x[0].id}/input_assembly/" }
 		mode 'copy'
 	}
 
 	prokka {
-		path { x -> "samples/${x[0].id}/assembly/" }
+		path { x -> "samples/${x[0].id}/input_assembly/" }
 		mode 'copy'
 	}
 	
 	long_reads_cram {
-		path { x -> x[1] >> "samples/${x[0].id}/long_reads/long_reads_to_assembly.cram" }
+		path { x -> x[1] >> "samples/${x[0].id}/input_assembly/long_reads.cram" }
 		mode 'copy'
 	}
 	long_reads_crai {
-		path { x -> x[1] >> "samples/${x[0].id}/long_reads/long_reads_to_assembly.cram.crai" }
+		path { x -> x[1] >> "samples/${x[0].id}/input_assembly/long_reads.cram.crai" }
 		mode 'copy'
 	}
 	long_reads_cram_stats {
-		path { x -> x[1] >> "samples/${x[0].id}/long_reads/long_reads_to_assembly.cram.stats" }
+		path { x -> x[1] >> "samples/${x[0].id}/input_assembly/long_reads.cram.stats" }
 		mode 'copy'
 	}
 	short_reads_cram {
-		path { x -> x[1] >> "samples/${x[0].id}/short_reads/short_reads_to_assembly.cram" }
+		path { x -> x[1] >> "samples/${x[0].id}/input_assembly/short_reads.cram" }
 		mode 'copy'
 	}
 	short_reads_crai {
-		path { x -> x[1] >> "samples/${x[0].id}/short_reads/short_reads_to_assembly.cram.crai" }
+		path { x -> x[1] >> "samples/${x[0].id}/input_assembly/short_reads.cram.crai" }
 		mode 'copy'
 	}
 	short_reads_cram_stats {
-		path { x -> x[1] >> "samples/${x[0].id}/short_reads/short_reads_to_assembly.cram.stats" }
+		path { x -> x[1] >> "samples/${x[0].id}/input_assembly/short_reads.cram.stats" }
 		mode 'copy'
 	}
 
@@ -210,14 +223,37 @@ output {
 		path { x -> "./" }
 		mode 'copy'
 	}
-	nanoplot {
-		path { x -> "samples/${x[0].id}/long_reads/nanoplot" }
+	
+	
+	
+	long_reads_qc {
+		path { x -> "samples/${x[0].id}/long_reads/qc" }
 		mode 'copy'
 	}
-	fastqc {
-		path { x -> "samples/${x[0].id}/short_reads/fastqc/" }
+	long_reads_resfinder {
+		path { x -> "samples/${x[0].id}/long_reads/" }
 		mode 'copy'
-	}		
+	}
+	long_reads_plasmidfinder {
+		path { x -> "samples/${x[0].id}/long_reads/" }
+		mode 'copy'
+	}
+	
+	short_reads_qc {
+		path { x -> "samples/${x[0].id}/short_reads/qc/" }
+		mode 'copy'
+	}
+	short_reads_resfinder {
+		path { x -> "samples/${x[0].id}/short_reads/" }
+		mode 'copy'
+	}
+	short_reads_plasmidfinder {
+		path { x -> "samples/${x[0].id}/short_reads/" }
+		mode 'copy'
+	}
+	
+	
+	
 }
 
 

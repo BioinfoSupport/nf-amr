@@ -70,13 +70,13 @@ workflow ASSEMBLY_QC {
 			//CHARACTERIZE_UNMAPPED_READS
 			//QC_AGGREGATOR
 	emit:
-		cram_long = MINIMAP2_ALIGN_ONT.out.cram
-		crai_long = MINIMAP2_ALIGN_ONT.out.crai
-		cram_stats_long = SAMTOOLS_STATS_LONG.out
+		long_reads_cram        = MINIMAP2_ALIGN_ONT.out.cram
+		long_reads_crai        = MINIMAP2_ALIGN_ONT.out.crai
+		long_reads_cram_stats  = SAMTOOLS_STATS_LONG.out
 		
-		cram_short = BWA_MEM.out.cram
-		crai_short = BWA_MEM.out.crai
-		cram_stats_short = SAMTOOLS_STATS_SHORT.out
+		short_reads_cram       = BWA_MEM.out.cram
+		short_reads_crai       = BWA_MEM.out.crai
+		short_reads_cram_stats = SAMTOOLS_STATS_SHORT.out
 }
 
 
