@@ -12,35 +12,40 @@
         "type": "string",
         "pattern": "^\\S+$",
         "errorMessage": "Sample name must be provided and cannot contain spaces",
-        "meta": ["sample_id"]
+        "meta": "sample_id"
       },
-      "assembly_fasta": {
+      "input_assembly": {
         "type": "string",
         "format": "file-path",
         "pattern": "^\\S+\\.(fasta|fa)$",
-        "errorMessage": "Wrong assembly_fasta path provided (cannot contain spaces and must end with .fasta)"
+        "errorMessage": "Wrong path provided (cannot contain spaces and must end with .fasta or .fa)",
+        "meta": "input_assembly"
       },
-      "fastq_1": {
+      "short_reads_1": {
         "type": "string",
         "format": "file-path",
         "pattern": "^\\S+\\.(fastq|fq)\\.gz$",
-        "errorMessage": "Wrong fastq_1 path provided (cannot contain spaces and must end with .fastq.gz)"
+        "errorMessage": "Wrong path provided (cannot contain spaces and must end with .fastq.gz or .fq.gz)",
+        "meta": "short_reads_1"
       },
-      "fastq_2": {
+      "short_reads_2": {
         "type": "string",
         "format": "file-path",
         "pattern": "^\\S+\\.(fastq|fq)\\.gz$",
-        "errorMessage": "Wrong fastq_2 path provided (cannot contain spaces and must end with .fastq.gz)"
+        "errorMessage": "Wrong path provided (cannot contain spaces and must end with .fastq.gz or .fq.gz)",
+        "meta": "short_reads_2"
       },
-      "fastq_long": {
+      "long_reads": {
         "type": "string",
         "format": "file-path",
         "pattern": "^\\S+\\.(fastq|fq)\\.gz$",
-        "errorMessage": "Wrong fastq_long path provided (cannot contain spaces and must end with .fastq.gz)"
+        "errorMessage": "Wrong path provided (cannot contain spaces and must end with .fastq.gz or .fq.gz)",
+        "meta": "long_reads"
       },
       "org_name": {
         "type": "string",
-        "errorMessage": "Bad org_name specified"
+        "errorMessage": "Bad org_name specified",
+        "meta": "org_name"
       }
     }
   }

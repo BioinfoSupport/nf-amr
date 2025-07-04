@@ -16,9 +16,9 @@ include { SHORT_READS       } from './subworkflows/short_reads'
 include { MULTIREPORT       } from './subworkflows/multireport'
 include { validateParameters; paramsSummaryLog; samplesheetToList } from 'plugin/nf-schema'
 
-params.fastq_long = []
-params.fastq_short = []
-
+params.long_reads = []
+params.short_reads = []
+params.input_assembly = 'data/*.fasta'
 
 workflow {
 	main:
@@ -29,40 +29,54 @@ workflow {
 			// -------------------
 			// Prepare sequences
 			// -------------------
-			fql_ch = Channel.empty()
-			fqs_ch = Channel.empty()
-			fa_ch = Channel.empty()
+			ss = [
+				asm_ch: Channel.empty(),
+				lr_ch: Channel.empty(),
+				sr_ch: Channel.empty()
+			]
 			if (params.samplesheet) {
-				ss_ch = Channel.fromList(samplesheetToList(params.samplesheet, "assets/schema_samplesheet.json"))
-				ss_ch.view()
+				SS = Channel.fromList(samplesheetToList(params.samplesheet, "assets/schema_samplesheet.json"))
+					.multiMap({x ->
+						asm_ch: [[sample_id:x[0].sample_id],x[0].input_assembly]
+						lr_ch: [[sample_id:x[0].sample_id],x[0].long_reads]
+						sr_ch: [[sample_id:x[0].sample_id],[x[0].short_reads_1,x[0].short_reads_2]]
+					})
+				ss.lr_ch = SS.lr_ch
+				ss.sr_ch = SS.sr_ch
+				ss.asm_ch = SS.asm_ch
 			} else {
-				if (params.fastq_long) {
-					fql_ch = Channel.fromPath(params.fastq_long)
+				if (params.long_reads) {
+					ss.lr_ch = Channel.fromPath(params.long_reads)
 							.map({x -> tuple(["sample_id":x.name.replaceAll(/(\.fastq|.fq)\.gz$/, "")],x)})
 				}
-				if (params.fastq_short) {
-					fqs_ch = Channel
-							.fromFilePairs(params.fastq_short,size:-1) { file -> file.name.replaceAll(/_(R?[12])(_001)?\.(fq|fastq)\.gz$/, '') }
+				if (params.short_reads) {
+					ss.sr_ch = Channel
+							.fromFilePairs(params.short_reads,size:-1) { file -> file.name.replaceAll(/_(R?[12])(_001)?\.(fq|fastq)\.gz$/, '') }
 							.map({id,x -> [["sample_id":id],x]})
 				}
-				if (params.input) {
-					fa_ch = Channel.fromPath(params.input)
+				if (params.input_assembly) {
+					ss.asm_ch = Channel.fromPath(params.input_assembly)
 							.map({x -> tuple(["sample_id":x.baseName],x)})
 				}				
 			}
 			
-
-			IDENTITY(fa_ch)
+			ss.asm_ch = ss.asm_ch.filter({x,y -> y})
+			ss.sr_ch = ss.sr_ch.map({x,y -> [x,y.findAll({v->v})]}).filter({x,y -> y})
+			ss.lr_ch = ss.lr_ch.filter({x,y -> y})
+			
+			
+			// Ideally this should not but is is needed to have the assembly in the output
+			IDENTITY(ss.asm_ch)
 
 			// -------------------
 			// QC
 			// -------------------
-			LONG_READS(fql_ch)
-			SHORT_READS(fqs_ch)
-			ASSEMBLY_QC(fa_ch,fql_ch,fqs_ch)
+			LONG_READS(ss.lr_ch)
+			SHORT_READS(ss.sr_ch)
+			ASSEMBLY_QC(ss.asm_ch,ss.lr_ch,ss.sr_ch)
 
 			// Reads assembly
-			ASSEMBLE_READS(fql_ch,fqs_ch)	
+			ASSEMBLE_READS(ss.lr_ch,ss.sr_ch)	
 			
 
 			// MultiQC
@@ -82,9 +96,9 @@ workflow {
 			// -------------------
 			// Run assembly tools
 			// -------------------
-			ann_ch = ANNOTATE_ASSEMBLY(fa_ch)
+			ann_ch = ANNOTATE_ASSEMBLY(ss.asm_ch)
 			MULTIREPORT(
-				fa_ch,
+				ss.asm_ch,
 				ann_ch.fai,
 	    	ann_ch.runinfo,
 	    	ann_ch.orgfinder,
