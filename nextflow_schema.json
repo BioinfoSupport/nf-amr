@@ -5,19 +5,26 @@
 	    "assembly_params": { 
 	      "title": "Assembly parameters",
 	      "type": "object",
-	      "required": ["input"], 
+	      "required": [], 
 	      "properties": {
-	        "input": { 
-	          "type": "string",
-	          "format": "file-path-pattern"
-	        },
-	      	
+
 	        "samplesheet": { 
 	          "type": "string",
-	          "format": "file-path"
+	          "format": "file-path",
+	          "pattern": "^\\S+\\.(csv)$",
+	          "description": "Path to a CSV file containing the sample sheet. This parameter has precedence over input_assembly, long_reads and short_reads "
 	        },
+	      	
+	        "input_assembly": { 
+	          "type": "string",
+	          "format": "file-path-pattern",
+	          "pattern": "^\\S+\\.(fasta|fa)$",
+	          "description": "Path to FASTA of the genomes to annotate. Only use if samplesheet is not set"
+	        },
+	      	
 	        "org_name": {
-	          "type": "string"
+	          "type": "string",
+	          "description": "Force organism name"
 	        }
 	      }
 	    }

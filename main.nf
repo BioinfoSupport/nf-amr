@@ -23,8 +23,8 @@ params.input_assembly = 'data/*.fasta'
 workflow {
 	main:
 			// Validate parameters and print summary of supplied ones
-			//validateParameters()
-			//log.info(paramsSummaryLog(workflow))
+			validateParameters()
+			log.info(paramsSummaryLog(workflow))
 			
 			// -------------------
 			// Prepare sequences
@@ -65,7 +65,7 @@ workflow {
 			ss.lr_ch = ss.lr_ch.filter({x,y -> y})
 			
 			
-			// Ideally this should not but is is needed to have the assembly in the output
+			// Ideally this should not be called but is needed to publish the assembly in the output
 			IDENTITY(ss.asm_ch)
 
 			// -------------------
