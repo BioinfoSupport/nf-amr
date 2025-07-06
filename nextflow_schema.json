@@ -2,8 +2,8 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
 	"$defs": { 
-	    "assembly_params": { 
-	      "title": "Assembly parameters",
+	    "genomic_params": { 
+	      "title": "Genomic Sequence Parameters",
 	      "type": "object",
 	      "required": [], 
 	      "properties": {
@@ -27,9 +27,46 @@
 	          "description": "Force organism name"
 	        }
 	      }
+	    },
+	    
+	    "assembly_params": {
+	      "title": "Reads Assembly Parameters",
+	      "type": "object",
+	      "required": [], 
+	      "properties": {
+		    	"spades_short": {
+		    		"type": "boolean",
+		    		"default": false
+		    	},
+					"unicycler_short": {
+						"type": "boolean",
+						"default": false
+		    	},
+					"flye_long": {
+						"type": "boolean",
+						"default": false
+		    	},
+					"hybracter_long": {
+						"type": "boolean",
+						"default": false
+		    	},
+					"unicycler_long": {
+						"type": "boolean",
+						"default": false
+		    	},
+					"hybracter_hybrid": {
+						"type": "boolean",
+						"default": false
+		    	},
+					"unicycler_hybrid": {
+						"type": "boolean",
+						"default": false
+		    	}
+	  		}
 	    }
 	  },
   "allOf": [
-    { "$ref": "#/$defs/assembly_params" } 
+    { "$ref": "#/$defs/genomic_params" }, 
+    { "$ref": "#/$defs/assembly_params" }
   ]
 }

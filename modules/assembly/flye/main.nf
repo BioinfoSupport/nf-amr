@@ -1,6 +1,6 @@
 process FLYE {
     container 'quay.io/biocontainers/flye:2.9.6--py311h2de2dd3_0'
-    memory '16 GB'
+    memory '20 GB'
     cpus 8
     time '4h'
     input:

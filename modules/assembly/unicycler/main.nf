@@ -9,8 +9,13 @@ process UNICYCLER {
         tuple val(meta), path('unicycler',type:'dir')
     script:
 	      def nanopore_reads = nanopore?"-l $nanopore":''
-	      def short_reads = illumina?(illumina.size()==1?"-s illumina[0]":"-1 ${illumina[0]} -2 ${illumina[1]}"):''
+	      illumina = illumina instanceof List?illumina:[illumina]
+	      def short_reads = illumina?(illumina.size()==1?"-s ${illumina[0]}":"-1 ${illumina[0]} -2 ${illumina[1]}"):''
 		    """
+		    #${illumina.size()}
+		    #${illumina.size()}
+		    #${illumina.class}
+		    #${illumina.join(" ")}
 		    unicycler \\
 		        ${task.ext.args?:''} \\
 		        --threads ${task.cpus} \\
