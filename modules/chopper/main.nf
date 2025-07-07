@@ -9,10 +9,7 @@ process CHOPPER {
 	    tuple val(meta), path("filtered_reads.fastq.gz"), emit: fastq
     script:
     """
-    zcat $fastq \\
-    | chopper --threads ${task.cpus} ${task.ext.args?:'-q 15 -l 500'} \\
-    | gzip \\
-    > filtered_reads.fastq.gz
+    chopper --threads ${task.cpus} ${task.ext.args?:'-q 15 -l 500'} -i reads.fastq.gz | gzip > filtered_reads.fastq.gz
     """
 }
 
