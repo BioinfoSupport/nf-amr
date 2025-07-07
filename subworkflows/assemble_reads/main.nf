@@ -24,7 +24,7 @@ workflow ASSEMBLE_READS {
 		main:
 				// Short reads only assemblies
 				SPADES_SHORT(fqs_ch.filter({params.spades_short}).map({meta,fqs -> [meta,fqs,[]]}))
-				UNICYCLER_SHORT(fqs_ch.filter({params.unicycler_short}).map({meta,fqs -> [meta,fqs,[]]}).view())
+				UNICYCLER_SHORT(fqs_ch.filter({params.unicycler_short}).map({meta,fqs -> [meta,fqs,[]]}))
 				
 				// Long reads only assemblies
 				FLYE_LONG(fql_ch.filter({params.flye_long}))
