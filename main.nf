@@ -27,7 +27,7 @@ workflow {
 			log.info(paramsSummaryLog(workflow))
 			
 			// -------------------
-			// Prepare sequences
+			// Prepare SampleSheet
 			// -------------------
 			ss = [
 				asm_ch: Channel.empty(),
@@ -59,7 +59,6 @@ workflow {
 							.map({x -> tuple(["sample_id":x.baseName],x)})
 				}				
 			}
-			
 			ss.asm_ch = ss.asm_ch.filter({x,y -> y})
 			ss.sr_ch = ss.sr_ch.map({x,y -> [x,y.findAll({v->v})]}).filter({x,y -> y})
 			ss.lr_ch = ss.lr_ch.filter({x,y -> y})
@@ -78,7 +77,6 @@ workflow {
 			// Reads assembly
 			ASSEMBLE_READS(ss.lr_ch,ss.sr_ch)	
 			
-
 			// MultiQC
 			ORGANIZE_FILES(
 				Channel.empty().mix(

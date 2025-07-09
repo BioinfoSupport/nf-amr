@@ -11,8 +11,8 @@ workflow SHORT_READS {
 			RESFINDER(fqs_ch,'illumina')
 			PLASMIDFINDER(fqs_ch)
 	emit:
-			fastqc_html     = FASTQC.out.html
-			fastqc_zip      = FASTQC.out.zip
+			fastqc_html   = FASTQC.out.html
+			fastqc_zip    = FASTQC.out.zip
 			resfinder     = RESFINDER.out
 			plasmidfinder = PLASMIDFINDER.out
 }
