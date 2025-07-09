@@ -5,8 +5,8 @@ nextflow.preview.output = true
 include { MULTIQC            } from './modules/multiqc'
 include { ORGANIZE_FILES     } from './modules/organize_files'
 
-include { ASSEMBLE_READS    } from './subworkflows/assemble_reads'
 include { IDENTITY          } from './modules/identity'
+include { ASSEMBLE_READS    } from './workflows/assemble_reads'
 include { ANNOTATE_ASSEMBLY } from './workflows/annotate_assembly'
 
 include { ASSEMBLY_QC       } from './subworkflows/assembly_qc'
