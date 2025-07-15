@@ -2,6 +2,7 @@
 
 nextflow.preview.output = true
 
+include { SAMTOOLS_FASTQ     } from './modules/samtools/fastq'
 include { MULTIQC            } from './modules/multiqc'
 include { ORGANIZE_FILES     } from './modules/organize_files'
 
@@ -67,6 +68,14 @@ workflow {
 			// Ideally this should not be called but is needed to publish the assembly in the output
 			IDENTITY(ss.asm_ch)
 
+			// ------------------------------------------------------------------
+			// CONVERT long_reads given in BAM/CRAM format into FASTQ format
+			// ------------------------------------------------------------------
+			ss.lr_ch = Channel.empty().mix(
+				ss.lr_ch.filter({meta,f -> !f.name.matches(/\.[bam|cram]$/)}),
+				ss.lr_ch.filter({meta,f ->  f.name.matches(/\.[bam|cram]$/)}) | SAMTOOLS_FASTQ
+      )
+			
 			// -------------------
 			// QC
 			// -------------------
