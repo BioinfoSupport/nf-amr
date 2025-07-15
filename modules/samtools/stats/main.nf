@@ -5,11 +5,11 @@ process SAMTOOLS_STATS {
     cpus 1
     time '15 min'
     input:
-    		tuple val(meta), path("input.cram")
+    		tuple val(meta), path("input.bam")
     output:
-    		tuple val(meta), path("input.cram.stats")
+    		tuple val(meta), path("input.bam.stats")
     script:
 				"""
-				samtools stats -@ ${task.cpus} ${task.ext.args?:''} input.cram > input.cram.stats
+				samtools stats -@ ${task.cpus} ${task.ext.args?:''} input.bam > input.bam.stats
 				"""
 }

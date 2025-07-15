@@ -89,8 +89,8 @@ workflow {
 			// MultiQC
 			ORGANIZE_FILES(
 				Channel.empty().mix(
-					ASSEMBLY_QC.out.long_cram_stats.map({meta,file -> [file,"${meta.sample_id}_long.cram.stats"]}),
-					ASSEMBLY_QC.out.short_cram_stats.map({meta,file -> [file,"${meta.sample_id}_short.cram.stats"]}),
+					ASSEMBLY_QC.out.long_bam_stats.map({meta,file -> [file,"${meta.sample_id}_long.bam.stats"]}),
+					ASSEMBLY_QC.out.short_bam_stats.map({meta,file -> [file,"${meta.sample_id}_short.bam.stats"]}),
 					LONG_READS.out.nanostat.map({meta,file -> [file,"${meta.sample_id}_long.nanostat"]}),
 					SHORT_READS.out.fastqc_zip.map({meta,files -> [files[0],"${meta.sample_id}_short_fastqc.zip"]}),
 					SHORT_READS.out.fastqc_zip.map({meta,files -> [files[1],"${meta.sample_id}_short_R2_fastqc.zip"]})
@@ -134,12 +134,12 @@ workflow {
     	prokka           = ann_ch.prokka
 			
 			// Input assembly QC
-    	long_cram           = ASSEMBLY_QC.out.long_cram
-    	long_crai           = ASSEMBLY_QC.out.long_crai
-    	long_cram_stats     = ASSEMBLY_QC.out.long_cram_stats
-			short_cram          = ASSEMBLY_QC.out.short_cram
-			short_crai          = ASSEMBLY_QC.out.short_crai
-			short_cram_stats    = ASSEMBLY_QC.out.short_cram_stats
+    	long_bam           = ASSEMBLY_QC.out.long_bam
+    	long_bai           = ASSEMBLY_QC.out.long_bai
+    	long_bam_stats     = ASSEMBLY_QC.out.long_bam_stats
+			short_bam          = ASSEMBLY_QC.out.short_bam
+			short_bai          = ASSEMBLY_QC.out.short_bai
+			short_bam_stats    = ASSEMBLY_QC.out.short_bam_stats
 
 			// Long-reads
 			long_qc             = LONG_READS.out.nanoplot
@@ -222,28 +222,28 @@ output {
 		mode 'copy'
 	}
 	
-	long_cram {
-		path { x -> x[1] >> "samples/${x[0].sample_id}/input_assembly/long_reads.cram" }
+	long_bam {
+		path { x -> x[1] >> "samples/${x[0].sample_id}/input_assembly/long_reads.bam" }
 		mode 'copy'
 	}
-	long_crai {
-		path { x -> x[1] >> "samples/${x[0].sample_id}/input_assembly/long_reads.cram.crai" }
+	long_bai {
+		path { x -> x[1] >> "samples/${x[0].sample_id}/input_assembly/long_reads.bam.bai" }
 		mode 'copy'
 	}
-	long_cram_stats {
-		path { x -> x[1] >> "samples/${x[0].sample_id}/input_assembly/long_reads.cram.stats" }
+	long_bam_stats {
+		path { x -> x[1] >> "samples/${x[0].sample_id}/input_assembly/long_reads.bam.stats" }
 		mode 'copy'
 	}
-	short_cram {
-		path { x -> x[1] >> "samples/${x[0].sample_id}/input_assembly/short_reads.cram" }
+	short_bam {
+		path { x -> x[1] >> "samples/${x[0].sample_id}/input_assembly/short_reads.bam" }
 		mode 'copy'
 	}
-	short_crai {
-		path { x -> x[1] >> "samples/${x[0].sample_id}/input_assembly/short_reads.cram.crai" }
+	short_bai {
+		path { x -> x[1] >> "samples/${x[0].sample_id}/input_assembly/short_reads.bam.bai" }
 		mode 'copy'
 	}
-	short_cram_stats {
-		path { x -> x[1] >> "samples/${x[0].sample_id}/input_assembly/short_reads.cram.stats" }
+	short_bam_stats {
+		path { x -> x[1] >> "samples/${x[0].sample_id}/input_assembly/short_reads.bam.stats" }
 		mode 'copy'
 	}
 	

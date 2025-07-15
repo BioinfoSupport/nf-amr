@@ -4,7 +4,8 @@ include { SAMTOOLS_STATS as SAMTOOLS_STATS_LONG  } from '../../modules/samtools/
 include { SAMTOOLS_STATS as SAMTOOLS_STATS_SHORT } from '../../modules/samtools/stats'
 include { BWA_MEM            } from '../../modules/bwa/mem'
 include { BWA_INDEX          } from '../../modules/bwa/index'
-
+include { ORGANIZE_FILES     } from '../../modules/organize_files'
+include { RMD_RENDER         } from '../../modules/rmd/render'
 
 /* Assembly stats
 Number of contigs
@@ -65,24 +66,41 @@ workflow ASSEMBLY_QC {
 	main:
 			BWA_MEM(BWA_INDEX(fa_ch).join(fqs_ch))
 			MINIMAP2_ALIGN_ONT(fa_ch.join(fql_ch))
-			SAMTOOLS_STATS_LONG(MINIMAP2_ALIGN_ONT.out.cram)
-			SAMTOOLS_STATS_SHORT(BWA_MEM.out.cram)
+			SAMTOOLS_STATS_LONG(MINIMAP2_ALIGN_ONT.out.bam)
+			SAMTOOLS_STATS_SHORT(BWA_MEM.out.bam)
 			
 			//RUN VCF_LONG
 			//RUN VCF_SHORT
 			//HTML_AND_JSON_QC_REPORT()
+			
+			
+			ORGANIZE_FILES(
+				Channel.empty()
+					.mix(
+					  fa_ch.map(                  {meta,file -> [file,"${meta.sample_id}/input_assembly/assembly.fasta"]}),
+						SAMTOOLS_STATS_LONG.out.map({meta,file -> [file,"${meta.sample_id}/input_assembly/long_reads.bam.stat"]})
+					)
+					.collect({x -> [x]})
+			)			
+			RMD_RENDER(
+				ORGANIZE_FILES.out.map({x -> ["assembly_qc.html",x,"indir='${x}'"]}),
+				file("${moduleDir}/assets/isolate_report.Rmd"),
+				[]
+			)
+
+			
 			//CHARACTERIZE_UNMAPPED_READS
 			//QC_AGGREGATOR
 	emit:
-		long_cram        = MINIMAP2_ALIGN_ONT.out.cram
-		long_crai        = MINIMAP2_ALIGN_ONT.out.crai
-		long_cram_stats  = SAMTOOLS_STATS_LONG.out
-		long_vcf         = Channel.empty()
+		long_bam        = MINIMAP2_ALIGN_ONT.out.bam
+		long_bai        = MINIMAP2_ALIGN_ONT.out.bai
+		long_bam_stats  = SAMTOOLS_STATS_LONG.out
+		long_vcf        = Channel.empty()
 		
-		short_cram       = BWA_MEM.out.cram
-		short_crai       = BWA_MEM.out.crai
-		short_cram_stats = SAMTOOLS_STATS_SHORT.out
-		short_vcf        = Channel.empty()
+		short_bam       = BWA_MEM.out.bam
+		short_bai       = BWA_MEM.out.bai
+		short_bam_stats = SAMTOOLS_STATS_SHORT.out
+		short_vcf       = Channel.empty()
 }
 
 

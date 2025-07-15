@@ -5,11 +5,11 @@ process SAMTOOLS_INDEX {
     cpus 2
     time '15 min'
     input:
-    		tuple val(meta), path("align.cram")
+    		tuple val(meta), path("align.bam")
     output:
-    		tuple val(meta), path("align.cram.crai")
+    		tuple val(meta), path("align.bam.bai")
     script:
 				"""
-				samtools index -@ ${task.cpus} ${task.ext.args?:''} align.cram
+				samtools index -@ ${task.cpus} ${task.ext.args?:''} align.bam
 				"""
 }

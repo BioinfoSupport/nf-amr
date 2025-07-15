@@ -5,12 +5,12 @@ process SAMTOOLS_FASTQ {
     cpus 1
     time '15 min'
     input:
-    		tuple val(meta), path("input.cram")
+    		tuple val(meta), path("input.bam")
     output:
     		tuple val(meta), path("output.fastq.gz")
     script:
 				"""
-				samtools fastq -@ ${task.cpus} ${task.ext.args?:'-n -T "*" -0'} input.cram \\
+				samtools fastq -@ ${task.cpus} ${task.ext.args?:'-n -T "*" -0'} input.bam \\
 				| bgzip -@ ${task.cpus} \\
 				> output.fastq.gz
 				"""
