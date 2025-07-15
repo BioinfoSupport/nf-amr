@@ -55,11 +55,10 @@ nextflow run -r v1.5.3 -bg -resume \
   -profile hpc,discrete_gpus \
   --basecaller_cfg 'dna_r10.4.1_e8.2_400bps_sup@v5.2.0' \
   --barcode_kit 'SQK-NBD114-24' \
-  --out_dir 'output' \
-  --input 'pod5_pass'
+  --out_dir 'wf-basecalling_sup_v5.2.0' \
+  --input 'pod5_pass' \
+  --basecaller_chunk_size 2
 ```
-
-
 
 
 
