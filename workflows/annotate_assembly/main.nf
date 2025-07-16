@@ -1,16 +1,16 @@
 #!/usr/bin/env nextflow
 
-include { ORGFINDER_DETECT    } from '../../modules/orgfinder/detect'
+include { ORGFINDER_DETECT    } from './modules/orgfinder/detect'
 
-include { AMRFINDERPLUS_UPDATE } from '../../modules/amrfinderplus/update'
-include { AMRFINDERPLUS_RUN } from '../../modules/amrfinderplus/run'
-include { PROKKA_RUN        } from '../../modules/tseemann/prokka'
-include { MLST_RUN          } from '../../modules/tseemann/mlst'
+include { AMRFINDERPLUS_UPDATE } from './modules/amrfinderplus/update'
+include { AMRFINDERPLUS_RUN    } from './modules/amrfinderplus/run'
+include { PROKKA_RUN           } from './modules/tseemann/prokka'
+include { MLST                 } from './modules/tseemann/mlst'
 
-include { RESFINDER         } from '../../modules/cgetools/resfinder'
-include { PLASMIDFINDER     } from '../../modules/cgetools/plasmidfinder'
-include { CGEMLST_RUN       } from '../../modules/cgetools/cgemlst'
-include { MOBTYPER_RUN      } from '../../modules/mobsuite/mobtyper'
+include { RESFINDER         } from './modules/cgetools/resfinder'
+include { PLASMIDFINDER     } from './modules/cgetools/plasmidfinder'
+include { MLST as CGEMLST   } from './modules/cgetools/cgemlst'
+include { MOBTYPER_RUN      } from './modules/mobsuite/mobtyper'
 
 include { TO_JSON           } from '../../modules/tojson'
 include { SAMTOOLS_FAIDX    } from '../../modules/samtools/faidx'
@@ -125,7 +125,7 @@ workflow ANNOTATE_ASSEMBLY {
 						cgemlst_ch = fa_org_ch
 							.map({meta,fa,org_name -> [meta, fa, tool_args('cgemlst',meta,org_name)]})
 							.filter({meta,fasta,args -> args!=null})
-							| CGEMLST_RUN
+							| CGEMLST
 				}
 				
 				if (skip_tool('MLST')) {
@@ -134,7 +134,7 @@ workflow ANNOTATE_ASSEMBLY {
 						MLST_ch = fa_org_ch
 						  .map({meta,fa,org_name -> [meta, fa, tool_args('MLST',meta,org_name)]})
 						  .filter({meta,fasta,args -> args!=null})
-							| MLST_RUN
+							| MLST
 				}
 
 				// PROKKA annotations

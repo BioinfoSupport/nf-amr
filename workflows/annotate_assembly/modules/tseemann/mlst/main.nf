@@ -1,6 +1,4 @@
-
-
-process MLST_RUN {
+process MLST {
 	  container "docker.io/staphb/mlst:2.23.0-2025-02-01"
     memory '4 GB'
     cpus 1
