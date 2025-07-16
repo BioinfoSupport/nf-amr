@@ -9,7 +9,7 @@ include { MLST                 } from './modules/tseemann/mlst'
 
 include { RESFINDER         } from './modules/cgetools/resfinder'
 include { PLASMIDFINDER     } from './modules/cgetools/plasmidfinder'
-include { MLST as CGEMLST   } from './modules/cgetools/cgemlst'
+include { MLST as CGEMLST   } from './modules/cgetools/mlst'
 include { MOBTYPER_RUN      } from './modules/mobsuite/mobtyper'
 
 include { TO_JSON           } from '../../modules/tojson'
