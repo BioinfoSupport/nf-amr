@@ -16,6 +16,7 @@ params.hybracter_long = false
 params.hybracter_hybrid = false
 params.spades_short = false
 params.flye_long = false
+params.flye_hybrid = false
 
 
 workflow ASSEMBLE_READS {
@@ -28,15 +29,17 @@ workflow ASSEMBLE_READS {
 				UNICYCLER_SHORT(fqs_ch.filter({params.unicycler_short}).map({meta,fqs -> [meta,fqs,[]]}))
 				
 				// Long reads only assemblies
-				FLYE_LONG(fql_ch.filter({params.flye_long}))
+				FLYE_LONG(fql_ch.filter({params.flye_long|params.flye_hybrid}))
 				HYBRACTER_LONG(fql_ch.filter({params.hybracter_long}).map({meta,fql -> [meta,[],fql]}))
 				UNICYCLER_LONG(fql_ch.filter({params.unicycler_long}).map({meta,fql -> [meta,[],fql]}))
 
 				// Hybrid assemblies
 				HYBRACTER_HYBRID(fql_ch.join(fqs_ch).filter({params.hybracter_hybrid}).map({meta,fql,fqs -> [meta,fqs,fql]}))
 				UNICYCLER_HYBRID(fql_ch.join(fqs_ch).filter({params.unicycler_hybrid}).map({meta,fql,fqs -> [meta,fqs,fql]}))
-				
-				PILON_POLISH(FLYE_LONG.out.map({meta,flye -> [meta,flye/'02_medaka/consensus.fasta']}),fqs_ch)
+				PILON_POLISH(
+					FLYE_LONG.out.map({meta,flye -> [meta,flye/'02_medaka/consensus.fasta']}).filter({params.flye_hybrid}),
+					fqs_ch.filter({params.flye_hybrid})
+				)
 
 				// TODO: Run assemblies individual QC 
 				// TODO: Run QC summary report
