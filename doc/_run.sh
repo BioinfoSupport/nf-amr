@@ -9,6 +9,12 @@ docker run --rm -it \
   nextflow/nextflow:25.04.6 bash
 
 
+
+nextflow run . -resume --long_reads=data/run64_sup_v5.2.0/demuxed/demuxed/*_barcode17/reads.bam
+
+nextflow run . -resume --input data/r62b14.hdr.fasta
+
+
 nextflow run . -resume --samplesheet=data/samplesheet_test.csv --unicycler_hybrid  --unicycler_short  --unicycler_long
 
 nextflow run . -resume --long_reads=data/test/long/*.fastq.gz --short_reads=data/test/short/*.fastq.gz --input_assembly=data/test/assembly/*.fasta
@@ -19,7 +25,7 @@ nextflow run . -resume --input='data/run99/*.fasta'
 
 nextflow run . -resume --input data/oxa48_prd_ricai/assemblies/r2b3.fasta 
 
-nextflow run . -resume --input data/r62b14.hdr.fasta
+
 nextflow run . -resume --fastq_long=data/*.fastq.gz --fastq_short=data/*_R{1,2}.fastq.gz
 
 nextflow run -r dev BioinfoSupport/nf-amr -resume --input='data/oxa48_prd_ricai/assemblies/*.fasta'

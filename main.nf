@@ -19,7 +19,7 @@ include { validateParameters; paramsSummaryLog; samplesheetToList } from 'plugin
 
 params.long_reads = []
 params.short_reads = []
-params.input_assembly = 'data/*.fasta'
+params.input_assembly = []
 
 workflow {
 	main:
@@ -71,10 +71,11 @@ workflow {
 			// ------------------------------------------------------------------
 			// CONVERT long_reads given in BAM/CRAM format into FASTQ format
 			// ------------------------------------------------------------------
-			ss.lr_ch = Channel.empty().mix(
-				ss.lr_ch.filter({meta,f -> !f.name.matches(/\.[bam|cram]$/)}),
-				ss.lr_ch.filter({meta,f ->  f.name.matches(/\.[bam|cram]$/)}) | SAMTOOLS_FASTQ
-      )
+			ss.lr_ch = ss.lr_ch.branch({meta,f -> 
+				bam: f.name =~ /\.(bam|cram)$/
+				fq: true
+			})
+			ss.lr_ch = ss.lr_ch.fq.mix(SAMTOOLS_FASTQ(ss.lr_ch.bam))
 			
 			// -------------------
 			// QC
