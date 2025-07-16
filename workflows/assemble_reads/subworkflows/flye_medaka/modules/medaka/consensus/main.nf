@@ -1,8 +1,8 @@
 process MEDAKA_CONSENSUS {
     container 'docker.io/ontresearch/medaka:shac4e11bfa4e65668b28739ba32edc3af12baf7574-amd64'
-    memory '20 GB'
-    cpus 8
-    time '4h'
+    memory '10 GB'
+    cpus 4
+    time '2h'
     input:
         tuple val(meta), path('assembly.fasta'), path('long_reads.fastq.gz')
     output:
@@ -11,7 +11,7 @@ process MEDAKA_CONSENSUS {
 		    """
 		    medaka_consensus \\
 		      ${task.ext.args?:'--bacteria'} \\
-			    -f \\
+			    -f -t ${task.ext.cpus} \\
 			    -d assembly.fasta \\
 			    -i long_reads.fastq.gz \\
 			    -o medaka
