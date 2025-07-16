@@ -12,12 +12,6 @@ docker run --rm -it \
 
 nextflow run . -resume -profile arm64 --long_reads=data/run64_sup_v5.2.0/demuxed/demuxed/*_barcode17/reads.bam --flye_long
 
-
-
-nextflow run . -resume -profile arm64 --long_reads=data/run64_sup_v5.2.0/demuxed/demuxed/*_barcode17/reads.bam --flye_long
-
-
-
 nextflow run . -resume --input data/r62b14.hdr.fasta
 
 

@@ -1,5 +1,5 @@
 
-include { FLYE   } from '../../modules/assembly/flye'
+include { FLYE   } from '../../modules/flye'
 include { MEDAKA_CONSENSUS } from '../../modules/medaka/consensus'
 
 workflow FLYE_MEDAKA {
