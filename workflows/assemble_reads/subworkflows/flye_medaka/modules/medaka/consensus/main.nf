@@ -11,7 +11,7 @@ process MEDAKA_CONSENSUS {
 		    """
 		    medaka_consensus \\
 		      ${task.ext.args?:'--bacteria'} \\
-			    -f -t ${task.ext.cpus} \\
+			    -f -t ${task.cpus} \\
 			    -d assembly.fasta \\
 			    -i long_reads.fastq.gz \\
 			    -o medaka
