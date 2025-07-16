@@ -10,6 +10,9 @@ docker run --rm -it \
 
 
 
+
+nextflow run . -resume -profile arm64 -output-dir 'results_run64_sup_v5.0.0' --input_assembly='data/run64_wf-bacterial/sup_v5.0.0/*.fasta' 
+
 nextflow run . -resume -profile arm64 --long_reads=data/run64_sup_v5.2.0/demuxed/demuxed/*_barcode17/reads.bam --flye_long
 
 # Test hybrid assembly 
