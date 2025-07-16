@@ -38,8 +38,8 @@
       "long_reads": {
         "type": "string",
         "format": "file-path",
-        "pattern": "^\\S+\\.(fastq|fq)\\.gz$",
-        "errorMessage": "Wrong path provided (cannot contain spaces and must end with .fastq.gz or .fq.gz)",
+        "pattern": "^\\S+\\.(bam|fastq\\.gz|fq\\.gz)$",
+        "errorMessage": "Wrong path provided (cannot contain spaces and must end with .bam, .fastq.gz or .fq.gz)",
         "meta": "long_reads"
       },
       "org_name": {
