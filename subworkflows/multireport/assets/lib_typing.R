@@ -171,7 +171,7 @@ db_load <- function(amr_dir) {
 			mutate(anninfo = map(fs::path(basepath,"input_assembly","anninfo.json"),read_anninfo_json)) |>
 			mutate(orgfinder = map(fs::path(basepath,"input_assembly","orgfinder","tax.tsv"),read_orgfinder_tax)) |>
 			mutate(contigs = map(fs::path(basepath,"input_assembly","assembly.fasta"),contig_meta)) |>
-			mutate(mlst = map(fs::path(basepath,"input_assembly","cge_mlst","data.json"),read_cgemlst_json)) |>
+			mutate(mlst = map(fs::path(basepath,"input_assembly","mlst","data.json"),read_cgemlst_json)) |>
 			mutate(plasmidfinder = map(fs::path(basepath,"input_assembly","plasmidfinder","data.json"),read_plasmidfinder_json)) |>
 			mutate(resfinder = map(fs::path(basepath,"input_assembly","resfinder","data.json"),read_resfinder_json)) |>
 			mutate(amrfinderplus = map(fs::path(basepath,"input_assembly","amrfinderplus","report.tsv"),read_amrfinderplus_tsv)) |>		
