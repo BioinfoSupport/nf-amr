@@ -13,7 +13,6 @@ process FLYE {
 		      ${task.ext.args?:''} \\
 		      --threads ${task.cpus} \\
 		      --out-dir ./flye \\
-		      --nano-hq \\
-		      long_reads.fastq.gz
+		      --nano-hq long_reads.fastq.gz
 		    """
 }
