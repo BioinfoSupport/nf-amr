@@ -1,11 +1,12 @@
 
-include { UNICYCLER   as UNICYCLER_LONG   } from './modules/unicycler'
-include { UNICYCLER   as UNICYCLER_SHORT  } from './modules/unicycler'
-include { UNICYCLER   as UNICYCLER_HYBRID } from './modules/unicycler'
-include { HYBRACTER   as HYBRACTER_LONG   } from './modules/hybracter'
-include { HYBRACTER   as HYBRACTER_HYBRID } from './modules/hybracter'
-include { SPADES      as SPADES_SHORT     } from './modules/spades'
-include { FLYE_MEDAKA as FLYE_LONG        } from './subworkflows/flye_medaka'
+include { UNICYCLER    as UNICYCLER_LONG   } from './modules/unicycler'
+include { UNICYCLER    as UNICYCLER_SHORT  } from './modules/unicycler'
+include { UNICYCLER    as UNICYCLER_HYBRID } from './modules/unicycler'
+include { HYBRACTER    as HYBRACTER_LONG   } from './modules/hybracter'
+include { HYBRACTER    as HYBRACTER_HYBRID } from './modules/hybracter'
+include { SPADES       as SPADES_SHORT     } from './modules/spades'
+include { FLYE_MEDAKA  as FLYE_LONG        } from './subworkflows/flye_medaka'
+include { PILON_POLISH                     } from './subworkflows/pilon_polish'
 
 
 params.unicycler_long = false
@@ -34,6 +35,8 @@ workflow ASSEMBLE_READS {
 				// Hybrid assemblies
 				HYBRACTER_HYBRID(fql_ch.join(fqs_ch).filter({params.hybracter_hybrid}).map({meta,fql,fqs -> [meta,fqs,fql]}))
 				UNICYCLER_HYBRID(fql_ch.join(fqs_ch).filter({params.unicycler_hybrid}).map({meta,fql,fqs -> [meta,fqs,fql]}))
+				
+				PILON_POLISH(FLYE_LONG.out.map({meta,flye -> [meta,flye/'02_medaka/consensus.fasta']}),fqs_ch)
 
 				// TODO: Run assemblies individual QC 
 				// TODO: Run QC summary report

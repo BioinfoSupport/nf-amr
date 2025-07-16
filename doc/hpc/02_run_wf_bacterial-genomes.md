@@ -53,8 +53,8 @@ export NXF_SINGULARITY_TMPDIR=~/scratch/singularity_tmp
 nextflow run -r v1.4.2 -bg -resume \
   epi2me-labs/wf-bacterial-genomes \
   --isolates \
-  --bam 'output_wf-basecalling_sup_v5.0.0/demuxed/demuxed/' \
-  --out_dir 'output_wf-bacterial-genomes_sup_v5.0.0' \
+  --bam 'wf-basecalling_sup_v5.0.0/demuxed/demuxed/' \
+  --out_dir 'wf-bacterial-genomes_sup_v5.0.0' \
   -profile hpc
 ```
 

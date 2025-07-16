@@ -12,6 +12,11 @@ docker run --rm -it \
 
 nextflow run . -resume -profile arm64 --long_reads=data/run64_sup_v5.2.0/demuxed/demuxed/*_barcode17/reads.bam --flye_long
 
+# Test hybrid asembly 
+nextflow run . -resume --long_reads=data/test/long/RH1.fastq.gz --short_reads=data/test/short/RH1.fastq.gz 
+
+
+
 nextflow run . -resume --input data/r62b14.hdr.fasta
 
 
