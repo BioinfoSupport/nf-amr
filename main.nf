@@ -48,7 +48,7 @@ workflow {
 			} else {
 				if (params.long_reads) {
 					ss.lr_ch = Channel.fromPath(params.long_reads)
-							.map({x -> tuple(["sample_id":x.name.replaceAll(/(\.fastq|.fq)\.gz$/, "")],x)})
+							.map({x -> tuple(["sample_id":x.name.replaceAll(/\.(fastq\.gz|fq\.gz|bam|cram)$/, "")],x)})
 				}
 				if (params.short_reads) {
 					ss.sr_ch = Channel

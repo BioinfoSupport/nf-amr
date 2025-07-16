@@ -1,11 +1,11 @@
 
-include { UNICYCLER as UNICYCLER_LONG   } from '../../modules/assembly/unicycler'
-include { UNICYCLER as UNICYCLER_SHORT  } from '../../modules/assembly/unicycler'
-include { UNICYCLER as UNICYCLER_HYBRID } from '../../modules/assembly/unicycler'
-include { HYBRACTER as HYBRACTER_LONG   } from '../../modules/assembly/hybracter'
-include { HYBRACTER as HYBRACTER_HYBRID } from '../../modules/assembly/hybracter'
-include { SPADES    as SPADES_SHORT     } from '../../modules/assembly/spades'
-include { FLYE      as FLYE_LONG        } from '../../modules/assembly/flye'
+include { UNICYCLER   as UNICYCLER_LONG   } from '../../modules/assembly/unicycler'
+include { UNICYCLER   as UNICYCLER_SHORT  } from '../../modules/assembly/unicycler'
+include { UNICYCLER   as UNICYCLER_HYBRID } from '../../modules/assembly/unicycler'
+include { HYBRACTER   as HYBRACTER_LONG   } from '../../modules/assembly/hybracter'
+include { HYBRACTER   as HYBRACTER_HYBRID } from '../../modules/assembly/hybracter'
+include { SPADES      as SPADES_SHORT     } from '../../modules/assembly/spades'
+include { FLYE_MEDAKA as FLYE_LONG        } from '../../subworkflows/flye_medaka'
 
 
 params.unicycler_long = false

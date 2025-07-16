@@ -1,0 +1,149 @@
+---
+title: "Isolate Assembly QC Report"
+author: "`r Sys.getenv('USER')`"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+    flexdashboard::flex_dashboard:
+        orientation: rows
+params:
+  isolate_dir: "results/samples/RH1"
+---
+
+```{r setup}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)
+library(flexdashboard)
+library(Biostrings)
+
+read_samtools_stats <- function(f) {
+	stats <- readLines(f)
+	list(
+		SN = read.table(
+				text = str_subset(stats,"^SN\t"),
+				sep = "\t",comment="",fill = TRUE,
+				col.names = c("tag","var","value","comment")
+			) |>
+			mutate(var=str_replace(var,": *$","") |> make.names()) |>
+			pull(value,name = var) |>
+			as.list(),
+		COV = read.table(
+					text = str_subset(stats,"^COV\t"),
+					sep = "\t",comment="",fill = TRUE,
+					col.names = c("tag","range","range_max","count"),colClasses = c(tag="NULL")
+				) 
+	)
+}
+```
+
+
+
+```{r data loading}
+fa <- readDNAStringSet(fs::path(params$isolate_dir,"input_assembly/assembly.fasta"))
+stats <- list(
+	long_reads = read_samtools_stats(fs::path(params$isolate_dir,"input_assembly/long_reads.cram.stats")),
+	short_reads = read_samtools_stats(fs::path(params$isolate_dir,"input_assembly/short_reads.cram.stats"))
+)
+```
+
+
+
+# Summary
+
+Row
+-------------------------
+
+### Total length
+```{r}
+valueBox(sprintf("%s bp",format(sum(lengths(fa)),big.mark="'")),"Assembly Total Length")
+```
+
+### Number of contig
+```{r}
+valueBox(length(fa),"Contigs")
+```
+
+
+### N50
+```{r}
+valueBox(sprintf("%s bp",format(N50(lengths(fa)),big.mark="'")),"N50")
+```
+
+### Longest contig
+```{r}
+valueBox(sprintf("%s bp",format(max(lengths(fa)),big.mark="'")),"Longest contig")
+```
+
+### GC content
+```{r}
+valueBox(sprintf("%.1f %%",100*sum(Biostrings::letterFrequency(fa,"GC")) / sum(lengths(fa))),"% GC")
+```
+
+
+
+
+Row
+-------------------------
+
+### Number of long reads
+```{r}
+valueBox(format(stats$long_reads$SN$raw.total.sequences,big.mark="'"),"Long reads")
+```
+
+### Percent of mapped long reads
+```{r}
+valueBox(sprintf("%.1f %%",100*stats$long_reads$SN$reads.mapped/stats$long_reads$SN$raw.total.sequences),"Long reads mapped")
+```
+
+### 
+```{r}
+gauge(100*stats$long_reads$SN$reads.mapped/stats$long_reads$SN$raw.total.sequences, min = 0, max = 100, symbol = '%', gaugeSectors(
+  success = c(90, 100), warning = c(80, 90), danger = c(0, 80)
+))
+```
+
+### Mean coverage
+```{r}
+valueBox(sprintf("%.1f",stats$long_reads$SN$bases.mapped..cigar. / sum(lengths(fa))),"Mean coverage")
+```
+
+
+### Coverage
+```{r fig.height=2, fig.width=4}
+ggplot(stats$long_reads$COV,aes(x=range_max,y=count)) +
+	geom_col(color="black",fill="black") + xlab("read depth")
+```
+
+
+
+Row
+-------------------------
+
+### Number of short reads
+```{r}
+valueBox(format(stats$short_reads$SN$raw.total.sequences,big.mark="'"),"Short reads")
+```
+
+### Percent of mapped long reads
+```{r}
+valueBox(sprintf("%.1f %%",100*stats$short_reads$SN$reads.mapped/stats$short_reads$SN$raw.total.sequences),"Short reads mapped")
+```
+
+### 
+```{r}
+gauge(100*stats$short_reads$SN$reads.mapped/stats$short_reads$SN$raw.total.sequences, min = 0, max = 100, symbol = '%', gaugeSectors(
+  success = c(90, 100), warning = c(80, 90), danger = c(0, 80)
+))
+```
+
+
+### Mean coverage
+```{r}
+valueBox(sprintf("%.1f",stats$short_reads$SN$bases.mapped..cigar. / sum(lengths(fa))),"Mean coverage")
+```
+
+
+### Coverage
+```{r fig.height=2, fig.width=4}
+ggplot(stats$short_reads$COV,aes(x=range_max,y=count)) +
+	geom_col(color="black",fill="black") + xlab("read depth")
+```
