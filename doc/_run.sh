@@ -48,7 +48,30 @@ git checkout dev
 git merge master
 git checkout master
 git merge dev
-git tag -a v0.3 -m "This version include assembly options"
+git tag -a v0.4.1 -m "This version include assembly options"
 git push origin --tags
 git checkout dev
 
+
+
+
+
+
+
+
+
+
+
+ssh yggdrasil
+cd ~/gvfs/*/BioinfoSupport/colombie
+rsync -av 2025-07-09_sierra_triplecarba_run64 ~/scratch/
+cd  ~/scratch/2025-07-09_sierra_triplecarba_run64
+
+
+export NXF_SINGULARITY_CACHEDIR=~/scratch/singularity
+export NXF_SINGULARITY_TMPDIR=~/scratch/singularity_tmp
+nextflow run -r v0.4.1 BioinfoSupport/nf-amr -profile hpc -resume --samplesheet=data/SampleSheet_pipeline.csv
+
+
+
+./nextflow run BioinfoSupport/nf-amr -profile hpc -bg -resume --input=data/*.fasta
