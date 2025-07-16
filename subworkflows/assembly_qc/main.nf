@@ -101,6 +101,8 @@ workflow ASSEMBLY_QC {
 		short_bai       = BWA_MEM.out.bai
 		short_bam_stats = SAMTOOLS_STATS_SHORT.out
 		short_vcf       = Channel.empty()
+		
+		qc_isolate_html = RMD_RENDER.out.html
 }
 
 

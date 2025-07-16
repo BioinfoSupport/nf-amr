@@ -141,6 +141,7 @@ workflow {
 			short_bam          = ASSEMBLY_QC.out.short_bam
 			short_bai          = ASSEMBLY_QC.out.short_bai
 			short_bam_stats    = ASSEMBLY_QC.out.short_bam_stats
+			qc_isolate_html    = ASSEMBLY_QC.out.qc_isolate_html
 
 			// Long-reads
 			long_qc             = LONG_READS.out.nanoplot
@@ -246,6 +247,10 @@ output {
 	short_bam_stats {
 		path { x -> x[1] >> "samples/${x[0].sample_id}/input_assembly/short_reads.bam.stats" }
 		mode 'copy'
+	}
+	qc_isolate_html {
+		path { x -> x[1] >> "samples/${x[0].sample_id}/input_assembly/isolate_qc.html" }
+		mode 'copy'		
 	}
 	
 	
