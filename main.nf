@@ -169,6 +169,7 @@ workflow {
 			long_plasmidfinder  = LONG_READS.out.plasmidfinder
 			long_flye           = ASSEMBLE_READS.out.long_flye
 			long_unicycler      = ASSEMBLE_READS.out.long_unicycler
+			long_hybracter      = ASSEMBLE_READS.out.long_hybracter
 
 			// Short-reads
 			short_qc            = SHORT_READS.out.fastqc_html
@@ -294,6 +295,10 @@ output {
 		mode 'copy'
 	}
 	long_unicycler {
+		path { x -> "samples/${x[0].sample_id}/long_reads/" }
+		mode 'copy'
+	}
+	long_hybracter {
 		path { x -> "samples/${x[0].sample_id}/long_reads/" }
 		mode 'copy'
 	}
