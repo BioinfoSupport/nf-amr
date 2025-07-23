@@ -1,6 +1,6 @@
 
 process ORGFINDER_DETECT {
-    container 'registry.gitlab.unige.ch/amr-genomics/orgfinder:main'
+    container 'registry.gitlab.unige.ch/amr-genomics/orgfinder:v0.2'
     memory '20 GB'
     cpus 8
     time '15 min'
