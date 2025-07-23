@@ -23,15 +23,8 @@ params.short_reads = []
 params.input_assembly = []
 params.samplesheet = []
 
-workflow {
-	main:
-			// Validate parameters and print summary of supplied ones
-			validateParameters()
-			log.info(paramsSummaryLog(workflow))
-			
-			// -------------------
-			// Prepare SampleSheet
-			// -------------------
+
+def get_samplesheet() {
 			ss = [
 				asm_ch: Channel.empty(),
 				lr_ch: Channel.empty(),
@@ -66,6 +59,20 @@ workflow {
 			ss.asm_ch = ss.asm_ch.filter({x,y -> y})
 			ss.sr_ch = ss.sr_ch.map({x,y -> [x,y.findAll({v->v})]}).filter({x,y -> y})
 			ss.lr_ch = ss.lr_ch.filter({x,y -> y})
+			return ss	
+}
+
+
+workflow {
+	main:
+			// Validate parameters and print summary of supplied ones
+			validateParameters()
+			log.info(paramsSummaryLog(workflow))
+			
+			// -------------------
+			// Prepare SampleSheet
+			// -------------------
+			ss = get_samplesheet()
 			
 			// ------------------------------------------------------------------
 			// Uncompress .fasta.gz when needed
@@ -76,9 +83,6 @@ workflow {
 			})
 			ss.asm_ch = ss.asm_ch.fa.mix(GZIP_DECOMPRESS(ss.asm_ch.gz))
 
-			// Ideally this should not be called but is needed to publish the assembly in the output
-			IDENTITY(ss.asm_ch)
-
 			// ------------------------------------------------------------------
 			// CONVERT long_reads given in BAM/CRAM format into FASTQ format
 			// ------------------------------------------------------------------
@@ -88,16 +92,19 @@ workflow {
 			})
 			ss.lr_ch = ss.lr_ch.fq.mix(SAMTOOLS_FASTQ(ss.lr_ch.bam))
 			
+			// Ideally this should not be called but is needed to publish the assembly in the output
+			IDENTITY(ss.asm_ch)
+			
 			// -------------------
-			// QC
+			// Reads processing
 			// -------------------
 			LONG_READS(ss.lr_ch)
 			SHORT_READS(ss.sr_ch)
-			ASSEMBLY_QC(ss.asm_ch,ss.lr_ch,ss.sr_ch)
-
+			
 			// Reads assembly
 			ASSEMBLE_READS(ss.lr_ch,ss.sr_ch)	
-			
+			ASSEMBLY_QC(ss.asm_ch,ss.lr_ch,ss.sr_ch)
+
 			// MultiQC
 			/*
 			ORGANIZE_FILES(
