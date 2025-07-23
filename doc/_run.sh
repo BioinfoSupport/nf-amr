@@ -50,7 +50,7 @@ git checkout dev
 git merge master
 git checkout master
 git merge dev
-git tag -a v0.4.4 -m "This version include assembly options"
+git tag -a v0.4.5 -m "This version include new Aeromonas"
 git push origin --tags
 git push origin
 git checkout dev
@@ -77,7 +77,7 @@ rsync -av --no-perms ~/scratch/2025-07-09_sierra_triplecarba_run64/results ./202
 
 export NXF_SINGULARITY_CACHEDIR=~/scratch/singularity
 export NXF_SINGULARITY_TMPDIR=~/scratch/singularity_tmp
-nextflow run -r v0.4.4 BioinfoSupport/nf-amr -profile hpc -resume -bg --samplesheet=data/SampleSheet_pipeline.csv
+nextflow run -r v0.4.5 BioinfoSupport/nf-amr -profile hpc -resume -bg --samplesheet=data/SampleSheet_pipeline.csv
 
 
 

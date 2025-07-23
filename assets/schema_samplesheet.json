@@ -17,7 +17,7 @@
       "input_assembly": {
         "type": "string",
         "format": "file-path",
-        "pattern": "^\\S+\\.(fasta|fa)(\\.gz)$",
+        "pattern": "^\\S+\\.(fasta|fa)(\\.gz)?$",
         "errorMessage": "Wrong path provided (cannot contain spaces and must end with .fasta or .fa)",
         "meta": "input_assembly"
       },
