@@ -6,7 +6,7 @@ output:
     flexdashboard::flex_dashboard:
         orientation: rows
 params:
-  isolate_dir: "results/samples/RH1"
+  isolate_dir: "results/samples/RH1/input_assembly"
 ---
 
 ```{r setup}
@@ -38,10 +38,10 @@ read_samtools_stats <- function(f) {
 
 
 ```{r data loading}
-fa <- readDNAStringSet(fs::path(params$isolate_dir,"input_assembly/assembly.fasta"))
+fa <- readDNAStringSet(fs::path(params$isolate_dir,"assembly.fasta"))
 stats <- list(
-	long_reads = read_samtools_stats(fs::path(params$isolate_dir,"input_assembly/long_reads.cram.stats")),
-	short_reads = read_samtools_stats(fs::path(params$isolate_dir,"input_assembly/short_reads.cram.stats"))
+	long_reads = read_samtools_stats(fs::path(params$isolate_dir,"long_reads.cram.stats")),
+	short_reads = read_samtools_stats(fs::path(params$isolate_dir,"short_reads.cram.stats"))
 )
 ```
 

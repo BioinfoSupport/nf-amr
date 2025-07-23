@@ -58,12 +58,14 @@ process IGV_SCRIPT {
 }
 */
 
+
 workflow ASSEMBLY_QC {
 	take:
 		fa_ch
 		fql_ch
 		fqs_ch
 	main:
+			// Align long reads and short reads and extract stats
 			BWA_MEM(BWA_INDEX(fa_ch).join(fqs_ch))
 			MINIMAP2_ALIGN_ONT(fa_ch.join(fql_ch))
 			SAMTOOLS_STATS_LONG(MINIMAP2_ALIGN_ONT.out.bam)
@@ -73,22 +75,19 @@ workflow ASSEMBLY_QC {
 			//RUN VCF_SHORT
 			//HTML_AND_JSON_QC_REPORT()
 			
-			
-			ORGANIZE_FILES(
-				Channel.empty()
-					.mix(
-					  fa_ch.map(                  {meta,file -> [file,"${meta.sample_id}/input_assembly/assembly.fasta"]}),
-						SAMTOOLS_STATS_LONG.out.map({meta,file -> [file,"${meta.sample_id}/input_assembly/long_reads.bam.stat"]})
-					)
-					.collect({x -> [x]})
-			)			
+			/*
+			fa_ch
+				.join(SAMTOOLS_STATS_LONG.out,remainder:true)
+				.join(SAMTOOLS_STATS_SHORT.out,remainder:true)
+				.map({meta,x1,x2,x3 -> [meta,[x1,x2,x3],"isolate_dir='./'"]})
+			*/
+/*
 			RMD_RENDER(
-				ORGANIZE_FILES.out.map({x -> ["assembly_qc.html",x,"indir='${x}'"]}),
-				file("${moduleDir}/assets/isolate_report.Rmd"),
-				[]
-			)
+				file("${moduleDir}/assets/isolate_assembly_qc.Rmd"),
+				file("${moduleDir}/assets/isolate_assembly_qc.Rmd")
+			)			
+*/
 
-			
 			//CHARACTERIZE_UNMAPPED_READS
 			//QC_AGGREGATOR
 	emit:
@@ -102,7 +101,8 @@ workflow ASSEMBLY_QC {
 		short_bam_stats = SAMTOOLS_STATS_SHORT.out
 		short_vcf       = Channel.empty()
 		
-		qc_isolate_html = RMD_RENDER.out.html
+		//qc_isolate_html = RMD_RENDER.out.html
+		qc_isolate_html = Channel.empty()
 }
 
 

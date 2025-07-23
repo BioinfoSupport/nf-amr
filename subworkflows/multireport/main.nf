@@ -60,15 +60,16 @@ workflow MULTIREPORT {
 						MLST_ch.map(         {meta,file -> [file,"${meta.sample_id}/input_assembly/${file.name}"]}),
 						prokka_ch.map(       {meta,file -> [file,"${meta.sample_id}/input_assembly/${file.name}"]})
 					)
-					.collect({x -> [x]})
+					.collect({[it]})
+					.map({["unused",it]})
 			)
 			RMD_RENDER(
-				ORGANIZE_FILES.out.map({x -> ["multireport.html",x,"indir='${x}'"]}),
+				ORGANIZE_FILES.out.map({m,x -> ["multireport.html",x,"indir='${x}'"]}),
 				file("${moduleDir}/assets/multireport.Rmd"),
 				file("${moduleDir}/assets/lib_typing.R")
 			)
 			MULTITABLE(
-				ORGANIZE_FILES.out.map({x -> ["multitable.xlsx",x]}),
+				ORGANIZE_FILES.out.map({m,x -> ["multitable.xlsx",x]}),
 				file("${moduleDir}/assets/lib_typing.R")
 			)
 			

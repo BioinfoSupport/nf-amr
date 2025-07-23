@@ -3,8 +3,8 @@
 nextflow.preview.output = true
 
 include { SAMTOOLS_FASTQ     } from './modules/samtools/fastq'
-include { MULTIQC            } from './modules/multiqc'
-include { ORGANIZE_FILES     } from './modules/organize_files'
+//include { MULTIQC            } from './modules/multiqc'
+//include { ORGANIZE_FILES     } from './modules/organize_files'
 
 include { IDENTITY          } from './modules/identity'
 include { GZIP_DECOMPRESS   } from './modules/gzip'
@@ -21,6 +21,7 @@ include { validateParameters; paramsSummaryLog; samplesheetToList } from 'plugin
 params.long_reads = []
 params.short_reads = []
 params.input_assembly = []
+params.samplesheet = []
 
 workflow {
 	main:
@@ -66,7 +67,9 @@ workflow {
 			ss.sr_ch = ss.sr_ch.map({x,y -> [x,y.findAll({v->v})]}).filter({x,y -> y})
 			ss.lr_ch = ss.lr_ch.filter({x,y -> y})
 			
+			// ------------------------------------------------------------------
 			// Uncompress .fasta.gz when needed
+			// ------------------------------------------------------------------
 			ss.asm_ch = ss.asm_ch.branch({meta,f -> 
 				gz: f.name =~ /\.gz$/
 				fa: true
@@ -96,6 +99,7 @@ workflow {
 			ASSEMBLE_READS(ss.lr_ch,ss.sr_ch)	
 			
 			// MultiQC
+			/*
 			ORGANIZE_FILES(
 				Channel.empty().mix(
 					ASSEMBLY_QC.out.long_bam_stats.map({meta,file -> [file,"${meta.sample_id}_long.bam.stats"]}),
@@ -104,10 +108,11 @@ workflow {
 					SHORT_READS.out.fastqc_zip.map({meta,files -> [files[0],"${meta.sample_id}_short_fastqc.zip"]}),
 					SHORT_READS.out.fastqc_zip.map({meta,files -> [files[1],"${meta.sample_id}_short_R2_fastqc.zip"]})
 				)
-				.collect({x -> [x]})
+				.collect({[it]})
+				.map({["unused",it]})
 			)
 			MULTIQC(ORGANIZE_FILES.out,file("${moduleDir}/assets/multiqc/config.yml"))
-
+			*/
 
 			// -------------------
 			// Run assembly tools
@@ -172,7 +177,7 @@ workflow {
 			// Summary reports
     	html_report      = MULTIREPORT.out.html
     	xlsx_report      = MULTIREPORT.out.xlsx
-    	multiqc          = Channel.empty() //MULTIQC.out.html
+    	multiqc          = Channel.empty()//MULTIQC.out.html
 }
 
 

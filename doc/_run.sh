@@ -11,7 +11,9 @@ docker run --rm -it \
 
 
 
-nextflow run . -resume -profile arm64 -output-dir 'results_run64_sup_v5.0.0' --input_assembly='data/run64_wf-bacterial/sup_v5.0.0/*.fasta' 
+nextflow run BioinfoSupport/nf-amr -r v0.4.4 -resume --input_assembly='data/urgent/*.fasta' 
+
+nextflow run . -resume -profile arm64 -output-dir 'results_run64_sup_v5.0.0' --input_assembly='data/run64_wf-bacterial/sup_v5.0.0/*.fasta*' 
 
 nextflow run . -resume -profile arm64 --long_reads=data/run64_sup_v5.2.0/demuxed/demuxed/*_barcode17/reads.bam --flye_long
 
@@ -48,8 +50,9 @@ git checkout dev
 git merge master
 git checkout master
 git merge dev
-git tag -a v0.4.1 -m "This version include assembly options"
+git tag -a v0.4.4 -m "This version include assembly options"
 git push origin --tags
+git push origin
 git checkout dev
 
 
@@ -67,11 +70,17 @@ cd ~/gvfs/*/BioinfoSupport/colombie
 rsync -av 2025-07-09_sierra_triplecarba_run64 ~/scratch/
 cd  ~/scratch/2025-07-09_sierra_triplecarba_run64
 
+cd ~/gvfs/*/BioinfoSupport/colombie
+rsync -av --no-perms ~/scratch/2025-07-09_sierra_triplecarba_run64/results ./2025-07-09_sierra_triplecarba_run64/
+
+
 
 export NXF_SINGULARITY_CACHEDIR=~/scratch/singularity
 export NXF_SINGULARITY_TMPDIR=~/scratch/singularity_tmp
-nextflow run -r v0.4.1 BioinfoSupport/nf-amr -profile hpc -resume --samplesheet=data/SampleSheet_pipeline.csv
+nextflow run -r v0.4.4 BioinfoSupport/nf-amr -profile hpc -resume -bg --samplesheet=data/SampleSheet_pipeline.csv
 
 
+
+scp yggdrasil:~/scratch/2025-07-09_sierra_triplecarba_run64/results/*.html ~/Downloads/
 
 ./nextflow run BioinfoSupport/nf-amr -profile hpc -bg -resume --input=data/*.fasta
