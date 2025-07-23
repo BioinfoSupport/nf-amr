@@ -18,7 +18,7 @@
 	        "input_assembly": { 
 	          "type": "string",
 	          "format": "file-path-pattern",
-	          "pattern": "^\\S+\\.(fasta|fa)$",
+	          "pattern": "^\\S+\\.(fasta|fa)(\\.gz)?$",
 	          "description": "Path to FASTA of the genomes to annotate. Only use if samplesheet is not set"
 	        },
 	      	

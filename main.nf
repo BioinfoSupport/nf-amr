@@ -7,6 +7,7 @@ include { MULTIQC            } from './modules/multiqc'
 include { ORGANIZE_FILES     } from './modules/organize_files'
 
 include { IDENTITY          } from './modules/identity'
+include { GZIP_DECOMPRESS   } from './modules/gzip'
 include { ASSEMBLE_READS    } from './workflows/assemble_reads'
 include { ANNOTATE_ASSEMBLY } from './workflows/annotate_assembly'
 
@@ -48,7 +49,7 @@ workflow {
 			} else {
 				if (params.long_reads) {
 					ss.lr_ch = Channel.fromPath(params.long_reads)
-							.map({x -> tuple(["sample_id":x.name.replaceAll(/\.(fastq\.gz|fq\.gz|bam|cram)$/, "")],x)})
+							.map({x -> tuple(["sample_id":x.name.replaceAll(/\.(fastq\.gz|fq\.gz|bam|cram)$/,'')],x)})
 				}
 				if (params.short_reads) {
 					ss.sr_ch = Channel
@@ -57,14 +58,21 @@ workflow {
 				}
 				if (params.input_assembly) {
 					ss.asm_ch = Channel.fromPath(params.input_assembly)
-							.map({x -> tuple(["sample_id":x.baseName],x)})
+							.map({x -> tuple(["sample_id":x.name.replaceAll(/\.(fasta|fa)(\.gz)?$/,'')],x)})
 				}				
 			}
+			// Filter missing values
 			ss.asm_ch = ss.asm_ch.filter({x,y -> y})
 			ss.sr_ch = ss.sr_ch.map({x,y -> [x,y.findAll({v->v})]}).filter({x,y -> y})
 			ss.lr_ch = ss.lr_ch.filter({x,y -> y})
 			
-			
+			// Uncompress .fasta.gz when needed
+			ss.asm_ch = ss.asm_ch.branch({meta,f -> 
+				gz: f.name =~ /\.gz$/
+				fa: true
+			})
+			ss.asm_ch = ss.asm_ch.fa.mix(GZIP_DECOMPRESS(ss.asm_ch.gz))
+
 			// Ideally this should not be called but is needed to publish the assembly in the output
 			IDENTITY(ss.asm_ch)
 
