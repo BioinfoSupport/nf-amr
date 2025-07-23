@@ -1,7 +1,7 @@
 
 process SAMTOOLS_STATS {
     container 'quay.io/biocontainers/samtools:1.21--h50ea8bc_0'
-    memory '4 GB'
+    memory '12 GB'
     cpus 1
     time '30 min'
     input:

@@ -13,7 +13,7 @@ process HYBRACTER {
 	      illumina = illumina instanceof List?illumina:[illumina]
 	      def short_reads = illumina?(illumina.size()==1?"-s ${illumina[0]}":"-1 ${illumina[0]} -2 ${illumina[1]}"):''
 		    """
-				hybracter hybrid-single \\
+				hybracter ${cmd} \\
 				    ${task.ext.args?:''} \\
 				    --threads ${task.cpus} \\
 				    --auto \\
