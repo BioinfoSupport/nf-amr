@@ -1,6 +1,6 @@
 process MLST {
 		label 'cgetools'
-	  container "registry.gitlab.unige.ch/amr-genomics/cgetools:v2.0"
+	  container "registry.gitlab.unige.ch/amr-genomics/cgetools:main"
     memory '4 GB'
     cpus 1
     time '1h'
