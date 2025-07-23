@@ -1,9 +1,9 @@
 
 process SAMTOOLS_STATS {
     container 'quay.io/biocontainers/samtools:1.21--h50ea8bc_0'
-    memory '2 GB'
+    memory '4 GB'
     cpus 1
-    time '15 min'
+    time '30 min'
     input:
     		tuple val(meta), path("input.bam")
     output:

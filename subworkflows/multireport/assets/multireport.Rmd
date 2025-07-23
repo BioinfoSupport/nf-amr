@@ -6,7 +6,7 @@ output:
     flexdashboard::flex_dashboard:
         orientation: rows
 params:
-    indir: "../../../results/samples"
+    indir: "../../../results_run64_sup_v5.0.0/samples"
 ---
 
 ```{r setup}

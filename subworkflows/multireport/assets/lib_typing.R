@@ -14,20 +14,26 @@ read_anninfo_json <- function(json_file) {
 
 
 read_resfinder_json <- function(json_file) {
-	json <- jsonlite::fromJSON(json_file,simplifyVector=FALSE)
 	expected_structure <- tibble(
-		query_id = character(0),
+		contig_id = character(0),
 		name = character(0),
 		query_start_pos = numeric(0),
 		query_end_pos = numeric(0),
+		query_id = character(0),
 		coverage = numeric(0),
 		identity = numeric(0)
 	)
-	json$seq_regions |>
-		tibble() |> 
-		unnest_wider(1) |>
-		mutate(contig_id = str_replace(query_id," .*","")) |>
-		bind_rows(expected_structure) |>
+	if (fs::file_exists(json_file)) {
+		out <- jsonlite::fromJSON(file(json_file,"rb"),simplifyVector=FALSE) |>
+			pluck("seq_regions") |>
+			tibble() |> 
+			unnest_wider(1) |>
+			mutate(contig_id = str_replace(query_id," .*",""))
+	} else {
+		out <- NULL
+	}
+	out |>
+		bind_rows(expected_structure)	|>
 		mutate(position=str_glue("{query_start_pos}-{query_end_pos}")) |>
 		relocate(contig_id,resistance_name=name,query_start_pos,query_end_pos,coverage,identity,position)
 }
@@ -174,6 +180,8 @@ db_load <- function(amr_dir) {
 			mutate(mlst = map(fs::path(basepath,"input_assembly","mlst","data.json"),read_cgemlst_json)) |>
 			mutate(plasmidfinder = map(fs::path(basepath,"input_assembly","plasmidfinder","data.json"),read_plasmidfinder_json)) |>
 			mutate(resfinder = map(fs::path(basepath,"input_assembly","resfinder","data.json"),read_resfinder_json)) |>
+			mutate(resfinder_long_reads = map(fs::path(basepath,"long_reads","resfinder","data.json"),read_resfinder_json)) |>
+			mutate(resfinder_short_reads = map(fs::path(basepath,"short_reads","resfinder","data.json"),read_resfinder_json)) |>
 			mutate(amrfinderplus = map(fs::path(basepath,"input_assembly","amrfinderplus","report.tsv"),read_amrfinderplus_tsv)) |>		
 			mutate(mobtyper = map(fs::path(basepath,"input_assembly","mobtyper.tsv"),read_mobtyper_tsv))
 }
@@ -206,6 +214,14 @@ summarise_resistances <- function(db) {
 		amrfinderplus = db |> 
 			select(assembly_id,amrfinderplus) |> 
 			unnest(amrfinderplus) |>
+			select(assembly_id,contig_id,resistance_name,coverage,identity,position),
+		resfinder_long_reads = db |> 
+			select(assembly_id,resfinder_long_reads) |> 
+			unnest(resfinder_long_reads) |>
+			select(assembly_id,contig_id,resistance_name,coverage,identity,position),
+		resfinder_short_reads = db |> 
+			select(assembly_id,resfinder_short_reads) |> 
+			unnest(resfinder_short_reads) |>
 			select(assembly_id,contig_id,resistance_name,coverage,identity,position),
 		.id = "source"
 	) |>
