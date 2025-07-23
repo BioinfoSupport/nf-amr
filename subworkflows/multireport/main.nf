@@ -46,8 +46,7 @@ workflow MULTIREPORT {
 	    	
 		main:
 			ORGANIZE_FILES(
-				Channel.empty()
-					.mix(
+				Channel.empty().mix(
 					  fa_ch.map(           {meta,file -> [file,"${meta.sample_id}/input_assembly/assembly.fasta"]}),
 						fai_ch.map(          {meta,file -> [file,"${meta.sample_id}/input_assembly/assembly.fasta.fai"]}),
 						runinfo_ch.map(      {meta,file -> [file,"${meta.sample_id}/input_assembly/anninfo.json"]}),
@@ -59,9 +58,9 @@ workflow MULTIREPORT {
 						mobtyper_ch.map(     {meta,file -> [file,"${meta.sample_id}/input_assembly/${file.name}"]}),
 						MLST_ch.map(         {meta,file -> [file,"${meta.sample_id}/input_assembly/${file.name}"]}),
 						prokka_ch.map(       {meta,file -> [file,"${meta.sample_id}/input_assembly/${file.name}"]})
-					)
-					.collect({[it]})
-					.map({["unused",it]})
+				)
+				.collect({[it]})
+				.map({["unused",it]})
 			)
 			RMD_RENDER(
 				ORGANIZE_FILES.out.map({m,x -> ["multireport.html",x,"indir='${x}'"]}),

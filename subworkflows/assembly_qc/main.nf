@@ -75,18 +75,17 @@ workflow ASSEMBLY_QC {
 			//RUN VCF_SHORT
 			//HTML_AND_JSON_QC_REPORT()
 			
-			/*
+			
 			fa_ch
 				.join(SAMTOOLS_STATS_LONG.out,remainder:true)
 				.join(SAMTOOLS_STATS_SHORT.out,remainder:true)
-				.map({meta,x1,x2,x3 -> [meta,[x1,x2,x3],"isolate_dir='./'"]})
-			*/
-/*
+				.map({meta,x1,x2,x3 -> [meta,[[x1,"assembly.fasta"],[x2,"long_reads.bam.stats"],[x3,"short_reads.bam.stats"]]]})
+				| ORGANIZE_FILES
 			RMD_RENDER(
+				ORGANIZE_FILES.out.map({m,x -> [m,x,"isolate_dir='${x}'"]}),
 				file("${moduleDir}/assets/isolate_assembly_qc.Rmd"),
 				file("${moduleDir}/assets/isolate_assembly_qc.Rmd")
-			)			
-*/
+			)
 
 			//CHARACTERIZE_UNMAPPED_READS
 			//QC_AGGREGATOR
@@ -101,8 +100,7 @@ workflow ASSEMBLY_QC {
 		short_bam_stats = SAMTOOLS_STATS_SHORT.out
 		short_vcf       = Channel.empty()
 		
-		//qc_isolate_html = RMD_RENDER.out.html
-		qc_isolate_html = Channel.empty()
+		html            = RMD_RENDER.out.html
 }
 
 

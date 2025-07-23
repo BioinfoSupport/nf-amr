@@ -6,7 +6,7 @@ output:
     flexdashboard::flex_dashboard:
         orientation: rows
 params:
-  isolate_dir: "results/samples/RH1/input_assembly"
+  isolate_dir: "/Users/prados/Documents/AMR-genomics/nf-amr/work/33/fd26283f3aeb3dbf3f76bf7baecdc5/output"
 ---
 
 ```{r setup}
@@ -16,7 +16,11 @@ library(flexdashboard)
 library(Biostrings)
 
 read_samtools_stats <- function(f) {
-	stats <- readLines(f)
+	if (fs::file_exists(f)) {
+		stats <- readLines(f)	
+	} else {
+		stats <- character(0)
+	}
 	list(
 		SN = read.table(
 				text = str_subset(stats,"^SN\t"),
