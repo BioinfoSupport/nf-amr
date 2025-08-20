@@ -68,7 +68,7 @@ workflow {
 			// Validate parameters and print summary of supplied ones
 			validateParameters()
 			log.info(paramsSummaryLog(workflow))
-			
+
 			// -------------------
 			// Prepare SampleSheet
 			// -------------------
@@ -167,20 +167,20 @@ workflow {
 			long_qc             = LONG_READS.out.nanoplot
 			long_resfinder      = LONG_READS.out.resfinder
 			long_plasmidfinder  = LONG_READS.out.plasmidfinder
-			long_flye           = ASSEMBLE_READS.out.long_flye
-			long_unicycler      = ASSEMBLE_READS.out.long_unicycler
-			long_hybracter      = ASSEMBLE_READS.out.long_hybracter
 
 			// Short-reads
 			short_qc            = SHORT_READS.out.fastqc_html
 			short_resfinder     = SHORT_READS.out.resfinder
 			short_plasmidfinder = SHORT_READS.out.plasmidfinder
+			
+			// Assemblies
+			long_flye_medaka    = ASSEMBLE_READS.out.long_flye_medaka
+			long_unicycler      = ASSEMBLE_READS.out.long_unicycler
+			long_hybracter      = ASSEMBLE_READS.out.long_hybracter
 			short_spades        = ASSEMBLE_READS.out.short_spades
 			short_unicycler     = ASSEMBLE_READS.out.short_unicycler
-
-			// Hybrid assembly
-			hybrid_unicycler          = ASSEMBLE_READS.out.hybrid_unicycler
-			hybrid_hybracter          = ASSEMBLE_READS.out.hybrid_hybracter
+			hybrid_unicycler    = ASSEMBLE_READS.out.hybrid_unicycler
+			hybrid_hybracter    = ASSEMBLE_READS.out.hybrid_hybracter
 			
 			// Summary reports
     	html_report      = MULTIREPORT.out.html
@@ -290,19 +290,8 @@ output {
 		path { x -> "samples/${x[0].sample_id}/long_reads/" }
 		mode 'copy'
 	}
-	long_flye {
-		path { x -> "samples/${x[0].sample_id}/long_reads/" }
-		mode 'copy'
-	}
-	long_unicycler {
-		path { x -> "samples/${x[0].sample_id}/long_reads/" }
-		mode 'copy'
-	}
-	long_hybracter {
-		path { x -> "samples/${x[0].sample_id}/long_reads/" }
-		mode 'copy'
-	}
-
+	
+	
 	// -------------------
 	// Short-reads
 	// -------------------
@@ -318,22 +307,37 @@ output {
 		path { x -> "samples/${x[0].sample_id}/short_reads/" }
 		mode 'copy'
 	}
+
+
+	// -------------------
+	// Assemblies
+	// -------------------
+	long_flye_medaka {
+		path { x -> "samples/${x[0].sample_id}/assemblies/long_flye_medaka" }
+		mode 'copy'
+	}
+	long_unicycler {
+		path { x -> "samples/${x[0].sample_id}/assemblies/long_unicycler" }
+		mode 'copy'
+	}
+	long_hybracter {
+		path { x -> "samples/${x[0].sample_id}/assemblies/long_hybracter" }
+		mode 'copy'
+	}
 	short_spades {
-		path { x -> "samples/${x[0].sample_id}/short_reads/" }
+		path { x -> "samples/${x[0].sample_id}/assemblies/short_spades" }
 		mode 'copy'
 	}
 	short_unicycler {
-		path { x -> "samples/${x[0].sample_id}/short_reads/" }
+		path { x -> "samples/${x[0].sample_id}/assemblies/short_unicycler" }
 		mode 'copy'
 	}
-
-
 	hybrid_unicycler {
-		path { x -> "samples/${x[0].sample_id}/hybrid/" }
+		path { x -> "samples/${x[0].sample_id}/assemblies/hybrid_unicycler" }
 		mode 'copy'
 	}
 	hybrid_hybracter {
-		path { x -> "samples/${x[0].sample_id}/hybrid/" }
+		path { x -> "samples/${x[0].sample_id}/assemblies/hybrid_hybracter" }
 		mode 'copy'
 	}
 	

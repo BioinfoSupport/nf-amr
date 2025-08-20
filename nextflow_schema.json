@@ -38,27 +38,31 @@
 		    		"type": "boolean",
 		    		"default": false
 		    	},
-					"unicycler_short": {
+					"short_unicycler": {
 						"type": "boolean",
 						"default": false
 		    	},
-					"flye_long": {
+					"long_flye_medaka": {
 						"type": "boolean",
 						"default": false
 		    	},
-					"hybracter_long": {
+					"long_hybracter": {
 						"type": "boolean",
 						"default": false
 		    	},
-					"unicycler_long": {
+					"long_unicycler": {
 						"type": "boolean",
 						"default": false
 		    	},
-					"hybracter_hybrid": {
+					"hybrid_hybracter": {
 						"type": "boolean",
 						"default": false
 		    	},
-					"unicycler_hybrid": {
+					"hybrid_unicycler": {
+						"type": "boolean",
+						"default": false
+		    	},
+					"hybrid_flye_medaka_pilon": {
 						"type": "boolean",
 						"default": false
 		    	}
