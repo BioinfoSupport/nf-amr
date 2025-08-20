@@ -1,6 +1,8 @@
 
 # nf-amrseq
 
+**This Page is under construction and not up to date**
+
 `nf-amrseq` is a nextflow pipeline to process sequencing data of Antimicrobial Multi-Resistance bacteria.
 
 The pipeline:
@@ -11,7 +13,7 @@ The pipeline:
  
  3) Run `MLST` with the schema automatically selected from detected species. 
 
- 4) Generate a HTML report.
+ 4) Generate HTML reports.
  
  
 ## Usage
@@ -27,7 +29,7 @@ Running the pipeline on a local computer requires [`docker`](https://www.docker.
 If the FASTA files to process are in subfolder 'data/' of your working directory
 
 ```bash
-nextflow run BioinfoSupport/nf-amr -resume --input=data/*.fasta
+nextflow run BioinfoSupport/nf-amr -resume --input_assembly=data/*.fasta
 ```
 
 #### Nextflow container
@@ -51,7 +53,7 @@ docker run --rm -it \
 To run the pipeline on a HPC cluster with `slurm` and `singularity` use `-profile=hpc`:
 
 ```bash
-./nextflow run BioinfoSupport/nf-amr -profile hpc -bg -resume --input=data/*.fasta
+nextflow run BioinfoSupport/nf-amr -profile hpc -bg -resume --input_assembly=data/*.fasta
 ```
 
 If `nextflow` is not installed on your HPC, it can be installed with:
@@ -63,79 +65,22 @@ curl -s https://get.nextflow.io | bash && chmod +x nextflow
 And if you need to update the pipeline latest version, use:
 
 ```bash
-./nextflow pull BioinfoSupport/nf-amr
+nextflow pull BioinfoSupport/nf-amr
+```
+
+Or run a specific version:
+
+```bash
+nextflow run BioinfoSupport/nf-amr -r v0.4.12 -profile hpc -bg -resume --input_assembly=data/*.fasta
 ```
 
 
 ## Input
 
-If `--input` argument is missing, the pipeline process all FASTA files located 
-in subfolder `data/` (`--input='data/*.fasta'` by default).
+ - `--input_assembly`: FASTA files with assembled genomes to annotated 
 
 ## Output
-By default, the results of the pipeline are stored in subfolder `results/` but
-it can controlled with option `-output-dir` 
-
-
-# TODO:
- - Setup all tools so they use external DB given in param: orgfinder, plasmidfinder, resfinder, amrfinder, mlst
- - add sample sheet from CSV file (with id, org_name)
- - add multi-reporting / aggregator (which include independant report)
-
- - add ISfinder annotations (mobile elements)
- - add generation of CGView file
- - add hybracter assembly ?
- - add cgMLST analysis
- - add plasmid cgMLST
- - après assemblage ajouter les mapping des reads sur l'assemblage 
- 
- 
-
-
-
-# Parking 
-
-
-### Cleaning
-
-```bash
-rm -rf results/ .nextflow* work/
-```
-
-```bash
-nextflow run . -resume
-nextflow run . -resume --org_name="Citrobacter freundii"
-```
-
-### Test ANI speed
-```bash
-nextflow run . --input=data/r62b14.hdr.fasta --skip_plasmidfinder --skip_resfinder --skip_mlst --skip_prokka
-```
-
-
-### nf-core
-```bash
-docker run --rm \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  -v $(pwd):$(pwd) \
-  --platform linux/amd64 \
-  --workdir $(pwd) \
-  --env NXF_HOME=$(pwd)/.nextflow_home \
-  nfcore/tools \
-  pipelines schema build
-```
-
-```bash
-docker run --rm nfcore/tools --help
-docker run --rm nfcore/tools modules list remote
-docker run --rm nfcore/tools pipelines list
-
-docker run -it --rm --entrypoint bash nfcore/tools
-nf-core pipelines create
-nf-core pipelines create --name americ -a "J. Prados" --organisation "amr-genomics" --description "anti-microbial resistance infection control pipeline"
-```
-
-
-
+By default, pipeline outputs are stored in `results/` but it can controlled with 
+option `-output-dir` 
 
 
