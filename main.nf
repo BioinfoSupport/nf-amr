@@ -7,7 +7,7 @@ include { SAMTOOLS_FASTQ     } from './modules/samtools/fastq'
 //include { ORGANIZE_FILES     } from './modules/organize_files'
 
 include { IDENTITY          } from './modules/identity'
-include { GZIP_DECOMPRESS   } from './modules/gzip'
+include { GZIP_DECOMPRESS as GZIP_DECOMPRESS_FASTA  } from './modules/gzip'
 include { ASSEMBLE_READS    } from './workflows/assemble_reads'
 include { ANNOTATE_ASSEMBLY } from './workflows/annotate_assembly'
 
@@ -81,7 +81,7 @@ workflow {
 				gz: f.name =~ /\.gz$/
 				fa: true
 			})
-			ss.asm_ch = ss.asm_ch.fa.mix(GZIP_DECOMPRESS(ss.asm_ch.gz))
+			ss.asm_ch = ss.asm_ch.fa.mix(GZIP_DECOMPRESS_FASTA(ss.asm_ch.gz))
 
 			// ------------------------------------------------------------------
 			// CONVERT long_reads given in BAM/CRAM format into FASTQ format
@@ -102,7 +102,7 @@ workflow {
 			SHORT_READS(ss.sr_ch)
 			
 			// Reads assembly
-			ASSEMBLE_READS(ss.lr_ch,ss.sr_ch)	
+			ASSEMBLE_READS(ss.lr_ch,ss.sr_ch)
 			ASSEMBLY_QC(ss.asm_ch,ss.lr_ch,ss.sr_ch)
 
 			// MultiQC
