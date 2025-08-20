@@ -8,6 +8,7 @@ process MULTITABLE {
 	  container "registry.gitlab.unige.ch/amr-genomics/rscript:main"
     memory '8 GB'
     cpus 2
+    time '30 min'
     input:
     		tuple val(meta),path("db")
     		each path("lib_typing.R")
