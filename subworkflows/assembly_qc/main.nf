@@ -65,16 +65,17 @@ workflow ASSEMBLY_QC {
 		fql_ch
 		fqs_ch
 	main:
-			// Align long reads and short reads and extract stats
+			// Short reads alignment and statistics
 			BWA_MEM(BWA_INDEX(fa_ch).join(fqs_ch))
+			SAMTOOLS_STATS_SHORT(BWA_MEM.out.bam)
+			
+			// Long reads alignment and statistics
 			MINIMAP2_ALIGN_ONT(fa_ch.join(fql_ch))
 			SAMTOOLS_STATS_LONG(MINIMAP2_ALIGN_ONT.out.bam)
-			SAMTOOLS_STATS_SHORT(BWA_MEM.out.bam)
 			
 			//RUN VCF_LONG
 			//RUN VCF_SHORT
 			//HTML_AND_JSON_QC_REPORT()
-			
 			
 			fa_ch
 				.join(SAMTOOLS_STATS_LONG.out,remainder:true)
