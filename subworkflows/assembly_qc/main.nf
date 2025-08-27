@@ -1,9 +1,9 @@
 
 include { MINIMAP2_ALIGN_ONT } from '../../modules/minimap2/align_ont'
-include { SAMTOOLS_STATS as SAMTOOLS_STATS_LONG  } from '../../modules/samtools/stats'
-include { SAMTOOLS_STATS as SAMTOOLS_STATS_SHORT } from '../../modules/samtools/stats'
-include { BWA_MEM            } from '../../modules/bwa/mem'
-include { BWA_INDEX          } from '../../modules/bwa/index'
+include { SAMTOOLS_STATS as SAMTOOLS_STATS_LONG  } from './modules/samtools/stats'
+include { SAMTOOLS_STATS as SAMTOOLS_STATS_SHORT } from './modules/samtools/stats'
+include { BWA_MEM            } from './modules/bwa/mem'
+include { BWA_INDEX          } from './modules/bwa/index'
 include { ORGANIZE_FILES     } from '../../modules/organize_files'
 include { RMD_RENDER         } from '../../modules/rmd/render'
 

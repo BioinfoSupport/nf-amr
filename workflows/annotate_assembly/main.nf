@@ -11,9 +11,10 @@ include { RESFINDER         } from './modules/cgetools/resfinder'
 include { PLASMIDFINDER     } from './modules/cgetools/plasmidfinder'
 include { MLST as CGEMLST   } from './modules/cgetools/mlst'
 include { MOBTYPER_RUN      } from './modules/mobsuite/mobtyper'
+include { SAMTOOLS_FAIDX    } from './modules/samtools/faidx'
 
 include { TO_JSON           } from '../../modules/tojson'
-include { SAMTOOLS_FAIDX    } from '../../modules/samtools/faidx'
+
 
 params.skip_prokka = true
 params.mobtyper_default_args = ''
