@@ -19,7 +19,7 @@ process RESFINDER {
     			input = "-ifa ${seq.join(' ')}"
     		}
 		    """
-				python -m resfinder ${task.ext.args?:''} ${input} -acq -d -j resfinder/data.json -o 'resfinder/'
+				python -m resfinder ${task.ext.args?:''} ${input} --kma_threads ${task.cpus} -acq -d -j resfinder/data.json -o 'resfinder/'
 		    """    
 }
 
