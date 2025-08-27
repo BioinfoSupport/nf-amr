@@ -313,33 +313,34 @@ output {
 	// Assemblies
 	// -------------------
 	long_flye_medaka {
-		path { x -> "samples/${x[0].sample_id}/assemblies/long_flye_medaka" }
+		path { x -> x[1] >> "samples/${x[0].sample_id}/assemblies/long_flye_medaka" }
 		mode 'copy'
 	}
 	long_unicycler {
-		path { x -> "samples/${x[0].sample_id}/assemblies/long_unicycler" }
+		path { x -> x[1] >> "samples/${x[0].sample_id}/assemblies/long_unicycler" }
 		mode 'copy'
 	}
 	long_hybracter {
-		path { x -> "samples/${x[0].sample_id}/assemblies/long_hybracter" }
+		path { x -> x[1] >> "samples/${x[0].sample_id}/assemblies/long_hybracter" }
 		mode 'copy'
 	}
 	short_spades {
-		path { x -> "samples/${x[0].sample_id}/assemblies/short_spades" }
+		path { x -> x[1] >> "samples/${x[0].sample_id}/assemblies/short_spades" }
 		mode 'copy'
 	}
 	short_unicycler {
-		path { x -> "samples/${x[0].sample_id}/assemblies/short_unicycler" }
+		path { x -> x[1] >> "samples/${x[0].sample_id}/assemblies/short_unicycler" }
 		mode 'copy'
 	}
 	hybrid_unicycler {
-		path { x -> "samples/${x[0].sample_id}/assemblies/hybrid_unicycler" }
+		path { x -> x[1] >> "samples/${x[0].sample_id}/assemblies/hybrid_unicycler" }
 		mode 'copy'
 	}
 	hybrid_hybracter {
-		path { x -> "samples/${x[0].sample_id}/assemblies/hybrid_hybracter" }
+		path { x -> x[1] >> "samples/${x[0].sample_id}/assemblies/hybrid_hybracter" }
 		mode 'copy'
 	}
+	
 	
 	// -------------------
 	// Summary reports
