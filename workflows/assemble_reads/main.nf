@@ -6,7 +6,9 @@ include { HYBRACTER    as LONG_HYBRACTER   } from './modules/hybracter'
 include { HYBRACTER    as HYBRID_HYBRACTER } from './modules/hybracter'
 include { SPADES       as SHORT_SPADES     } from './modules/spades'
 include { FLYE_MEDAKA  as LONG_FLYE_MEDAKA } from './subworkflows/flye_medaka'
-include { PILON_POLISH                     } from './subworkflows/pilon_polish'
+include { PILON_POLISH as PILON_POLISH_ROUND1 } from './subworkflows/pilon_polish'
+include { PILON_POLISH as PILON_POLISH_ROUND2 } from './subworkflows/pilon_polish'
+include { PILON_POLISH as PILON_POLISH_ROUND3 } from './subworkflows/pilon_polish'
 
 
 params.long_unicycler = false
@@ -17,6 +19,42 @@ params.hybrid_hybracter = false
 params.short_spades = false
 params.long_flye_medaka = false
 params.hybrid_flye_medaka_pilon = false
+
+
+
+process HYBRID_FLYE_MEDAKA_PILON_FOLDER {
+    input:
+    	tuple val(meta),path('flye_medaka'),path('flye_medaka_pilon/03_pilon_round1'),path('flye_medaka_pilon/04_pilon_round2'),path('flye_medaka_pilon/05_pilon_round3')
+    output:
+    	tuple val(meta),path("flye_medaka_pilon",type: 'dir')
+    script:
+    """
+    	cp --no-dereference flye_medaka/* flye_medaka_pilon/
+    """
+}
+
+workflow HYBRID_FLYE_MEDAKA_PILON {
+	take:
+		flye_medaka_ch
+		fqs_ch
+	main:
+		pilon1_ch = PILON_POLISH_ROUND1(
+			flye_medaka_ch.map({meta,asm -> [meta,asm/'02_medaka/consensus.fasta']}),
+			fqs_ch
+		)
+		pilon2_ch = PILON_POLISH_ROUND2(
+			pilon1_ch.map({meta,asm -> [meta,asm/'pilon.fasta']}),
+			fqs_ch
+		)
+		pilon3_ch = PILON_POLISH_ROUND3(
+			pilon2_ch.map({meta,asm -> [meta,asm/'pilon.fasta']}),
+			fqs_ch
+		)
+		HYBRID_FLYE_MEDAKA_PILON_FOLDER(flye_medaka_ch.join(pilon1_ch).join(pilon2_ch).join(pilon3_ch))
+	emit:
+		HYBRID_FLYE_MEDAKA_PILON_FOLDER.out
+}
+
 
 
 workflow ASSEMBLE_READS {
@@ -63,10 +101,8 @@ workflow ASSEMBLE_READS {
 						.filter({params.hybrid_unicycler})
 						.map({meta,fql,fqs -> [meta,fqs,fql]})
 				)
-				PILON_POLISH(
-					LONG_FLYE_MEDAKA.out
-						.map({meta,flye -> [meta,flye/'02_medaka/consensus.fasta']})
-						.filter({params.hybrid_flye_medaka_pilon}),
+				HYBRID_FLYE_MEDAKA_PILON(
+					LONG_FLYE_MEDAKA.out,
 					fqs_ch.filter({params.hybrid_flye_medaka_pilon})
 				)
 
@@ -82,6 +118,6 @@ workflow ASSEMBLE_READS {
 		    
 		    hybrid_unicycler = HYBRID_UNICYCLER.out
 		    hybrid_hybracter = HYBRID_HYBRACTER.out
-		    hybrid_flye_medaka_pilon = PILON_POLISH.out
+		    hybrid_flye_medaka_pilon = HYBRID_FLYE_MEDAKA_PILON.out
 }
 
