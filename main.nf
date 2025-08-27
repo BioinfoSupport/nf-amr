@@ -174,13 +174,14 @@ workflow {
 			short_plasmidfinder = SHORT_READS.out.plasmidfinder
 			
 			// Assemblies
-			long_flye_medaka    = ASSEMBLE_READS.out.long_flye_medaka
-			long_unicycler      = ASSEMBLE_READS.out.long_unicycler
-			long_hybracter      = ASSEMBLE_READS.out.long_hybracter
-			short_spades        = ASSEMBLE_READS.out.short_spades
-			short_unicycler     = ASSEMBLE_READS.out.short_unicycler
-			hybrid_unicycler    = ASSEMBLE_READS.out.hybrid_unicycler
-			hybrid_hybracter    = ASSEMBLE_READS.out.hybrid_hybracter
+			long_flye_medaka         = ASSEMBLE_READS.out.long_flye_medaka
+			long_unicycler           = ASSEMBLE_READS.out.long_unicycler
+			long_hybracter           = ASSEMBLE_READS.out.long_hybracter
+			short_spades             = ASSEMBLE_READS.out.short_spades
+			short_unicycler          = ASSEMBLE_READS.out.short_unicycler
+			hybrid_unicycler         = ASSEMBLE_READS.out.hybrid_unicycler
+			hybrid_hybracter         = ASSEMBLE_READS.out.hybrid_hybracter
+			hybrid_flye_medaka_pilon = ASSEMBLE_READS.out.hybrid_flye_medaka_pilon
 			
 			// Summary reports
     	html_report      = MULTIREPORT.out.html
@@ -338,6 +339,10 @@ output {
 	}
 	hybrid_hybracter {
 		path { x -> x[1] >> "samples/${x[0].sample_id}/assemblies/hybrid_hybracter" }
+		mode 'copy'
+	}
+	hybrid_flye_medaka_pilon {
+		path { x -> x[1] >> "samples/${x[0].sample_id}/assemblies/hybrid_flye_medaka_pilon" }
 		mode 'copy'
 	}
 	

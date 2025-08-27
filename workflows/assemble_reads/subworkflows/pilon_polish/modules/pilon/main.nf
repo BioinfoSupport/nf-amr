@@ -9,12 +9,13 @@ process PILON {
         tuple val(meta), path('pilon',type:'dir')
     script:
     """
-    java -Xmx8000M -jar /usr/local/share/pilon*/pilon.jar \
+    mkdir pilon \
+    && java -Xmx8000M -jar /usr/local/share/pilon*/pilon.jar \
        --genome assembly.fasta \
        --bam short_reads.bam \
        ${task.ext.args?:'--fix all --changes'} \
        --threads ${task.cpus} \
-       --output pilon
+       --output pilon/pilon
     """
 }
 
