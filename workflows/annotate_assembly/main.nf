@@ -1,6 +1,7 @@
 #!/usr/bin/env nextflow
 
 include { ORGFINDER_DETECT    } from './modules/orgfinder/detect'
+include { SPECIATOR           } from './modules/speciator'
 
 include { AMRFINDERPLUS_UPDATE } from './modules/amrfinderplus/update'
 include { AMRFINDERPLUS_RUN    } from './modules/amrfinderplus/run'
@@ -23,7 +24,7 @@ params.plasmidfinder_default_args = ''
 params.cgemlst_default_args = null // do not run by default
 params.MLST_default_args = ''      // autodetect species by default
 params.prokka_default_args = '--kingdom Bacteria'
-
+params.speciator = false
 
 
 // Return a boolean of whether the tool should be skip or not
@@ -113,6 +114,12 @@ workflow ANNOTATE_ASSEMBLY {
 	      // ----------------------------------------------------
 				//orgfinder_ch = ORG_DETECT(fa_ch.filter({meta,fa -> org_name(meta)==null}),ORG_DB.out)
 				orgfinder_ch = ORGFINDER_DETECT(fa_ch)
+				if (params.speciator) {
+					speciator_ch = SPECIATOR(fa_ch)
+				} else {
+					speciator_ch = Channel.empty()
+				}
+				
 				
 				// Update fa_ch to add detected organism
 				fa_org_ch = fa_ch
