@@ -2,7 +2,7 @@ process RESFINDER {
 		label 'cgetools'
 	  container "registry.gitlab.unige.ch/amr-genomics/cgetools:v2.0"
     memory '4 GB'
-    cpus 1
+    cpus 3
     time '1h'
     input:
         tuple val(meta), path(seq)
