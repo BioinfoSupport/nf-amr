@@ -179,6 +179,7 @@ workflow ANNOTATE_ASSEMBLY {
 				cgemlst = cgemlst_ch
 				MLST = MLST_ch
 				prokka = prokka_ch
+				speciator = speciator_ch
 }
 	
 

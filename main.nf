@@ -153,6 +153,7 @@ workflow {
     	cgemlst          = ann_ch.cgemlst
     	MLST             = ann_ch.MLST
     	prokka           = ann_ch.prokka
+			speciator        = ann_ch.speciator
 			
 			// Input assembly QC
     	long_bam           = ASSEMBLY_QC.out.long_bam
@@ -242,6 +243,11 @@ output {
 	}
 
 	prokka {
+		path { x -> "samples/${x[0].sample_id}/input_assembly/" }
+		mode 'copy'
+	}
+
+	speciator {
 		path { x -> "samples/${x[0].sample_id}/input_assembly/" }
 		mode 'copy'
 	}
