@@ -68,9 +68,9 @@
 		    	}
 	  		}
 	    }
-	  },
-  "allOf": [
-    { "$ref": "#/$defs/genomic_params" }, 
-    { "$ref": "#/$defs/assembly_params" }
-  ]
+	},
+	"allOf": [
+		{ "$ref": "#/$defs/genomic_params" }, 
+		{ "$ref": "#/$defs/assembly_params" }
+	]
 }
