@@ -1,7 +1,5 @@
 #!/usr/bin/env nextflow
 
-nextflow.preview.output = true
-
 include { SAMTOOLS_FASTQ     } from './modules/samtools/fastq'
 //include { MULTIQC            } from './modules/multiqc'
 //include { ORGANIZE_FILES     } from './modules/organize_files'
